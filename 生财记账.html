@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生财记账</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#1e293b;background:#f1f5f9;-webkit-font-smoothing:antialiased}
+.layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:#0f172a;color:#94a3b8;display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;overflow-y:auto;background:#f1f5f9}
+.page{padding:28px 32px}
+.logo{padding:22px 20px 18px;border-bottom:1px solid #1e293b}
+.logo-title{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.logo-sub{font-size:11px;color:#475569;margin-top:3px}
+.nav{padding:14px 10px;flex:1}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:14px;color:#64748b;transition:all .15s;margin-bottom:3px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.ni:hover{background:#1e293b;color:#cbd5e1}
+.ni.on{background:#064e3b;color:#10b981;font-weight:700}
+.ni-ico{font-size:17px;width:22px;text-align:center}
+.nav-foot{padding:14px 10px;border-top:1px solid #1e293b}
+.card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.ct{font-size:13px;font-weight:700;color:#64748b;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase;letter-spacing:.5px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.scard{background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.slbl{font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:500}
+.sval{font-size:24px;font-weight:900;color:#1e293b;letter-spacing:-.5px}
+.ssub{font-size:11px;color:#94a3b8;margin-top:5px}
+.scard.g .sval{color:#10b981}
+.scard.r .sval{color:#ef4444}
+.scard.a .sval{color:#f59e0b}
+.chart-grid{display:grid;grid-template-columns:3fr 2fr;gap:18px;margin-bottom:18px}
+.bot-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.chart-wrap{position:relative;height:260px}
+.phdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.ptitle{font-size:21px;font-weight:900;color:#1e293b;letter-spacing:-.3px}
+.pactions{display:flex;gap:10px;align-items:center}
+.btn{border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btnp{background:#10b981;color:#fff}
+.btnp:hover{background:#059669}
+.btns{background:#f1f5f9;color:#475569}
+.btns:hover{background:#e2e8f0}
+.btnd{background:#fee2e2;color:#ef4444}
+.btnd:hover{background:#fecaca}
+.btni{background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;display:inline-flex;align-items:center;transition:all .15s}
+.btni:hover{background:#f1f5f9;color:#475569}
+.fbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.fsel{border:1.5px solid #e2e8f0;border-radius:9px;padding:7px 12px;font-size:13px;background:#fff;color:#334155;cursor:pointer;outline:none;font-family:inherit}
+.fsel:focus{border-color:#10b981}
+.sinp{border:1.5px solid #e2e8f0;border-radius:9px;padding:7px 12px;font-size:13px;width:180px;outline:none;font-family:inherit;color:#334155}
+.sinp:focus{border-color:#10b981}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;border-bottom:2px solid #f1f5f9;white-space:nowrap;background:#f8fafc;text-transform:uppercase;letter-spacing:.5px}
+td{padding:11px 14px;border-bottom:1px solid #f8fafc;color:#334155;vertical-align:middle}
+tr:hover td{background:#f8fffe}
+.inc{color:#10b981;font-weight:700}
+.exp{color:#ef4444;font-weight:700}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:28px 28px 30px}
+.modal-w{max-width:720px}
+.modal-xl{max-width:880px}
+@keyframes flashRow{0%{background:#fde68a}50%{background:#fef9c3}100%{background:#fef9c3}}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.mtitle{font-size:17px;font-weight:800}
+.mx{background:#f1f5f9;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;color:#64748b}
+.mfoot{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-top:22px}
+.frow{margin-bottom:16px}
+.flbl{font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px}
+.finp{width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:15px;font-family:inherit;color:#1e293b;background:#fff;outline:none;transition:border-color .15s}
+.finp:focus{border-color:#10b981}
+select.finp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.finp-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:20px}
+.segb{flex:1;padding:9px;border:none;background:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;color:#94a3b8;transition:all .2s;font-family:inherit}
+.segb.on{background:#fff;color:#10b981;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.segb.on.e{color:#ef4444}
+.amt-inp{width:100%;border:none;border-bottom:3px solid #10b981;background:none;font-size:38px;font-weight:900;text-align:center;outline:none;font-family:inherit;padding:4px 0 8px;color:#10b981;letter-spacing:-1px}
+.amt-inp.e{border-color:#ef4444;color:#ef4444}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.chip{padding:5px 13px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12px;cursor:pointer;color:#64748b;background:#fff;transition:all .15s;font-family:inherit}
+.chip.on{border-color:#10b981;color:#10b981;background:#ecfdf5;font-weight:700}
+.nav-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.nav-card{position:relative;background:#fff;border:1px solid #eef2f6;border-radius:12px;transition:all .18s;overflow:hidden}
+.nav-card:hover{border-color:#10b981;box-shadow:0 4px 16px rgba(16,185,129,.1);transform:translateY(-2px)}
+.nav-card-link{display:flex;align-items:center;gap:12px;padding:16px;text-decoration:none;color:inherit}
+.nav-card-emoji{font-size:28px;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:10px}
+.nav-card-title{font-size:14px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-card-desc{font-size:12px;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.nav-card:hover .nav-card-actions{opacity:1}
+.tgl{width:46px;height:26px;border-radius:13px;background:#e2e8f0;position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
+.tgl.on{background:#10b981}
+.tglthumb{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tgl.on .tglthumb{left:22px}
+.tagbox{display:flex;flex-wrap:wrap;gap:7px;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;min-height:44px;align-items:center}
+.tagbox:focus-within{border-color:#10b981}
+.tag{background:#ecfdf5;color:#10b981;border-radius:6px;padding:3px 9px;font-size:12px;display:flex;align-items:center;gap:4px;font-weight:600}
+.tagx{cursor:pointer;opacity:.5;font-size:15px}
+.taginp{border:none;background:none;outline:none;font-size:14px;min-width:80px;font-family:inherit;color:#1e293b}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.ba{background:#fef3c7;color:#d97706}
+.bg{background:#d1fae5;color:#065f46}
+.br{background:#fee2e2;color:#dc2626}
+.bb{background:#dbeafe;color:#1d4ed8}
+.pitem{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #f1f5f9;gap:12px}
+.pitem:last-child{border-bottom:none}
+.brow{margin-bottom:14px}
+.browhdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.bbar{height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden}
+.bfill{height:100%;border-radius:3px;transition:width .4s}
+.asset-row{display:flex;align-items:center;padding:9px 12px;border-radius:10px;gap:10px;transition:background .15s}
+.asset-row:hover{background:#f8fafc}
+.prev-wrap{max-height:250px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:16px}
+.prev-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.prev-tbl th,.prev-tbl td{padding:7px 10px;border-bottom:1px solid #f1f5f9;text-align:left}
+.prev-tbl th{background:#f8fafc;font-weight:700;font-size:11px;color:#64748b;position:sticky;top:0}
+.empty{text-align:center;padding:60px 20px;color:#94a3b8}
+.empty-ico{font-size:48px;margin-bottom:12px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.nw-banner{background:linear-gradient(135deg,#10b981,#0d9488);border-radius:14px;padding:20px 24px;color:#fff;margin-bottom:18px}
+.nw-amt{font-size:30px;font-weight:900;margin:4px 0 12px;letter-spacing:-.5px}
+.nw-row{display:flex;gap:32px}
+.nw-lbl{font-size:11px;opacity:.75}
+.nw-val{font-size:14px;font-weight:700;margin-top:3px}
+.totbar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-top:8px}
+.totfill{height:100%;border-radius:4px;transition:width .3s}
+@media(max-width:900px){.sidebar{display:none}.stat-grid{grid-template-columns:1fr 1fr}.chart-grid,.bot-grid{grid-template-columns:1fr}}
+
+/* ── Mobile bottom nav ── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;z-index:400;padding-bottom:env(safe-area-inset-bottom,0px)}
+.mob-ni{flex:1;border:none;background:none;padding:10px 0 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:#64748b;font-family:inherit;transition:color .2s;min-height:52px}
+.mob-ni.on{color:#10b981}
+.mob-ni-ico{font-size:22px;line-height:1}
+.mob-hdr{display:none;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:#0f172a;color:#fff;position:sticky;top:0;z-index:100}
+.mob-hdr-title{font-size:16px;font-weight:800;color:#fff}
+.mob-hdr-sub{font-size:11px;color:#475569;margin-top:1px}
+
+/* ── Mobile styles (≤768px) ── */
+@media(max-width:768px){
+  html,body{-webkit-text-size-adjust:100%;overflow-x:hidden}
+  .layout{flex-direction:column;height:auto;min-height:100vh;overflow:visible}
+  .main{overflow-y:visible;height:auto;flex:none;width:100%}
+  .sidebar{display:none!important}
+  .mob-nav{display:flex}
+  .mob-hdr{display:flex}
+  .main{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}
+  .page{padding:12px 12px 20px}
+  /* stat grid 2×2 */
+  .stat-grid{grid-template-columns:1fr 1fr!important;gap:8px;margin-bottom:12px}
+  .scard{padding:12px 14px}
+  .sval{font-size:19px}
+  .ssub{font-size:10px}
+  /* charts stack */
+  .chart-grid{grid-template-columns:1fr!important;gap:12px;margin-bottom:12px}
+  .chart-wrap{height:200px}
+  .bot-grid{grid-template-columns:1fr!important;gap:12px}
+  /* page header */
+  .phdr{padding:10px 12px;flex-wrap:wrap;gap:8px}
+  .ptitle{font-size:16px}
+  .pactions{flex-wrap:wrap;gap:6px}
+  .pactions .btn{font-size:12px;padding:7px 12px}
+  /* filter bar */
+  .fbar{gap:6px;padding:0 0 8px}
+  .fsel{font-size:13px;padding:7px 10px}
+  .sinp{font-size:13px;padding:7px 10px;width:140px}
+  /* table */
+  table{font-size:12px}
+  th{padding:7px 8px;font-size:10px}
+  td{padding:8px 8px}
+  /* iOS input zoom prevention (must be ≥16px) */
+  .finp{font-size:16px!important}
+  select.finp{font-size:16px!important}
+  .lnk-inp{font-size:16px!important}
+  .fsel{font-size:16px!important}
+  input[type="date"].finp{font-size:15px!important}
+  /* touch targets */
+  .btn{min-height:44px}
+  .btni{min-height:36px;min-width:36px}
+  .mx{width:36px;height:36px;font-size:20px}
+  /* modals → bottom sheet */
+  .modal-bg{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-width:100%!important;max-height:93vh;padding:18px 14px calc(24px + env(safe-area-inset-bottom,0px))}
+  .modal-w{max-width:100%!important}
+  .modal-xl{max-width:100%!important}
+  .mhdr{margin-bottom:16px}
+  /* modal drag handle */
+  .modal::before{content:'';display:block;width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 14px}
+  /* assets grid → single col on mobile */
+  .asset-grid{grid-template-columns:1fr!important}
+  /* budget cards */
+  .budget-grid{grid-template-columns:1fr!important}
+  /* net worth */
+  .nw-banner{margin:8px;padding:14px 16px}
+  .nw-amt{font-size:24px}
+  /* summary card */
+  .smcard{margin:8px;padding:14px 16px}
+  .sm-bal{font-size:22px;margin-bottom:10px}
+  /* card margins */
+  .card{margin:0 0 10px;border-radius:12px;padding:14px}
+  /* fab */
+  .fab{bottom:calc(66px + env(safe-area-inset-bottom,0px));right:14px;width:48px;height:48px;font-size:22px}
+  /* chips - larger tap targets */
+  .chip{padding:7px 12px;font-size:13px;min-height:36px}
+  /* seg */
+  .segb{padding:10px;font-size:14px;min-height:40px}
+  /* amount input */
+  .amt-inp{font-size:32px!important}
+  /* finp-2col stays 2col on mobile for pair fields */
+  .finp-2col{gap:8px}
+  /* lnk drop max height smaller */
+  .lnk-drop{max-height:200px}
+  /* ql modal */
+  .ql-sel-area{max-height:100px;overflow-y:auto}
+  /* pending table */
+  .pending-tbl td,.pending-tbl th{padding:7px 8px;font-size:11px}
+}
+
+/* ── Extra small phones (iPhone SE, Galaxy A) ── */
+@media(max-width:390px){
+  .stat-grid{gap:6px}
+  .sval{font-size:17px}
+  .page{padding:10px 10px 20px}
+  .finp-2col{grid-template-columns:1fr!important}
+}
+.order-list{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;padding-right:2px;margin-bottom:12px}
+.order-card{border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .15s;background:#fff}
+.order-card:hover{border-color:#10b981;background:#f0fdf4}
+.order-card.on{border-color:#10b981;background:#ecfdf5;box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+.order-card-name{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.order-card-meta{display:flex;gap:10px;font-size:12px;color:#64748b;flex-wrap:wrap}
+.order-card-new{border:1.5px dashed #cbd5e1;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .15s;background:#f8fafc;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#64748b}
+.order-card-new:hover{border-color:#10b981;color:#10b981;background:#f0fdf4}
+.order-card-new.on{border-color:#10b981;background:#ecfdf5;color:#10b981}
+.linked-txs{margin-top:10px;border-top:1px solid #fde68a;padding-top:10px}
+.linked-tx-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid #fef9c3}
+.linked-tx-row:last-child{border-bottom:none}
+.order-tab-row{display:flex;gap:6px;margin-bottom:12px}
+.order-tab{padding:5px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;color:#64748b;background:#fff;transition:all .15s}
+.order-tab.on{border-color:#10b981;color:#10b981;background:#ecfdf5}
+.lnk-wrap{position:relative;margin-bottom:10px}
+.lnk-inp{width:100%;border:1.5px solid #fbbf24;border-radius:10px;padding:9px 13px;font-size:14px;font-family:inherit;outline:none;background:#fff;color:#1e293b}
+.lnk-inp:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.lnk-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500;max-height:260px;overflow-y:auto}
+.lnk-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f8fafc;transition:background .12s}
+.lnk-opt:last-child{border-bottom:none}
+.lnk-opt:hover{background:#f0fdf4}
+.lnk-opt.on{background:#ecfdf5}
+.lnk-sid{font-family:monospace;font-size:12px;font-weight:700;color:#10b981;background:#ecfdf5;padding:2px 7px;border-radius:5px;flex-shrink:0}
+.lnk-sid.exp{color:#ef4444;background:#fef2f2}
+.lnk-info{flex:1;min-width:0}
+.lnk-info-top{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lnk-info-sub{font-size:11px;color:#94a3b8;margin-top:1px}
+.lnk-amt{font-size:13px;font-weight:800;flex-shrink:0}
+.lnk-preview{background:#fff;border:1.5px solid #10b981;border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.lnk-clear{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;padding:0 2px;line-height:1}
+.lnk-clear:hover{color:#ef4444}
+.ql-sel-area{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;margin-bottom:12px;min-height:42px;align-items:center}
+.ql-sel-empty{color:#94a3b8;font-size:13px}
+.ql-chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1.5px solid #10b981;border-radius:8px;padding:4px 10px 4px 10px;font-size:12px;font-weight:600;color:#065f46}
+.ql-chip.exp{border-color:#ef4444;color:#7f1d1d}
+.ql-chip-x{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px;padding:0;line-height:1;margin-left:2px}
+.ql-chip-x:hover{color:#ef4444}
+.ql-cb{width:18px;height:18px;border-radius:5px;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:11px;color:transparent}
+.ql-cb.on{background:#10b981;border-color:#10b981;color:#fff}
+.ql-foot{display:flex;gap:10px;margin-top:14px}
+.link-pills{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.link-pill{display:inline-flex;align-items:center;gap:3px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#065f46;white-space:nowrap}
+.link-pill.exp{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}
+.link-more{display:inline-flex;align-items:center;background:#f1f5f9;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#64748b;white-space:nowrap}
+.link-empty{color:#cbd5e1;font-size:11px;display:flex;align-items:center;gap:4px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo,useRef,useCallback}=React;
+
+// ─── utils ───────────────────────────────────────────
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+// 交易记录专用自增 ID（存入 localStorage，跨会话连续递增）
+// 通用自增 ID 生成器（资产/计划/快照等非流水实体使用）
+function nextAutoId(key){
+  const n=(parseInt(localStorage.getItem(key)||'0')||0)+1;
+  localStorage.setItem(key,String(n));
+  return n;
+}
+const nextAssetId=()=>nextAutoId('_assetIdCnt');
+const nextBudgetId=()=>nextAutoId('_budgetIdCnt');
+const nextSnapId=()=>nextAutoId('_snapIdCnt');
+const nextInsId=()=>nextAutoId('_insIdCnt');
+const nextNavId=()=>nextAutoId('_navIdCnt');
+function syncIdCounter(txList){
+  const maxN=Math.max(0,...(txList||[]).map(t=>parseInt(t.id)).filter(n=>Number.isFinite(n)&&n>0));
+  const stored=parseInt(localStorage.getItem('_txIdCnt')||'0')||0;
+  if(maxN>=stored)localStorage.setItem('_txIdCnt',String(maxN));
+}
+function nextTxId(){
+  // 每次生成前先同步一次，防止导入后计数器落后
+  const allTxs=JSON.parse(localStorage.getItem('txs')||'[]');
+  const maxN=Math.max(0,...allTxs.map(t=>parseInt(t.id)).filter(n=>Number.isFinite(n)&&n>0));
+  const stored=parseInt(localStorage.getItem('_txIdCnt')||'0')||0;
+  const n=Math.max(maxN,stored)+1;
+  localStorage.setItem('_txIdCnt',String(n));
+  return n;
+}
+function fmtM(n){return(Math.abs(+n)||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtSigned(n){const v=+n||0;return(v<0?'-':'')+'¥'+fmtM(v)}
+function today(){return new Date().toISOString().split('T')[0]}
+function curM(){return today().slice(0,7)}
+function prevM(m){const[y,mo]=m.split('-').map(Number);const d=new Date(y,mo-2,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+function nextM(m){const[y,mo]=m.split('-').map(Number);const d=new Date(y,mo,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+function fmtYM(m){const[y,mo]=m.split('-');return`${y}年${+mo}月`}
+function parseDate(v){if(!v)return'';if(typeof v==='number'){const d=new Date((v-25569)*86400*1000);return d.toISOString().split('T')[0]}return String(v).replace(/\//g,'-').slice(0,10)}
+function sid(id){
+  const s=String(id??'');
+  // 纯数字 ID（新格式）直接显示，如 #42
+  if(/^\d+$/.test(s))return'#'+s;
+  // 旧字符串 ID 兼容显示（前6位大写）
+  return'#'+s.slice(0,6).toUpperCase();
+}
+// Get array of linked tx IDs from a tx (handles migration from old single orderId)
+function getLinkedIds(tx,allTxs){
+  if(Array.isArray(tx.linkedIds))return tx.linkedIds;
+  if(tx.orderId&&allTxs&&allTxs.find(t=>t.id===tx.orderId))return[tx.orderId];
+  return[];
+}
+
+const S={get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+
+// ─── defaults ────────────────────────────────────────
+const DEF_ASSETS=[
+  {id:genId(),name:'支付宝',cat:'存款',amount:0,note:''},
+  {id:genId(),name:'微信',cat:'存款',amount:0,note:''},
+  {id:genId(),name:'银行卡',cat:'存款',amount:0,note:''},
+  {id:genId(),name:'股票',cat:'投资',amount:0,note:''},
+  {id:genId(),name:'公积金',cat:'投资',amount:0,note:''},
+  {id:genId(),name:'信用卡-平安',cat:'信用卡负债',amount:0,note:'额度20000'},
+  {id:genId(),name:'信用卡-工商',cat:'信用卡负债',amount:0,note:'额度20000'},
+  {id:genId(),name:'花呗/白条',cat:'消费贷负债',amount:0,note:''},
+  {id:genId(),name:'房贷',cat:'贷款负债',amount:0,note:''},
+];
+const DEF_BUDGETS=[
+  {id:genId(),name:'爱自己专项',pct:10,desc:'个人体检护肤、兴趣消费'},
+  {id:genId(),name:'老婆的小惊喜',pct:10,desc:'节日礼物、纪念日红包'},
+  {id:genId(),name:'父母的问候',pct:10,desc:'每月孝心红包、换季衣物'},
+  {id:genId(),name:'成长的计划',pct:20,desc:'技能培训、书籍、考证'},
+  {id:genId(),name:'长期储蓄',pct:50,desc:'应急储备、房产首付'},
+];
+const DEF_CATS=['兼职收入','项目收入','餐饮','购物','交通','娱乐','医疗','教育','房租','日常','水电','其他'];
+const DEF_BOOKS=['日常账本','工作账本','投资账本'];
+const DEF_PAYS=['微信','支付宝','银行卡','现金','信用卡'];
+const INS_CATS=['重疾险','医疗险','意外险','寿险','年金险','教育金','财产险','车险','其他'];
+const INS_FREQ=['年缴','半年缴','季缴','月缴','趸交'];
+const INS_CAT_EMOJI={'重疾险':'🏥','医疗险':'💊','意外险':'🛡️','寿险':'❤️','年金险':'💰','教育金':'🎓','财产险':'🏠','车险':'🚗','其他':'📋'};
+const FREQ_MONTHS={'年缴':12,'半年缴':6,'季缴':3,'月缴':1,'趸交':0};
+const DEF_NAV_LINKS=[
+  {id:1,cat:'常用理财工具',title:'利息计算器',desc:'利息、收益率计算',url:'https://www.ihaosuan.com/web/',emoji:'🧮'},
+  {id:2,cat:'常用理财工具',title:'国家外汇管理局',desc:'官方汇率查询',url:'https://www.safe.gov.cn/',emoji:'💱'},
+  {id:3,cat:'基金股票',title:'天天基金网',desc:'基金净值、行情',url:'https://fund.eastmoney.com/',emoji:'📈'},
+  {id:4,cat:'基金股票',title:'东方财富',desc:'股票行情、财经资讯',url:'https://www.eastmoney.com/',emoji:'📊'},
+  {id:5,cat:'信用查询',title:'中国人民银行征信中心',desc:'个人信用报告',url:'https://www.pbccrc.org.cn/',emoji:'📋'},
+];
+const ASSET_CATS=['存款','投资','保险','公积金','贵金属','信用卡负债','消费贷负债','贷款负债','其他资产','其他负债'];
+const CAT_EMOJI={兼职收入:'💼',项目收入:'🚀',餐饮:'🍜',购物:'🛍️',交通:'🚗',娱乐:'🎮',医疗:'💊',教育:'📚',房租:'🏠',日常:'📝',水电:'💡',其他:'💸'};
+const CLRS=['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#14b8a6','#6366f1','#e11d48'];
+const BCLRS=['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
+
+function Toggle({on,onChange}){return<div className={`tgl${on?' on':''}`} onClick={()=>onChange(!on)}><div className="tglthumb"/></div>}
+
+// ─── Charts ──────────────────────────────────────────
+function MonthlyChart({txs}){
+  const ref=useRef(null);const chart=useRef(null);
+  useEffect(()=>{
+    if(!ref.current)return;
+    if(chart.current){chart.current.destroy();chart.current=null}
+    const now=new Date();
+    const months=[];for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`)}
+    const inc=months.map(m=>txs.filter(t=>t.date?.startsWith(m)&&t.type==='收入').reduce((s,t)=>s+t.amount,0));
+    const exp=months.map(m=>txs.filter(t=>t.date?.startsWith(m)&&t.type==='支出').reduce((s,t)=>s+t.amount,0));
+    const bal=months.map((_,i)=>inc[i]-exp[i]);
+    const lbl=months.map(m=>{const[y,mo]=m.split('-');return`${y.slice(2)}/${mo}`});
+    const fmtTick=v=>v>=10000?`¥${(v/10000).toFixed(1)}w`:v>=1000?`¥${(v/1000).toFixed(0)}k`:`¥${v}`;
+    chart.current=new Chart(ref.current,{
+      data:{labels:lbl,datasets:[
+        {type:'bar',label:'收入',data:inc,backgroundColor:'rgba(16,185,129,.8)',borderRadius:5,borderSkipped:false,order:2},
+        {type:'bar',label:'支出',data:exp,backgroundColor:'rgba(239,68,68,.8)',borderRadius:5,borderSkipped:false,order:2},
+        {type:'line',label:'结余',data:bal,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',
+          pointBackgroundColor:bal.map(v=>v>=0?'#f59e0b':'#ef4444'),
+          pointRadius:5,pointHoverRadius:7,fill:false,tension:.35,borderWidth:2.5,order:1,
+          segment:{borderColor:ctx=>ctx.p1.parsed.y<0?'rgba(239,68,68,.9)':'rgba(245,158,11,.9)'}},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:12}}},
+          tooltip:{callbacks:{label:ctx=>{const v=ctx.raw;return`${ctx.dataset.label}: ${v<0?'-':''}¥${fmtM(v)}`}}}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'},ticks:{callback:fmtTick}}}
+      }
+    });
+    return()=>{if(chart.current){chart.current.destroy();chart.current=null}};
+  },[txs]);
+  return<canvas ref={ref}/>;
+}
+
+function CatChart({txs,month}){
+  const ref=useRef(null);const chart=useRef(null);
+  const data=useMemo(()=>{
+    const m=month||curM();
+    const filtered=txs.filter(t=>t.date?.startsWith(m)&&t.type==='支出');
+    const cats={};filtered.forEach(t=>{cats[t.cat]=(cats[t.cat]||0)+t.amount});
+    return Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  },[txs,month]);
+  useEffect(()=>{
+    if(!ref.current)return;
+    if(chart.current){chart.current.destroy();chart.current=null}
+    if(data.length===0)return;
+    const total=data.reduce((s,[,v])=>s+v,0);
+    chart.current=new Chart(ref.current,{
+      type:'doughnut',
+      data:{labels:data.map(([k])=>k),datasets:[{data:data.map(([,v])=>v),backgroundColor:data.map((_,i)=>CLRS[i%CLRS.length]),borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{
+        legend:{position:'right',labels:{boxWidth:12,font:{size:12},padding:10,generateLabels:()=>data.map(([k,v],i)=>({text:`${k}  ${((v/total)*100).toFixed(0)}%`,fillStyle:CLRS[i%CLRS.length],hidden:false,index:i}))}},
+        tooltip:{callbacks:{label:ctx=>`¥${fmtM(ctx.raw)}  (${((ctx.raw/total)*100).toFixed(1)}%)`}}
+      }}
+    });
+    return()=>{if(chart.current){chart.current.destroy();chart.current=null}};
+  },[data]);
+  if(data.length===0)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'#94a3b8',fontSize:14}}>本月暂无支出数据</div>;
+  return<canvas ref={ref}/>;
+}
+
+// ─── TxModal ─────────────────────────────────────────
+function TxModal({tx,onClose,onSave,cats,books,pays,allTxs,onAddCat}){
+  const[type,setType]=useState(tx?.type||'收入');
+  const[amount,setAmount]=useState(tx?.amount?.toString()||'');
+  const[date,setDate]=useState(tx?.date||today());
+  const[cat,setCat]=useState(tx?.cat||cats[0]);
+  const[book,setBook]=useState(tx?.book||books[0]);
+  const[pay,setPay]=useState(tx?.pay||pays[0]);
+  const[notes,setNotes]=useState(tx?.notes||'');
+  const[tags,setTags]=useState(tx?.tags||[]);
+  const[tagInp,setTagInp]=useState('');
+  const[isOthers,setIsOthers]=useState(tx?.isOthers||false);
+  const[linkedIds,setLinkedIds]=useState(()=>Array.isArray(tx?.linkedIds)?tx.linkedIds:(tx?.orderId&&(allTxs||[]).find(t=>t.id===tx.orderId)?[tx.orderId]:[]));
+  const[orderTotal,setOrderTotal]=useState(tx?.orderTotal?.toString()||'');
+  const[lnkSearch,setLnkSearch]=useState('');
+  const[showDrop,setShowDrop]=useState(false);
+  const[showAddCat,setShowAddCat]=useState(false);
+  const[newCatInp,setNewCatInp]=useState('');
+  const isExp=type==='支出';
+  const addTag=e=>{if((e.key==='Enter'||e.key===',')&&tagInp.trim()){e.preventDefault();if(!tags.includes(tagInp.trim()))setTags([...tags,tagInp.trim()]);setTagInp('')}};
+  const confirmNewCat=()=>{const c=newCatInp.trim();if(!c)return;onAddCat&&onAddCat(c);setCat(c);setNewCatInp('');setShowAddCat(false)};
+  const save=()=>{if(!amount||isNaN(+amount)||+amount<=0){alert('请输入有效金额');return}onSave({...(tx||{}),id:tx?.id??nextTxId(),type,amount:+amount,date,cat,book,pay,notes,tags,isOthers,linkedIds,orderId:linkedIds[0]||'',orderTotal:orderTotal?+orderTotal:0,status:tx?.status||'active'})};
+
+  const lnkOptions=useMemo(()=>{
+    if(!allTxs)return[];
+    const q=lnkSearch.toLowerCase();
+    return allTxs.filter(t=>t.id!==tx?.id&&!linkedIds.includes(t.id)).filter(t=>{
+      if(!q)return true;
+      return sid(t.id).toLowerCase().includes(q)||(t.date||'').includes(q)||(t.notes||'').toLowerCase().includes(q)||(t.cat||'').toLowerCase().includes(q)||String(t.amount).includes(q);
+    }).slice(0,30);
+  },[allTxs,lnkSearch,tx,linkedIds]);
+
+  const linkedTxs=(allTxs||[]).filter(t=>linkedIds.includes(t.id));
+  const addLinked=t=>{setLinkedIds(p=>[...p,t.id]);setLnkSearch('');setShowDrop(false)};
+  const removeLinked=id=>setLinkedIds(p=>p.filter(x=>x!==id));
+
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal" style={{maxWidth:600}}>
+        <div className="mhdr"><span className="mtitle">{tx?'编辑记录':'新增记录'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="seg">
+          <button className={`segb${type==='收入'?' on':''}`} onClick={()=>setType('收入')}>＋ 收入</button>
+          <button className={`segb${type==='支出'?' on e':''}`} onClick={()=>setType('支出')}>－ 支出</button>
+        </div>
+        <div className="frow" style={{textAlign:'center'}}>
+          <input className={`amt-inp${isExp?' e':''}`} type="number" inputMode="decimal" placeholder="0.00" value={amount} onChange={e=>setAmount(e.target.value)} autoFocus/>
+        </div>
+        <div className="frow">
+          <label className="flbl">日期</label>
+          <input type="date" className="finp" value={date} onChange={e=>setDate(e.target.value)}/>
+        </div>
+        <div className="frow">
+          <label className="flbl" style={{display:'flex',justifyContent:'space-between'}}>
+            <span>分类</span>
+            {!showAddCat&&<button onClick={()=>setShowAddCat(true)} style={{background:'none',border:'none',cursor:'pointer',color:'#10b981',fontSize:12,fontWeight:700,padding:0}}>＋ 自定义分类</button>}
+          </label>
+          <div className="chips">
+            {cats.map(c=><button key={c} className={`chip${cat===c?' on':''}`} onClick={()=>{setCat(c);setShowAddCat(false)}}>{CAT_EMOJI[c]||'📌'} {c}</button>)}
+          </div>
+          {showAddCat&&<div style={{display:'flex',gap:8,marginTop:10,alignItems:'center'}}>
+            <input className="finp" style={{flex:1}} value={newCatInp} onChange={e=>setNewCatInp(e.target.value)} onKeyDown={e=>e.key==='Enter'&&confirmNewCat()} placeholder="输入新分类名称，回车确认" autoFocus/>
+            <button className="btn btnp" style={{padding:'9px 14px',whiteSpace:'nowrap'}} onClick={confirmNewCat}>添加</button>
+            <button className="btn btns" style={{padding:'9px 10px'}} onClick={()=>{setShowAddCat(false);setNewCatInp('')}}>✕</button>
+          </div>}
+        </div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">所属账本</label><select className="finp" value={book} onChange={e=>setBook(e.target.value)}>{books.map(b=><option key={b}>{b}</option>)}</select></div>
+          <div><label className="flbl">收支账户</label><select className="finp" value={pay} onChange={e=>setPay(e.target.value)}>{pays.map(p=><option key={p}>{p}</option>)}</select></div>
+        </div>
+        <div className="frow" style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 0',borderTop:'1px solid #f1f5f9',borderBottom:'1px solid #f1f5f9'}}>
+          <div><div style={{fontSize:14,fontWeight:700}}>💳 别人的钱</div><div style={{fontSize:11,color:'#94a3b8',marginTop:3}}>代收代付，标记待结算</div></div>
+          <Toggle on={isOthers} onChange={v=>{setIsOthers(v);if(!v)clearLinked()}}/>
+        </div>
+
+        {isOthers&&<div style={{background:'#fffbeb',borderRadius:12,padding:'14px 16px',marginTop:12,border:'1px solid #fde68a'}}>
+          <label className="flbl" style={{display:'block',marginBottom:8}}>关联账单 <span style={{color:'#94a3b8',fontWeight:400,textTransform:'none',letterSpacing:0}}>（可多选，已选 {linkedIds.length} 条）</span></label>
+
+          {/* 已选列表 */}
+          {linkedTxs.length>0&&<div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
+            {linkedTxs.map(t=>(
+              <div key={t.id} className={`ql-chip${t.type==='支出'?' exp':''}`}>
+                <span style={{fontFamily:'monospace'}}>{sid(t.id)}</span>
+                <span>{t.cat}</span>
+                <span style={{fontWeight:800}}>{t.type==='收入'?'+':'-'}¥{fmtM(t.amount)}</span>
+                <button className="ql-chip-x" onClick={()=>removeLinked(t.id)}>×</button>
+              </div>
+            ))}
+          </div>}
+
+          {/* 搜索添加更多 */}
+          <div className="lnk-wrap">
+            <input className="lnk-inp" placeholder="搜索添加关联账单（编号/日期/备注/金额）" value={lnkSearch} onChange={e=>{setLnkSearch(e.target.value);setShowDrop(true)}} onFocus={()=>setShowDrop(true)} onBlur={()=>setTimeout(()=>setShowDrop(false),160)}/>
+            {showDrop&&<div className="lnk-drop">
+              {lnkOptions.length===0&&<div style={{padding:'14px',textAlign:'center',color:'#94a3b8',fontSize:13}}>{lnkSearch?'没有匹配的账单':'输入关键词搜索'}</div>}
+              {lnkOptions.map(t=>(
+                <div key={t.id} className="lnk-opt" onMouseDown={()=>addLinked(t)}>
+                  <span className={`lnk-sid${t.type==='支出'?' exp':''}`}>{sid(t.id)}</span>
+                  <div className="lnk-info">
+                    <div className="lnk-info-top">{t.cat}{t.notes?` · ${t.notes.slice(0,20)}`:''}</div>
+                    <div className="lnk-info-sub">{t.date} · {t.pay||'—'}</div>
+                  </div>
+                  <span className={`lnk-amt${t.type==='支出'?' exp':' inc'}`}>{t.type==='收入'?'+':'-'}¥{fmtM(t.amount)}</span>
+                </div>
+              ))}
+            </div>}
+          </div>
+          <div style={{marginTop:10}}>
+            <label className="flbl">项目总金额（选填）</label>
+            <input type="number" className="finp" value={orderTotal} onChange={e=>setOrderTotal(e.target.value)} placeholder="如：1800"/>
+          </div>
+        </div>}
+
+        <div className="frow" style={{marginTop:14}}><label className="flbl">备注</label><textarea className="finp" rows={2} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="添加备注..." style={{resize:'none'}}/></div>
+        <div className="frow"><label className="flbl">标签（回车添加）</label>
+          <div className="tagbox">{tags.map(t=><span key={t} className="tag">{t}<span className="tagx" onClick={()=>setTags(tags.filter(x=>x!==t))}>×</span></span>)}<input className="taginp" value={tagInp} onChange={e=>setTagInp(e.target.value)} onKeyDown={addTag} placeholder={tags.length?'':'输入后回车添加'}/></div>
+        </div>
+        <div className="mfoot"><button className="btn btns" onClick={onClose}>取消</button><button className="btn btnp" onClick={save}>💾 保存记录</button></div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ImportModal ─────────────────────────────────────
+function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImportSnapshots,onImportPolicies,onImportNavLinks}){
+  const[rows,setRows]=useState([]);const[mapping,setMapping]=useState({});const[headers,setHeaders]=useState([]);const[step,setStep]=useState(1);const[sheet,setSheet]=useState('');const[sheets,setSheets]=useState([]);const[wb,setWb]=useState(null);
+  const[isFullBackup,setIsFullBackup]=useState(false);const[backupSummary,setBackupSummary]=useState(null);
+  const COL_FIELDS=[{key:'rid',label:'记录ID'},{key:'date',label:'日期',required:true},{key:'type',label:'收支类型',required:true},{key:'amount',label:'金额',required:true},{key:'isOthers',label:'别人的钱'},{key:'linkedIds',label:'关联账单IDs'},{key:'cat',label:'分类'},{key:'book',label:'所属账本'},{key:'pay',label:'收支账户'},{key:'notes',label:'备注'},{key:'tags',label:'标签'}];
+  const GUESSES={rid:['记录ID','id','ID','record_id'],date:['日期','date','时间','Date'],type:['收支类型','类型','type','收支'],amount:['金额','amount','收支金额','Amount'],isOthers:['别人的钱'],linkedIds:['关联账单IDs','关联账单','关联项目IDs'],cat:['分类','category','类别'],book:['所属账本','账本','记账本'],pay:['收支账户','账户','支付方式'],notes:['备注','notes','描述','remark'],tags:['标签','tag','标记']};
+  
+  const parseTxSheet=data=>data.map(r=>({
+    id:r['记录ID']?String(r['记录ID']).trim():nextTxId(),
+    date:parseDate(r['日期']),type:String(r['收支类型']||'').includes('支出')?'支出':'收入',
+    amount:Math.abs(+r['金额']||0),isOthers:String(r['别人的钱']||'').trim()==='是',
+    linkedIds:r['关联账单IDs']?String(r['关联账单IDs']).split(/[,，;；]/).map(s=>s.trim()).filter(Boolean):[],
+    cat:r['分类']||'其他',book:r['所属账本']||'日常账本',pay:r['收支账户']||'',
+    notes:r['备注']||'',tags:r['标签']?String(r['标签']).split(/[,，]/).filter(Boolean):[],
+    orderId:'',orderTotal:0,status:'active'
+  })).filter(r=>r.date&&r.amount>=0);
+  
+  const parseAssetSheet=data=>data.map(r=>({
+    id:r['资产ID']?String(r['资产ID']).trim():nextAssetId(),
+    name:r['名称']||'',cat:r['类别']||'其他',amount:+r['金额']||0,note:r['备注']||''
+  })).filter(r=>r.name);
+  
+  const parseBudgetSheet=data=>data.map(r=>({
+    id:r['计划ID']?String(r['计划ID']).trim():nextBudgetId(),
+    name:r['储蓄目标']||'',pct:+r['建议占比']||0,desc:r['用途说明']||''
+  })).filter(r=>r.name);
+  
+  const parseSnapSheet=data=>data.map(r=>({
+    id:r['快照ID']?String(r['快照ID']).trim():nextSnapId(),
+    date:parseDate(r['日期']),totalA:+r['总资产']||0,totalL:+r['总负债']||0,note:r['备注']||'',
+    breakdown:r['资产明细JSON']?(()=>{try{return JSON.parse(r['资产明细JSON'])}catch{return null}})():null
+  })).filter(r=>r.date);
+
+  const parsePolicySheet=data=>data.map(r=>({
+    id:r['保单ID']?String(r['保单ID']).trim():nextInsId(),
+    name:r['保险名称']||'',company:r['保险公司']||'',insured:r['被保险人']||'我',cat:r['保险分类']||'其他',
+    freq:r['缴费方式']||'年缴',amount:+r['缴费金额']||0,paidOff:String(r['已结清']||'').trim()==='是',
+    payStart:r['缴费起始日']?parseDate(r['缴费起始日']):'',payYears:r['总缴费年限']||'',coverage:+r['保额']||0,
+    startYear:r['保障起始年份']?String(r['保障起始年份']):'',endYear:r['保障至']?String(r['保障至']):'',
+    holder:r['投保人']||'',beneficiary:r['受益人']||'',note:r['备注']||''
+  })).filter(r=>r.name);
+
+  const parseNavSheet=data=>data.map(r=>({
+    id:r['导航ID']?String(r['导航ID']).trim():nextNavId(),
+    emoji:r['图标']||'🔗',title:r['名称']||'',url:r['网址']||'',desc:r['描述']||'',cat:r['分类']||'未分类'
+  })).filter(r=>r.title&&r.url);
+  
+  const getSheet=name=>{
+    if(!wb||!wb.Sheets[name])return[];
+    return XLSX.utils.sheet_to_json(wb.Sheets[name],{raw:true,defval:''});
+  };
+  
+  const loadFile=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const book=XLSX.read(ev.target.result,{type:'binary',cellDates:true});
+        setWb(book);setSheets(book.SheetNames);setSheet(book.SheetNames[0]);
+        // 直接用本地变量 book 读表（不能用 getSheet，因为 wb state 还没更新）
+        const readSheet=name=>book.Sheets[name]?XLSX.utils.sheet_to_json(book.Sheets[name],{raw:true,defval:''}):[];
+        const txData=readSheet('生财流水').filter(r=>r['日期']||r['记录ID']); // 过滤掉"暂无记录"占位行
+        // 完整备份判定：含任一已知数据表即视为完整备份
+        const isBackup=book.SheetNames.includes('资产负债表')||book.SheetNames.includes('资产快照')||book.SheetNames.includes('计划清单')||book.SheetNames.includes('家庭保单')||book.SheetNames.includes('工具导航');
+        setIsFullBackup(isBackup);
+        if(isBackup){
+          const assetData=readSheet('资产负债表').filter(r=>r['名称']);
+          const budgetData=readSheet('计划清单').filter(r=>r['储蓄目标']);
+          const snapData=readSheet('资产快照').filter(r=>r['日期']);
+          const polData=readSheet('家庭保单').filter(r=>r['保险名称']);
+          const navData=readSheet('工具导航').filter(r=>r['名称']);
+          setBackupSummary({txData,assetData,budgetData,snapData,polData,navData});
+          setStep(2);
+        }else{
+          const ws=book.Sheets[book.SheetNames[0]];
+          const data=XLSX.utils.sheet_to_json(ws,{raw:true,defval:''});
+          if(!data.length){alert('该工作表没有数据');return}
+          const hdrs=Object.keys(data[0]);setHeaders(hdrs);setRows(data);
+          const m={};COL_FIELDS.forEach(f=>{const g=GUESSES[f.key]||[];const found=hdrs.find(h=>g.some(gk=>h.includes(gk)));if(found)m[f.key]=found});
+          setMapping(m);setStep(3);
+        }
+      }catch(err){alert('读取文件失败：'+err.message)}
+    };
+    reader.readAsBinaryString(file);
+  };
+  
+  const doFullRestore=()=>{
+    if(!backupSummary)return;
+    const{txData,assetData,budgetData,snapData,polData,navData}=backupSummary;
+    const txs=parseTxSheet(txData);
+    onImportTxs&&onImportTxs(txs);
+    if(assetData.length>0&&onImportAssets){const assets=parseAssetSheet(assetData);if(assets.length)onImportAssets(assets)}
+    if(budgetData.length>0&&onImportBudgets){const budgets=parseBudgetSheet(budgetData);if(budgets.length)onImportBudgets(budgets)}
+    if(snapData.length>0&&onImportSnapshots){const snaps=parseSnapSheet(snapData);if(snaps.length)onImportSnapshots(snaps.sort((a,b)=>b.date.localeCompare(a.date)))}
+    if(polData&&polData.length>0&&onImportPolicies){const pols=parsePolicySheet(polData);if(pols.length)onImportPolicies(pols)}
+    if(navData&&navData.length>0&&onImportNavLinks){const navs=parseNavSheet(navData);if(navs.length)onImportNavLinks(navs)}
+    onClose();
+    alert(`✅ 完整还原成功！\n流水 ${txData.length} 条\n资产 ${assetData.length} 项\n计划 ${budgetData.length} 项\n快照 ${snapData.length} 条\n保单 ${(polData||[]).length} 份\n导航 ${(navData||[]).length} 个`);
+  };
+  
+  const loadSheet=(book,name)=>{
+    const ws=book.Sheets[name];
+    const data=XLSX.utils.sheet_to_json(ws,{raw:true,defval:''});
+    if(!data.length){alert('该工作表没有数据');return}
+    const hdrs=Object.keys(data[0]);setHeaders(hdrs);setRows(data);
+    const m={};COL_FIELDS.forEach(f=>{const g=GUESSES[f.key]||[];const found=hdrs.find(h=>g.some(gk=>h.includes(gk)));if(found)m[f.key]=found});
+    setMapping(m);
+  };
+  
+  const doImport=()=>{
+    if(!mapping.date||!mapping.type||!mapping.amount){alert('请至少映射【日期、收支类型、金额】三列');return}
+    const imported=rows.map(r=>({
+      id:r[mapping.rid]?String(r[mapping.rid]).trim():nextTxId(),
+      date:parseDate(r[mapping.date]),type:String(r[mapping.type]||'').includes('支出')?'支出':'收入',
+      amount:Math.abs(+r[mapping.amount]||0),isOthers:String(r[mapping.isOthers]||'').trim()==='是',
+      linkedIds:r[mapping.linkedIds]?String(r[mapping.linkedIds]).split(/[,，;；]/).map(s=>s.trim()).filter(Boolean):[],
+      cat:r[mapping.cat]||'其他',book:r[mapping.book]||'日常账本',pay:r[mapping.pay]||'',
+      notes:r[mapping.notes]||'',tags:r[mapping.tags]?String(r[mapping.tags]).split(/[,，]/).filter(Boolean):[],
+      orderId:'',orderTotal:0,status:'active'
+    })).filter(r=>r.date&&r.amount>=0);
+    onImportTxs(imported);onClose();
+  };
+  
+  const bs=backupSummary;
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal modal-w">
+        <div className="mhdr"><span className="mtitle">📥 导入数据</span><button className="mx" onClick={onClose}>×</button></div>
+        
+        {step===1&&<div>
+          <div style={{background:'#f8fafc',borderRadius:12,padding:24,textAlign:'center',border:'2px dashed #e2e8f0',marginBottom:16}}>
+            <div style={{fontSize:40,marginBottom:12}}>📊</div>
+            <div style={{fontSize:14,color:'#64748b',marginBottom:6}}>支持导入本应用导出的完整备份，或第三方账单 Excel</div>
+            <div style={{fontSize:12,color:'#94a3b8',marginBottom:16}}>完整备份可自动还原流水、资产、计划清单、快照</div>
+            <label className="btn btnp" style={{cursor:'pointer'}}>选择 Excel 文件<input type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={loadFile}/></label>
+          </div>
+        </div>}
+        
+        {/* 完整备份确认页 */}
+        {step===2&&isFullBackup&&bs&&<div>
+          <div style={{background:'#ecfdf5',border:'1px solid #a7f3d0',borderRadius:12,padding:'14px 18px',marginBottom:18}}>
+            <div style={{fontSize:14,fontWeight:700,color:'#065f46',marginBottom:6}}>✅ 检测到完整备份文件</div>
+            <div style={{fontSize:13,color:'#047857'}}>将自动还原以下数据，无需手动配置列映射：</div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:20}}>
+            {[
+              {ico:'💸',label:'生财流水',count:bs.txData.length,unit:'条',color:'#10b981'},
+              {ico:'🏦',label:'资产负债表',count:bs.assetData.length,unit:'项',color:'#3b82f6'},
+              {ico:'📋',label:'计划清单',count:bs.budgetData.length,unit:'项',color:'#f59e0b'},
+              {ico:'📈',label:'资产快照',count:bs.snapData.length,unit:'条',color:'#8b5cf6'},
+              {ico:'🛡️',label:'家庭保单',count:(bs.polData||[]).length,unit:'份',color:'#06b6d4'},
+              {ico:'🔗',label:'工具导航',count:(bs.navData||[]).length,unit:'个',color:'#ec4899'},
+            ].map(item=>(
+              <div key={item.label} style={{background:'#f8fafc',borderRadius:10,padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
+                <span style={{fontSize:24}}>{item.ico}</span>
+                <div>
+                  <div style={{fontSize:13,color:'#64748b'}}>{item.label}</div>
+                  <div style={{fontSize:18,fontWeight:800,color:item.color}}>{item.count} {item.unit}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:'#fffbeb',border:'1px solid #fde68a',borderRadius:10,padding:'10px 14px',marginBottom:18,fontSize:12,color:'#92400e'}}>
+            ⚠️ 还原操作将以 ID 为主键合并数据，已有记录会被覆盖，新记录会追加，不会全部清空。
+          </div>
+          <div className="mfoot">
+            <button className="btn btns" onClick={()=>setStep(1)}>← 重选文件</button>
+            <button className="btn btnp" onClick={doFullRestore}>🔄 一键完整还原</button>
+          </div>
+        </div>}
+        
+        {/* 第三方文件手动列映射 */}
+        {step===3&&!isFullBackup&&<div>
+          {sheets.length>1&&<div className="frow"><label className="flbl">选择工作表</label>
+            <select className="finp" value={sheet} onChange={e=>{setSheet(e.target.value);loadSheet(wb,e.target.value)}}>{sheets.map(s=><option key={s}>{s}</option>)}</select>
+          </div>}
+          <div style={{fontSize:13,fontWeight:700,color:'#64748b',marginBottom:10}}>列映射（共 <span style={{color:'#10b981',fontWeight:800}}>{rows.length}</span> 行数据）</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+            {COL_FIELDS.map(f=><div key={f.key}>
+              <label className="flbl">{f.label}{f.required&&<span style={{color:'#ef4444'}}>*</span>}</label>
+              <select className="fsel" style={{width:'100%'}} value={mapping[f.key]||''} onChange={e=>setMapping({...mapping,[f.key]:e.target.value||undefined})}>
+                <option value="">-- 不导入 --</option>
+                {headers.map(h=><option key={h} value={h}>{h}</option>)}
+              </select>
+            </div>)}
+          </div>
+          <div style={{fontSize:13,fontWeight:700,color:'#64748b',marginBottom:8}}>数据预览（前5行）</div>
+          <div className="prev-wrap">
+            <table className="prev-tbl"><thead><tr>{headers.slice(0,8).map(h=><th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{rows.slice(0,5).map((r,i)=><tr key={i}>{headers.slice(0,8).map(h=><td key={h}>{String(r[h]||'').slice(0,20)}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+          <div className="mfoot">
+            <button className="btn btns" onClick={()=>setStep(1)}>← 重选文件</button>
+            <button className="btn btnp" onClick={doImport}>✅ 导入 {rows.length} 条流水</button>
+          </div>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard ───────────────────────────────────────
+function Dashboard({txs,assets,budgets,income,snapshots,policies,onJumpToTx}){
+  const[chartMonth,setChartMonth]=useState(curM());
+  const m=curM();
+  const mTxs=txs.filter(t=>t.date?.startsWith(m));
+  const mInc=mTxs.filter(t=>t.type==='收入').reduce((s,t)=>s+t.amount,0);
+  const mExp=mTxs.filter(t=>t.type==='支出').reduce((s,t)=>s+t.amount,0);
+  const isLiab=cat=>cat.includes('负债')||cat.includes('贷款');
+  const totalA=(assets||[]).filter(a=>!isLiab(a.cat)).reduce((s,a)=>s+(+a.amount||0),0);
+  const totalL=(assets||[]).filter(a=>isLiab(a.cat)).reduce((s,a)=>s+(+a.amount||0),0);
+  const pending=txs.filter(t=>t.isOthers&&t.status!=='settled');
+  const pendingAmt=pending.reduce((s,t)=>s+t.amount,0);
+  const totalPct=(budgets||[]).reduce((s,b)=>s+b.pct,0);
+  return(
+    <div className="page">
+      <div className="phdr">
+        <div><div className="ptitle">数据看板</div><div style={{fontSize:13,color:'#94a3b8',marginTop:4}}>{fmtYM(m)} · 实时更新</div></div>
+      </div>
+      <div className="stat-grid">
+        <div className="scard g"><div className="slbl">本月收入</div><div className="sval">¥{fmtM(mInc)}</div><div className="ssub">{mTxs.filter(t=>t.type==='收入').length} 笔收入</div></div>
+        <div className="scard r"><div className="slbl">本月支出</div><div className="sval">¥{fmtM(mExp)}</div><div className="ssub">{mTxs.filter(t=>t.type==='支出').length} 笔支出</div></div>
+        <div className={`scard${mInc-mExp>=0?' g':' r'}`}><div className="slbl">本月结余</div><div className="sval">¥{fmtM(mInc-mExp)}</div><div className="ssub">净资产 {fmtSigned(totalA-totalL)}</div></div>
+        <div className="scard a"><div className="slbl">待结算金额</div><div className="sval">¥{fmtM(pendingAmt)}</div><div className="ssub">{pending.length} 笔别人的钱</div></div>
+      </div>
+      <div className="chart-grid">
+        <div className="card"><div className="ct">近12个月收支趋势</div><div className="chart-wrap"><MonthlyChart txs={txs}/></div></div>
+        <div className="card">
+          <div className="ct">本月支出分类
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <button onClick={()=>setChartMonth(prevM(chartMonth))} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'#10b981'}}>‹</button>
+              <span style={{fontSize:12,color:'#94a3b8'}}>{fmtYM(chartMonth)}</span>
+              <button onClick={()=>setChartMonth(nextM(chartMonth))} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'#10b981'}}>›</button>
+            </div>
+          </div>
+          <div className="chart-wrap"><CatChart txs={txs} month={chartMonth}/></div>
+        </div>
+      </div>
+      <div className="bot-grid">
+        <div className="card">
+          <div className="ct">💳 待结算 · 别人的钱
+            <span style={{fontSize:12,fontWeight:400,color:'#f59e0b'}}>¥{fmtM(pendingAmt)} · {pending.length}笔</span>
+          </div>
+          {pending.length===0?<div style={{textAlign:'center',padding:'24px 0',color:'#94a3b8',fontSize:14}}>🎉 暂无待结算</div>:
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+              <thead><tr>
+                {['编号','日期','分类','金额','账户','备注'].map(h=><th key={h} style={{textAlign:'left',padding:'6px 10px',fontSize:11,fontWeight:700,color:'#94a3b8',borderBottom:'1px solid #f1f5f9',whiteSpace:'nowrap'}}>{h}</th>)}
+              </tr></thead>
+              <tbody>{pending.slice(0,8).map(t=>(
+                <tr key={t.id} className="clk-row" style={{borderBottom:'1px solid #f8fafc',cursor:'pointer',transition:'background .15s'}}
+                  onClick={()=>onJumpToTx&&onJumpToTx(t.id)}
+                  onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'}
+                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                  title="点击查看该账单">
+                  <td style={{padding:'9px 10px',whiteSpace:'nowrap'}}>
+                    <span style={{fontFamily:'monospace',fontSize:11,fontWeight:700,color:'#10b981',background:'#ecfdf5',padding:'2px 7px',borderRadius:5}}>{sid(t.id)}</span>
+                  </td>
+                  <td style={{padding:'9px 10px',color:'#94a3b8',whiteSpace:'nowrap'}}>{t.date}</td>
+                  <td style={{padding:'9px 10px',whiteSpace:'nowrap'}}>
+                    <span style={{background:'#ecfdf5',color:'#065f46',padding:'2px 8px',borderRadius:6,fontSize:12,fontWeight:700}}>{CAT_EMOJI[t.cat]||'📌'} {t.cat}</span>
+                  </td>
+                  <td style={{padding:'9px 10px',fontWeight:800,color:t.type==='收入'?'#10b981':'#ef4444',whiteSpace:'nowrap'}}>
+                    {t.type==='收入'?'+':'-'}¥{fmtM(t.amount)}
+                  </td>
+                  <td style={{padding:'9px 10px',color:'#64748b',whiteSpace:'nowrap'}}>{t.pay||'—'}</td>
+                  <td style={{padding:'9px 10px',color:'#94a3b8',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.notes||'—'}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>}
+          {pending.length>8&&<div style={{textAlign:'center',paddingTop:10,fontSize:12,color:'#94a3b8'}}>还有 {pending.length-8} 笔…</div>}
+        </div>
+        <div className="card">
+          <div className="ct">📊 预算执行 · {fmtYM(m)}</div>
+          {(budgets||[]).map((b,i)=>{
+            const budgetAmt=Math.round(income*b.pct/100);
+            const spent=mTxs.filter(t=>t.type==='支出'&&t.cat===b.name).reduce((s,t)=>s+t.amount,0);
+            const pct2=budgetAmt>0?Math.min((spent/budgetAmt)*100,100):0;
+            const color=BCLRS[i%BCLRS.length];
+            return<div key={b.id} className="brow">
+              <div className="browhdr">
+                <span style={{fontSize:13,fontWeight:600}}>{b.name}</span>
+                <span style={{fontSize:12,color:spent>budgetAmt?'#ef4444':'#64748b'}}>¥{fmtM(spent)}<span style={{color:'#94a3b8',fontWeight:400}}> / ¥{fmtM(budgetAmt)}</span></span>
+              </div>
+              <div className="bbar"><div className="bfill" style={{width:`${pct2}%`,background:spent>budgetAmt?'#ef4444':color}}/></div>
+            </div>;
+          })}
+          <div style={{marginTop:12,padding:'10px 14px',background:'#f8fafc',borderRadius:10,fontSize:12,color:'#64748b'}}>
+            参考基准 <span style={{fontWeight:700,color:'#1e293b'}}>¥{fmtM(income)}</span> · 已分配 <span style={{fontWeight:700,color:totalPct>100?'#ef4444':'#10b981'}}>{totalPct}%</span>
+            <span style={{marginLeft:10,color:'#94a3b8'}}>（本月结余 {fmtSigned(mInc-mExp)}）</span>
+          </div>
+        </div>
+      </div>
+      {/* 净资产趋势 */}
+      <div className="card" style={{margin:'18px 0 0'}}>
+        <div className="ct">📈 净资产趋势
+          <span style={{fontSize:12,color:'#94a3b8',fontWeight:400}}>在「资产负债」页每月记录一次快照</span>
+        </div>
+        <div style={{height:240}}><NetWorthChart snapshots={snapshots||[]}/></div>
+      </div>
+      {/* 保单缴费提醒 */}
+      {(()=>{
+        const fm={'年缴':12,'半年缴':6,'季缴':3,'月缴':1,'趸交':0};
+        const calcNext=(start,freq)=>{if(!start||freq==='趸交'||!fm[freq])return null;const d=new Date(start);if(isNaN(d))return null;const now=new Date();now.setHours(0,0,0,0);while(d<now)d.setMonth(d.getMonth()+fm[freq]);return d};
+        const rem=(policies||[]).filter(p=>!p.paidOff&&p.freq!=='趸交').map(p=>{const nd=calcNext(p.payStart,p.freq);const days=nd?Math.round((nd-new Date().setHours(0,0,0,0))/86400000):null;return{...p,nd,days}}).filter(p=>p.days!=null&&p.days<=60).sort((a,b)=>a.days-b.days);
+        if(!rem.length)return null;
+        return(
+          <div className="card" style={{margin:'18px 0 0',borderLeft:'4px solid #f59e0b'}}>
+            <div className="ct">🔔 保单缴费提醒<span style={{fontSize:12,color:'#94a3b8',fontWeight:400}}>60天内待缴 {rem.length} 笔</span></div>
+            {rem.slice(0,5).map(p=>(
+              <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'1px solid #f8fafc',fontSize:13,flexWrap:'wrap'}}>
+                <span style={{fontSize:18}}>{INS_CAT_EMOJI[p.cat]||'📋'}</span>
+                <span style={{flex:1,minWidth:120,fontWeight:600}}>{p.name} <span style={{color:'#94a3b8',fontWeight:400,fontSize:12}}>· {p.insured}</span></span>
+                <span style={{color:'#64748b'}}>¥{fmtM(p.amount)}</span>
+                <span style={{fontWeight:700,color:p.days<=7?'#ef4444':p.days<=30?'#f59e0b':'#10b981'}}>{p.days<0?`逾期${-p.days}天`:p.days===0?'今天':`${p.days}天后`}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ─── AssetSankey (资产盘点桑基图) ────────────────────
+function AssetSankey({totalA,breakdown}){
+  const isLiab=cat=>String(cat||'').includes('负债')||String(cat||'').includes('贷款')||String(cat||'').includes('欠');
+  const items=(breakdown||[]).filter(b=>b.amount>0&&!isLiab(b.cat)).sort((a,b)=>b.amount-a.amount);
+  if(!items.length)return<div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>此快照未记录资产明细</div>;
+  const total=items.reduce((s,b)=>s+b.amount,0);
+  // 按分类聚合（保证同类账户相邻，ribbon 不交叉）
+  const catMap={};items.forEach(b=>{if(!catMap[b.cat])catMap[b.cat]=[];catMap[b.cat].push(b)});
+  const cats=Object.entries(catMap).map(([cat,list])=>({cat,amount:list.reduce((s,b)=>s+b.amount,0),items:[...list].sort((a,b)=>b.amount-a.amount)})).sort((a,b)=>b.amount-a.amount);
+  const orderedItems=[];cats.forEach(c=>c.items.forEach(it=>orderedItems.push({...it,catName:c.cat})));
+  const PALETTE=['#10b981','#3b82f6','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#ef4444','#84cc16','#f97316'];
+  const catColor={};cats.forEach((c,i)=>catColor[c.cat]=PALETTE[i%PALETTE.length]);
+  // 关键：每个账户节点设最小槽高，避免小金额标签重叠
+  const MIN_SLOT=30,padT=18,W=760,colW=150,midX=300,rightX=540;
+  const contentH=orderedItems.length*MIN_SLOT;
+  const H=contentH+padT*2;
+  // 账户节点：等高槽位（标签清晰），ribbon 厚度仍按金额比例但不小于4px
+  let iy=padT;
+  const itemLayout=orderedItems.map(it=>{const o={...it,y:iy,slotH:MIN_SLOT,color:catColor[it.catName]};iy+=MIN_SLOT;return o});
+  // 分类节点：高度=旗下账户槽位之和
+  let cy=padT;
+  const catLayout=cats.map(c=>{const h=c.items.length*MIN_SLOT;const o={...c,y:cy,h,color:catColor[c.cat]};cy+=h;return o});
+  const fmtW=v=>v>=10000?`${(v/10000).toFixed(2)}万`:fmtM(v);
+  // ribbon：左端按比例厚度，右端贴合账户槽中心
+  const ribbon=(x1,y1a,y1b,x2,y2a,y2b)=>{const mx=(x1+x2)/2;return`M${x1},${y1a} C${mx},${y1a} ${mx},${y2a} ${x2},${y2a} L${x2},${y2b} C${mx},${y2b} ${mx},${y1b} ${x1},${y1b} Z`};
+  const usableH=contentH;
+  return(
+    <div style={{overflowX:'auto'}}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',minWidth:680,height:'auto'}}>
+        {/* 总资产 → 分类 ribbon（左端按总资产比例，右端贴合分类节点）*/}
+        {(()=>{let sy=padT;return catLayout.map((c,i)=>{const ph=usableH*(c.amount/total);const path=ribbon(colW,sy,sy+ph,midX,c.y,c.y+c.h);sy+=ph;return<path key={'f1'+i} d={path} fill={c.color} opacity={.16}/>})})()}
+        {/* 分类 → 账户 ribbon */}
+        {(()=>{const catProg={};catLayout.forEach(c=>catProg[c.cat]=c.y);return itemLayout.map((it,i)=>{
+          const c=catLayout.find(x=>x.cat===it.catName);
+          const ph=c.h*(it.amount/c.amount);const y1a=catProg[it.catName];catProg[it.catName]+=ph;
+          return<path key={'f2'+i} d={ribbon(midX,y1a,y1a+ph,rightX,it.y,it.y+it.slotH)} fill={it.color} opacity={.26}/>;
+        })})()}
+        {/* 总资产节点 */}
+        <rect x={colW-12} y={padT} width={12} height={usableH} rx={3} fill="#10b981"/>
+        <text x={colW-20} y={padT+usableH/2-4} textAnchor="end" fontSize="13" fontWeight="700" fill="#1e293b">总资产</text>
+        <text x={colW-20} y={padT+usableH/2+14} textAnchor="end" fontSize="13" fontWeight="800" fill="#10b981">{fmtW(total)}</text>
+        {/* 分类节点 */}
+        {catLayout.map((c,i)=>(<g key={'c'+i}>
+          <rect x={midX} y={c.y} width={12} height={Math.max(c.h-3,4)} rx={3} fill={c.color}/>
+          <text x={midX+18} y={c.y+c.h/2+4} fontSize="12" fontWeight="700" fill="#334155">{c.cat} <tspan fill="#64748b" fontWeight="600">{fmtW(c.amount)}</tspan></text>
+        </g>))}
+        {/* 账户节点（等高槽，标签不重叠）*/}
+        {itemLayout.map((it,i)=>(<g key={'i'+i}>
+          <rect x={rightX} y={it.y+4} width={12} height={it.slotH-8} rx={3} fill={it.color}/>
+          <text x={rightX+18} y={it.y+it.slotH/2+4} fontSize="12" fill="#475569">{it.name} <tspan fontWeight="700" fill="#1e293b">{fmtW(it.amount)}</tspan> <tspan fill="#94a3b8" fontSize="11">{(it.amount/total*100).toFixed(0)}%</tspan></text>
+        </g>))}
+      </svg>
+    </div>
+  );
+}
+
+// 分类占比环形图（纯SVG，无依赖）
+function SnapDonut({breakdown}){
+  const isLiab=cat=>String(cat||'').includes('负债')||String(cat||'').includes('贷款')||String(cat||'').includes('欠');
+  const items=(breakdown||[]).filter(b=>b.amount>0&&!isLiab(b.cat));
+  if(!items.length)return null;
+  const catMap={};items.forEach(b=>{catMap[b.cat]=(catMap[b.cat]||0)+b.amount});
+  const cats=Object.entries(catMap).map(([cat,amount])=>({cat,amount})).sort((a,b)=>b.amount-a.amount);
+  const total=cats.reduce((s,c)=>s+c.amount,0);
+  const PALETTE=['#10b981','#3b82f6','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#ef4444','#84cc16','#f97316'];
+  const R=70,sw=26,C=2*Math.PI*R;let offset=0;
+  const fmtW=v=>v>=10000?`${(v/10000).toFixed(2)}万`:fmtM(v);
+  return(
+    <div style={{display:'flex',gap:20,alignItems:'center',flexWrap:'wrap',justifyContent:'center'}}>
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <g transform="rotate(-90 90 90)">
+          {cats.map((c,i)=>{const frac=c.amount/total;const len=C*frac;const el=<circle key={i} cx="90" cy="90" r={R} fill="none" stroke={PALETTE[i%PALETTE.length]} strokeWidth={sw} strokeDasharray={`${len} ${C-len}`} strokeDashoffset={-offset}/>;offset+=len;return el})}
+        </g>
+        <text x="90" y="85" textAnchor="middle" fontSize="12" fill="#94a3b8">总资产</text>
+        <text x="90" y="104" textAnchor="middle" fontSize="15" fontWeight="800" fill="#1e293b">{fmtW(total)}</text>
+      </svg>
+      <div style={{flex:1,minWidth:160}}>
+        {cats.map((c,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',fontSize:13}}>
+            <span style={{width:12,height:12,borderRadius:3,background:PALETTE[i%PALETTE.length],flexShrink:0}}/>
+            <span style={{flex:1,color:'#475569'}}>{c.cat}</span>
+            <span style={{fontWeight:700,color:'#1e293b'}}>{fmtW(c.amount)}</span>
+            <span style={{color:'#94a3b8',minWidth:42,textAlign:'right'}}>{(c.amount/total*100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SnapshotDetailModal({snap,onClose}){
+  if(!snap)return null;
+  const net=snap.totalA-snap.totalL;
+  const hasDetail=snap.breakdown&&snap.breakdown.length>0;
+  const isLiab=cat=>String(cat||'').includes('负债')||String(cat||'').includes('贷款')||String(cat||'').includes('欠');
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal modal-xl">
+        <div className="mhdr"><span className="mtitle">📊 资产盘点 · {snap.date}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="stat-grid" style={{marginBottom:18}}>
+          <div className="scard g"><div className="slbl">净资产</div><div className="sval">{fmtSigned(net)}</div></div>
+          <div className="scard"><div className="slbl">总资产</div><div className="sval">¥{fmtM(snap.totalA)}</div></div>
+          <div className="scard"><div className="slbl">总负债</div><div className="sval">¥{fmtM(snap.totalL)}</div></div>
+        </div>
+        {snap.note&&<div style={{fontSize:13,color:'#64748b',marginBottom:14,padding:'8px 12px',background:'#f8fafc',borderRadius:8}}>📝 {snap.note}</div>}
+        {hasDetail?<>
+          <div className="card" style={{marginBottom:14}}>
+            <div className="ct">🥧 资产占比</div>
+            <SnapDonut breakdown={snap.breakdown}/>
+          </div>
+          <div className="card" style={{marginBottom:14}}>
+            <div className="ct">💧 资金流向（桑基图）</div>
+            <AssetSankey totalA={snap.totalA} breakdown={snap.breakdown}/>
+          </div>
+          <div className="card">
+            <div className="ct">📋 明细清单</div>
+            <table style={{width:'100%',fontSize:13}}>
+              <thead><tr style={{color:'#94a3b8',fontSize:12}}><th style={{textAlign:'left',padding:'6px 0'}}>名称</th><th style={{textAlign:'left'}}>分类</th><th style={{textAlign:'right'}}>金额</th><th style={{textAlign:'right'}}>占比</th></tr></thead>
+              <tbody>{[...snap.breakdown].sort((a,b)=>b.amount-a.amount).map((b,i)=>(
+                <tr key={i} style={{borderTop:'1px solid #f8fafc'}}>
+                  <td style={{padding:'8px 0',fontWeight:600}}>{b.name}</td>
+                  <td style={{color:isLiab(b.cat)?'#ef4444':'#64748b'}}>{b.cat}</td>
+                  <td style={{textAlign:'right',fontWeight:700,color:isLiab(b.cat)?'#ef4444':'#1e293b'}}>{isLiab(b.cat)?'-':''}¥{fmtM(b.amount)}</td>
+                  <td style={{textAlign:'right',color:'#94a3b8'}}>{!isLiab(b.cat)&&snap.totalA>0?(b.amount/snap.totalA*100).toFixed(1)+'%':'—'}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </>:(
+          <div className="card" style={{textAlign:'center',padding:'32px 20px',color:'#94a3b8'}}>
+            <div style={{fontSize:32,marginBottom:10}}>📭</div>
+            <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>这条快照没有记录明细</div>
+            <div style={{fontSize:13}}>点击快照右侧 ✏️ 编辑，使用「📥 载入当前资产」或手动添加明细，<br/>即可记录当时的资金构成与占比</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── NetWorthChart ───────────────────────────────────
+function NetWorthChart({snapshots}){
+  const ref=useRef(null);const chart=useRef(null);
+  const sorted=useMemo(()=>[...snapshots].sort((a,b)=>a.date.localeCompare(b.date)),[snapshots]);
+  useEffect(()=>{
+    if(!ref.current)return;
+    if(chart.current){chart.current.destroy();chart.current=null}
+    if(sorted.length<1)return;
+    const labels=sorted.map(s=>s.date.slice(0,7));
+    const netData=sorted.map(s=>s.totalA-s.totalL);
+    const aData=sorted.map(s=>s.totalA);
+    const lData=sorted.map(s=>s.totalL);
+    chart.current=new Chart(ref.current,{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'净资产',data:netData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.08)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:'#10b981',borderWidth:2.5},
+        {label:'总资产',data:aData,borderColor:'#3b82f6',borderDash:[5,4],tension:.4,pointRadius:3,borderWidth:1.5},
+        {label:'总负债',data:lData,borderColor:'#ef4444',borderDash:[5,4],tension:.4,pointRadius:3,borderWidth:1.5},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{
+        legend:{position:'top',labels:{boxWidth:12,font:{size:12}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtSigned(ctx.raw)}`}},
+      },scales:{
+        x:{grid:{display:false}},
+        y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>v>=10000?`¥${(v/10000).toFixed(1)}w`:v>=1000?`¥${(v/1000).toFixed(0)}k`:`¥${v}`}}
+      }}
+    });
+    return()=>{if(chart.current){chart.current.destroy();chart.current=null}};
+  },[sorted]);
+  if(sorted.length===0)return(
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',color:'#94a3b8',gap:10}}>
+      <div style={{fontSize:36}}>📈</div>
+      <div style={{fontSize:14,fontWeight:600}}>暂无资产快照数据</div>
+      <div style={{fontSize:12}}>在「资产负债」页点击「📸 记录快照」开始追踪</div>
+    </div>
+  );
+  return<canvas ref={ref}/>;
+}
+
+// ─── SnapshotModal ───────────────────────────────────
+function SnapshotModal({snap,defTotalA,defTotalL,curAssets,onClose,onSave}){
+  const[date,setDate]=useState(snap?.date||today());
+  const[note,setNote]=useState(snap?.note||'');
+  // 明细行：{name,cat,amount}。编辑已有快照优先用其 breakdown；新建留空让用户载入
+  const[items,setItems]=useState(()=>{
+    if(snap?.breakdown&&snap.breakdown.length)return snap.breakdown.map(b=>({...b,amount:b.amount.toString()}));
+    return [];
+  });
+  // 是否使用明细模式（有明细行就自动算总额）
+  const useDetail=items.length>0;
+  const isLiab=cat=>String(cat||'').includes('负债')||String(cat||'').includes('贷款')||String(cat||'').includes('欠');
+  const totalA=useDetail?items.filter(i=>!isLiab(i.cat)).reduce((s,i)=>s+(+i.amount||0),0):(snap?.totalA??defTotalA);
+  const totalL=useDetail?items.filter(i=>isLiab(i.cat)).reduce((s,i)=>s+(+i.amount||0),0):(snap?.totalL??defTotalL);
+  // 简单模式总额（无明细时手填）
+  const[simpleA,setSimpleA]=useState(snap?.totalA!=null?snap.totalA.toString():defTotalA.toString());
+  const[simpleL,setSimpleL]=useState(snap?.totalL!=null?snap.totalL.toString():defTotalL.toString());
+  const finalA=useDetail?totalA:(+simpleA||0);
+  const finalL=useDetail?totalL:(+simpleL||0);
+  const net=finalA-finalL;
+  const loadCurrent=()=>{setItems((curAssets||[]).filter(a=>(+a.amount||0)!==0).map(a=>({name:a.name,cat:a.cat,amount:String(a.amount)})))};
+  const addItem=()=>setItems([...items,{name:'',cat:'存款',amount:''}]);
+  const updItem=(i,k,v)=>setItems(items.map((it,idx)=>idx===i?{...it,[k]:v}:it));
+  const delItem=i=>setItems(items.filter((_,idx)=>idx!==i));
+  const save=()=>{
+    if(!date){alert('请填日期');return}
+    const breakdown=useDetail?items.filter(i=>i.name.trim()).map(i=>({name:i.name.trim(),cat:i.cat||'其他',amount:+i.amount||0})):(snap?.breakdown||null);
+    onSave({...(snap||{}),id:snap?.id||nextSnapId(),date,totalA:finalA,totalL:finalL,note,breakdown});
+  };
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal modal-w">
+        <div className="mhdr"><span className="mtitle">{snap?'编辑快照':'记录资产快照'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div style={{background:'linear-gradient(135deg,#0f172a,#1e293b)',borderRadius:12,padding:'14px 18px',marginBottom:18,color:'#fff'}}>
+          <div style={{fontSize:12,color:'#64748b',marginBottom:4}}>净资产预览</div>
+          <div style={{fontSize:28,fontWeight:900,color:net<0?'#fca5a5':'#10b981'}}>{fmtSigned(net)}</div>
+          <div style={{fontSize:12,color:'#94a3b8',marginTop:4}}>总资产 ¥{fmtM(finalA)} · 总负债 ¥{fmtM(finalL)}</div>
+        </div>
+        <div className="frow"><label className="flbl">日期</label><input type="date" className="finp" value={date} onChange={e=>setDate(e.target.value)}/></div>
+        {/* 明细录入区 */}
+        <div className="frow">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <label className="flbl" style={{margin:0}}>资产明细（记录构成，方便回看占比）</label>
+            <button className="chip" style={{whiteSpace:'nowrap'}} onClick={loadCurrent}>📥 载入当前资产</button>
+          </div>
+          {items.length>0?(
+            <div style={{border:'1px solid #eef2f6',borderRadius:10,overflow:'hidden'}}>
+              {items.map((it,i)=>(
+                <div key={i} style={{display:'flex',gap:6,padding:'8px 10px',borderBottom:i<items.length-1?'1px solid #f8fafc':'none',alignItems:'center'}}>
+                  <input className="finp" style={{flex:2,padding:'7px 9px',fontSize:13}} value={it.name} onChange={e=>updItem(i,'name',e.target.value)} placeholder="名称"/>
+                  <select className="finp" style={{flex:1.3,padding:'7px 6px',fontSize:13}} value={it.cat} onChange={e=>updItem(i,'cat',e.target.value)}>{ASSET_CATS.map(c=><option key={c}>{c}</option>)}</select>
+                  <input type="number" className="finp" style={{flex:1.4,padding:'7px 9px',fontSize:13}} value={it.amount} onChange={e=>updItem(i,'amount',e.target.value)} placeholder="金额"/>
+                  <button className="btni" onClick={()=>delItem(i)}>🗑</button>
+                </div>
+              ))}
+              <button onClick={addItem} style={{width:'100%',padding:'9px',border:'none',background:'#f8fafc',color:'#10b981',fontWeight:600,cursor:'pointer',fontSize:13,fontFamily:'inherit'}}>＋ 添加一项</button>
+            </div>
+          ):(
+            <div style={{textAlign:'center',padding:'16px',background:'#f8fafc',borderRadius:10,fontSize:13,color:'#94a3b8'}}>
+              <div style={{marginBottom:8}}>暂无明细 · 可手填下方总额，或录入明细以记录资金占比</div>
+              <button className="chip on" onClick={addItem}>＋ 手动添加明细</button>
+            </div>
+          )}
+        </div>
+        {/* 无明细时显示总额手填 */}
+        {!useDetail&&<div className="finp-2col frow">
+          <div><label className="flbl">总资产（元）</label><input type="number" className="finp" value={simpleA} onChange={e=>setSimpleA(e.target.value)} placeholder="0"/></div>
+          <div><label className="flbl">总负债（元）</label><input type="number" className="finp" value={simpleL} onChange={e=>setSimpleL(e.target.value)} placeholder="0"/></div>
+        </div>}
+        <div className="frow"><label className="flbl">备注（可选）</label><input className="finp" value={note} onChange={e=>setNote(e.target.value)} placeholder="如：年终统计、换工作后"/></div>
+        <div className="mfoot">
+          <button className="btn btns" onClick={onClose}>取消</button>
+          <button className="btn btnp" onClick={save}>💾 保存快照</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── QuickLinkModal ──────────────────────────────────
+function QuickLinkModal({excludeId,allTxs,initIds,onClose,onConfirm}){
+  const[sel,setSel]=useState(()=>new Set(initIds||[]));
+  const[q,setQ]=useState('');
+  const toggle=id=>{const n=new Set(sel);n.has(id)?n.delete(id):n.add(id);setSel(n)};
+  const selTxs=allTxs.filter(t=>sel.has(t.id));
+  const opts=useMemo(()=>{
+    const lq=q.toLowerCase();
+    return allTxs.filter(t=>t.id!==excludeId).filter(t=>{
+      if(!lq)return true;
+      return sid(t.id).toLowerCase().includes(lq)||(t.date||'').includes(lq)||(t.notes||'').toLowerCase().includes(lq)||(t.cat||'').toLowerCase().includes(lq)||String(t.amount).includes(lq);
+    }).slice(0,40);
+  },[allTxs,q,excludeId]);
+
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal" style={{maxWidth:540}}>
+        <div className="mhdr">
+          <span className="mtitle">📎 关联账单 <span style={{fontSize:13,color:'#94a3b8',fontWeight:400}}>（多选）</span></span>
+          <button className="mx" onClick={onClose}>×</button>
+        </div>
+
+        {/* 已选区域 */}
+        <div style={{fontSize:11,fontWeight:700,color:'#64748b',marginBottom:6,textTransform:'uppercase',letterSpacing:.5}}>已选择 {sel.size} 条</div>
+        <div className="ql-sel-area">
+          {sel.size===0?<span className="ql-sel-empty">未选择任何账单，在下方列表点击勾选</span>:
+          selTxs.map(t=>(
+            <div key={t.id} className={`ql-chip${t.type==='支出'?' exp':''}`}>
+              <span style={{fontFamily:'monospace'}}>{sid(t.id)}</span>
+              <span>{t.cat}</span>
+              <span style={{fontWeight:800}}>{t.type==='收入'?'+':'-'}¥{fmtM(t.amount)}</span>
+              <button className="ql-chip-x" onClick={()=>toggle(t.id)}>×</button>
+            </div>
+          ))}
+        </div>
+
+        {/* 搜索框 */}
+        <input className="finp" placeholder="搜索账单（编号、日期、备注、分类、金额）" value={q} onChange={e=>setQ(e.target.value)} autoFocus style={{marginBottom:10}}/>
+
+        {/* 列表 */}
+        <div style={{maxHeight:320,overflowY:'auto',border:'1px solid #f1f5f9',borderRadius:12,overflow:'hidden'}}>
+          {opts.length===0&&<div style={{padding:'24px',textAlign:'center',color:'#94a3b8',fontSize:13}}>没有匹配的账单</div>}
+          {opts.map(t=>{
+            const checked=sel.has(t.id);
+            return(
+              <div key={t.id} className={`lnk-opt${checked?' on':''}`} onClick={()=>toggle(t.id)} style={{userSelect:'none'}}>
+                <div className={`ql-cb${checked?' on':''}`}>{checked&&'✓'}</div>
+                <span className={`lnk-sid${t.type==='支出'?' exp':''}`}>{sid(t.id)}</span>
+                <div className="lnk-info">
+                  <div className="lnk-info-top">{t.cat}{t.notes?` · ${t.notes.slice(0,22)}`:''}</div>
+                  <div className="lnk-info-sub">{t.date} · {t.pay||'—'}{t.isOthers?(t.status==='settled'?' · ✓已结算':' · ⏳待结算'):''}</div>
+                </div>
+                <span className={`lnk-amt${t.type==='支出'?' exp':' inc'}`}>{t.type==='收入'?'+':'-'}¥{fmtM(t.amount)}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 底部操作 */}
+        <div className="ql-foot">
+          <button className="btn btns" style={{flex:1}} onClick={()=>{onConfirm([]);onClose()}}>🗑 清除全部关联</button>
+          <button className="btn btnp" style={{flex:2}} onClick={()=>{onConfirm([...sel]);onClose()}}>
+            ✓ 确认关联{sel.size>0?` (${sel.size} 条)`:''}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── TxPage ──────────────────────────────────────────
+function TxPage({txs,saveTxs,cats,addCat,mergeCats,books,pays,saveAssets,saveBudgets,saveSnapshots,savePolicies,saveNavLinks,focusTxId,clearFocus}){
+  const[showAdd,setShowAdd]=useState(false);const[editTx,setEditTx]=useState(null);const[showImport,setShowImport]=useState(false);const[qlinkTx,setQlinkTx]=useState(null);
+  const[month,setMonth]=useState(curM());const[filterType,setFilterType]=useState('全部');const[filterCat,setFilterCat]=useState('全部');const[filterOthers,setFilterOthers]=useState('全部');const[search,setSearch]=useState('');
+  const[highlightId,setHighlightId]=useState(null);
+  const rowRefs=useRef({});
+  // 从看板跳转：切到对应账单的月份、清空筛选、高亮并滚动到该行
+  useEffect(()=>{
+    if(!focusTxId)return;
+    const tx=txs.find(t=>String(t.id)===String(focusTxId));
+    if(tx){
+      setMonth(tx.date.slice(0,7));setFilterType('全部');setFilterCat('全部');setFilterOthers('全部');setSearch('');
+      setHighlightId(tx.id);
+      setTimeout(()=>{const el=rowRefs.current[tx.id];if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},200);
+      setTimeout(()=>setHighlightId(null),3000);
+    }
+    clearFocus&&clearFocus();
+  },[focusTxId]);
+  const allCats=useMemo(()=>['全部',...new Set(txs.map(t=>t.cat).filter(Boolean))],[txs]);
+  const filtered=useMemo(()=>{
+    // 有搜索词时跨全部月份，否则只看当前月
+    let r=search.trim()?[...txs]:txs.filter(t=>t.date?.startsWith(month));
+    if(filterType!=='全部')r=r.filter(t=>t.type===filterType);
+    if(filterCat!=='全部')r=r.filter(t=>t.cat===filterCat);
+    if(filterOthers==='待结算')r=r.filter(t=>t.isOthers&&t.status!=='settled');
+    else if(filterOthers==='别人的钱')r=r.filter(t=>t.isOthers);
+    if(search.trim())r=r.filter(t=>[t.date,t.cat,t.notes,t.orderId,...(t.tags||[])].join(' ').toLowerCase().includes(search.trim().toLowerCase()));
+    return r.sort((a,b)=>b.date.localeCompare(a.date));
+  },[txs,month,filterType,filterCat,filterOthers,search]);
+  const inc=filtered.filter(t=>t.type==='收入').reduce((s,t)=>s+t.amount,0);
+  const exp=filtered.filter(t=>t.type==='支出').reduce((s,t)=>s+t.amount,0);
+  const addTx=tx=>{const next=[tx,...txs];saveTxs(next)};
+  const upTx=tx=>{saveTxs(txs.map(t=>t.id===tx.id?tx:t))};
+  const delTx=id=>{if(confirm('确认删除这条记录？'))saveTxs(txs.filter(t=>t.id!==id))};
+  const settleTx=id=>saveTxs(txs.map(t=>t.id===id?{...t,status:t.status==='settled'?'active':'settled'}:t));
+  const importTxs=rows=>{
+    // 以 ID 去重：已存在的记录用导入数据覆盖，新记录追加
+    const existingMap=Object.fromEntries(txs.map(t=>[t.id,t]));
+    rows.forEach(r=>{existingMap[r.id]=r});
+    const next=Object.values(existingMap).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    saveTxs(next);
+    syncIdCounter(next); // 导入后立即同步计数器，防止新建记录 ID 与已导入 ID 冲突
+    mergeCats(next.map(t=>t.cat));
+    setShowImport(false);
+    alert(`✅ 导入完成：${rows.length} 条（含关联关系 & 分类同步）`);
+  };
+  return(
+    <div className="page">
+      <div className="phdr">
+        <div>
+          <div className="ptitle">生财流水</div>
+          <div style={{display:'flex',gap:16,marginTop:6,fontSize:13,flexWrap:'wrap'}}>
+            <span className="inc">↑ 收入 ¥{fmtM(inc)}</span>
+            <span className="exp">↓ 支出 ¥{fmtM(exp)}</span>
+            <span style={{color:'#64748b'}}>结余 ¥{fmtM(inc-exp)}</span>
+            <span style={{color:'#64748b'}}>{filtered.length} 笔</span>
+            {search.trim()&&<span style={{background:'#fef3c7',color:'#92400e',padding:'1px 8px',borderRadius:6,fontSize:12,fontWeight:600}}>🔍 跨全部月份搜索</span>}
+          </div>
+        </div>
+        <div className="pactions">
+          <button className="btn btns" onClick={()=>setShowImport(true)}>📥 导入Excel</button>
+          <button className="btn btnp" onClick={()=>{setEditTx(null);setShowAdd(true)}}>＋ 新增记录</button>
+        </div>
+      </div>
+      <div className="fbar">
+        <div style={{display:'flex',alignItems:'center',gap:4}}>
+          <button onClick={()=>setMonth(prevM(month))} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#10b981',padding:'0 4px'}}>‹</button>
+          <span style={{fontSize:14,fontWeight:700,minWidth:80,textAlign:'center'}}>{fmtYM(month)}</span>
+          <button onClick={()=>setMonth(nextM(month))} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#10b981',padding:'0 4px'}}>›</button>
+        </div>
+        <select className="fsel" value={filterType} onChange={e=>setFilterType(e.target.value)}><option>全部</option><option>收入</option><option>支出</option></select>
+        <select className="fsel" value={filterCat} onChange={e=>setFilterCat(e.target.value)}>{allCats.map(c=><option key={c}>{c}</option>)}</select>
+        <select className="fsel" value={filterOthers} onChange={e=>setFilterOthers(e.target.value)}><option>全部</option><option>别人的钱</option><option>待结算</option></select>
+        <input className="sinp" placeholder="搜索备注/标签/项目…" value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+      <div className="card" style={{padding:0,overflow:'hidden'}}>
+        {filtered.length===0?<div className="empty"><div className="empty-ico">📋</div><div>本月暂无记录</div></div>:
+        <div style={{overflowX:'auto'}}>
+          <table>
+            <thead><tr>
+              <th>编号</th><th>日期</th><th>分类</th><th>金额</th><th>账户</th><th>备注</th><th>标签</th><th>关联账单</th><th>状态</th><th style={{textAlign:'right'}}>操作</th>
+            </tr></thead>
+            <tbody>{filtered.map(tx=>{
+              const lids=getLinkedIds(tx,txs);
+              const lnkTxs=lids.map(id=>txs.find(t=>t.id===id)).filter(Boolean);
+              return(
+              <tr key={tx.id} ref={el=>rowRefs.current[tx.id]=el} style={highlightId===tx.id?{background:'#fef9c3',transition:'background .5s',animation:'flashRow 1s ease'}:undefined}>
+                <td><span style={{fontFamily:'monospace',fontSize:11,fontWeight:700,color:'#94a3b8',background:'#f1f5f9',padding:'2px 7px',borderRadius:5}}>{sid(tx.id)}</span></td>
+                <td style={{whiteSpace:'nowrap',color:'#94a3b8',fontSize:13}}>{tx.date}</td>
+                <td><span style={{background:tx.type==='收入'?'#ecfdf5':'#fef2f2',color:tx.type==='收入'?'#10b981':'#ef4444',padding:'3px 8px',borderRadius:6,fontSize:12,fontWeight:700}}>{CAT_EMOJI[tx.cat]||'📌'} {tx.cat}</span></td>
+                <td className={tx.type==='收入'?'inc':'exp'}>{tx.type==='收入'?'+':'-'}¥{fmtM(tx.amount)}</td>
+                <td style={{fontSize:13,color:'#64748b'}}>{tx.pay||'—'}</td>
+                <td style={{maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:13}}>{tx.notes||'—'}</td>
+                <td>{(tx.tags||[]).map(t=><span key={t} className="badge bb" style={{marginRight:4}}>{t}</span>)}</td>
+                <td style={{maxWidth:220,cursor:'pointer'}} onClick={()=>setQlinkTx(tx)} title="点击管理关联账单">
+                  {lnkTxs.length===0
+                    ?<span className="link-empty">📎 点击关联</span>
+                    :<div className="link-pills">
+                      {lnkTxs.slice(0,2).map(t=>(
+                        <span key={t.id} className={`link-pill${t.type==='支出'?' exp':''}`}>
+                          <span style={{fontFamily:'monospace'}}>{sid(t.id)}</span>
+                          <span style={{maxWidth:60,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.cat}</span>
+                        </span>
+                      ))}
+                      {lnkTxs.length>2&&<span className="link-more">+{lnkTxs.length-2}</span>}
+                    </div>
+                  }
+                </td>
+                <td>{tx.isOthers?<span className={`badge${tx.status==='settled'?' bg':' ba'}`}>{tx.status==='settled'?'✓ 已结算':'⏳ 待结算'}</span>:'—'}</td>
+                <td style={{textAlign:'right',whiteSpace:'nowrap'}}>
+                  {tx.isOthers&&(tx.status==='settled'
+                    ?<button className="btn" style={{padding:'4px 10px',fontSize:11,marginRight:4,background:'#f1f5f9',color:'#94a3b8'}} onClick={()=>settleTx(tx.id)}>↩ 撤销</button>
+                    :<button className="btn" style={{padding:'4px 10px',fontSize:11,marginRight:4,background:'#d1fae5',color:'#065f46'}} onClick={()=>settleTx(tx.id)}>✓ 结算</button>
+                  )}
+                  <button className="btni" title="编辑" onClick={()=>{setEditTx(tx);setShowAdd(true)}}>✏️</button>
+                  <button className="btni" title="删除" onClick={()=>delTx(tx.id)}>🗑</button>
+                </td>
+              </tr>);
+            })}</tbody>
+          </table>
+        </div>}
+      </div>
+      {showAdd&&<TxModal tx={editTx} cats={cats} books={books} pays={pays} allTxs={txs} onAddCat={addCat} onClose={()=>{setShowAdd(false);setEditTx(null)}} onSave={tx=>{if(editTx)upTx(tx);else addTx(tx);setShowAdd(false);setEditTx(null)}}/>}
+      {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImportTxs={importTxs} onImportAssets={saveAssets} onImportBudgets={saveBudgets} onImportSnapshots={saveSnapshots} onImportPolicies={savePolicies} onImportNavLinks={saveNavLinks}/>}
+      {qlinkTx&&<QuickLinkModal excludeId={qlinkTx.id} allTxs={txs} initIds={getLinkedIds(qlinkTx,txs)} onClose={()=>setQlinkTx(null)} onConfirm={ids=>upTx({...qlinkTx,linkedIds:ids,orderId:ids[0]||qlinkTx.orderId})}/>}
+    </div>
+  );
+}
+
+// ─── AssetModal / AssetsPage ─────────────────────────
+function AssetModal({item,onClose,onSave}){
+  const[name,setName]=useState(item?.name||'');const[cat,setCat]=useState(item?.cat||'存款');const[amount,setAmount]=useState(item?.amount?.toString()||'');const[note,setNote]=useState(item?.note||'');const[custom,setCustom]=useState('');
+  const finalCat=custom||cat;
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal" style={{maxWidth:480}}>
+        <div className="mhdr"><span className="mtitle">{item?'编辑资产项':'添加资产项'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="frow"><label className="flbl">名称</label><input className="finp" value={name} onChange={e=>setName(e.target.value)} placeholder="如：招商银行、花呗"/></div>
+        <div className="frow">
+          <label className="flbl">类别（点选或自定义）</label>
+          <div className="chips" style={{marginBottom:8}}>{ASSET_CATS.map(c=><button key={c} className={`chip${finalCat===c?' on':''}`} onClick={()=>{setCat(c);setCustom('')}}>{c}</button>)}</div>
+          <input className="finp" value={custom} onChange={e=>setCustom(e.target.value)} placeholder="自定义类别（会覆盖上方选择）"/>
+        </div>
+        <div className="frow"><label className="flbl">金额（元）</label><input type="number" className="finp" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0"/></div>
+        <div className="frow"><label className="flbl">备注（如额度、利率）</label><input className="finp" value={note} onChange={e=>setNote(e.target.value)} placeholder="选填"/></div>
+        <div className="mfoot"><button className="btn btns" onClick={onClose}>取消</button><button className="btn btnp" onClick={()=>{if(!name.trim()){alert('请输入名称');return}onSave({...(item||{}),name:name.trim(),cat:finalCat,amount:+amount||0,note})}}>保存</button></div>
+      </div>
+    </div>
+  );
+}
+
+function AssetsPage({assets,setAssets,snapshots,saveSnapshots}){
+  const[showModal,setShowModal]=useState(false);const[editItem,setEditItem]=useState(null);
+  const[showSnapModal,setShowSnapModal]=useState(false);const[editSnap,setEditSnap]=useState(null);
+  const[viewSnapId,setViewSnapId]=useState(null);
+  const isLiab=cat=>cat.includes('负债')||cat.includes('贷款');
+  const totalA=useMemo(()=>assets.filter(a=>!isLiab(a.cat)).reduce((s,a)=>s+(+a.amount||0),0),[assets]);
+  const totalL=useMemo(()=>assets.filter(a=>isLiab(a.cat)).reduce((s,a)=>s+(+a.amount||0),0),[assets]);
+  const grouped=useMemo(()=>{const m={};assets.forEach(a=>{if(!m[a.cat])m[a.cat]=[];m[a.cat].push(a)});return Object.entries(m)},[assets]);
+  const catE={'存款':'💰','投资':'📈','保险':'🛡️','公积金':'🏢','贵金属':'🥇','信用卡负债':'💳','消费贷负债':'📦','贷款负债':'🏦'};
+  const save=item=>{const next=item.id&&assets.find(a=>a.id===item.id)?assets.map(a=>a.id===item.id?item:a):[...assets,{...item,id:nextAssetId()}];setAssets(next);setShowModal(false);setEditItem(null)};
+  const del=id=>{if(confirm('确认删除？'))setAssets(assets.filter(a=>a.id!==id))};
+  // 快照时捕获完整资产明细（含负债，方便回看构成）
+  const captureBreakdown=()=>assets.filter(a=>(+a.amount||0)!==0).map(a=>({name:a.name,cat:a.cat,amount:+a.amount||0}));
+  const saveSnap=snap=>{
+    const next=snap.id&&snapshots.find(s=>s.id===snap.id)?snapshots.map(s=>s.id===snap.id?snap:s):[...snapshots,snap];
+    const sorted=[...next].sort((a,b)=>b.date.localeCompare(a.date));
+    saveSnapshots(sorted);setShowSnapModal(false);setEditSnap(null);
+  };
+  const delSnap=id=>{if(confirm('确认删除这条快照？'))saveSnapshots(snapshots.filter(s=>s.id!==id))};
+  const quickSnap=()=>{
+    const todayStr=today();
+    if(snapshots.find(s=>s.date===todayStr)&&!confirm(`今天 ${todayStr} 已有快照，确认覆盖？`))return;
+    saveSnap({id:snapshots.find(s=>s.date===todayStr)?.id||nextSnapId(),date:todayStr,totalA,totalL,note:'自动快照',breakdown:captureBreakdown()});
+  };
+  const viewSnap=viewSnapId?snapshots.find(s=>s.id===viewSnapId):null;
+  return(
+    <div className="page">
+      <div className="phdr">
+        <div className="ptitle">资产负债表</div>
+        <div className="pactions">
+          <button className="btn btns" onClick={quickSnap}>📸 记录快照</button>
+          <button className="btn btnp" onClick={()=>{setEditItem(null);setShowModal(true)}}>＋ 添加项目</button>
+        </div>
+      </div>
+      <div className="nw-banner">
+        <div className="nw-lbl">净资产</div>
+        <div className="nw-amt" style={{color:totalA-totalL<0?'#fca5a5':'#fff'}}>{fmtSigned(totalA-totalL)}</div>
+        <div className="nw-row">
+          <div><div className="nw-lbl">总资产</div><div className="nw-val">¥{fmtM(totalA)}</div></div>
+          <div><div className="nw-lbl">总负债</div><div className="nw-val">¥{fmtM(totalL)}</div></div>
+        </div>
+      </div>
+
+      {/* 净资产趋势图 */}
+      <div className="card" style={{marginBottom:18}}>
+        <div className="ct">📈 净资产趋势
+          <button className="btnt" style={{fontSize:12}} onClick={()=>{setEditSnap(null);setShowSnapModal(true)}}>＋ 补录历史</button>
+        </div>
+        <div style={{height:220}}><NetWorthChart snapshots={snapshots}/></div>
+        {/* 快照记录列表 */}
+        {snapshots.length>0&&<div style={{marginTop:16,borderTop:'1px solid #f1f5f9',paddingTop:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:8,textTransform:'uppercase',letterSpacing:.5}}>快照记录</div>
+          <div style={{maxHeight:200,overflowY:'auto'}}>
+            {snapshots.map(s=>{
+              const hasDetail=s.breakdown&&s.breakdown.length>0;
+              return(
+              <div key={s.id} className="snap-row" style={{display:'flex',alignItems:'center',padding:'10px 8px',borderBottom:'1px solid #f8fafc',gap:12,borderRadius:8,cursor:hasDetail?'pointer':'default',transition:'background .15s'}}
+                onClick={()=>hasDetail&&setViewSnapId(s.id)}
+                onMouseEnter={e=>{if(hasDetail)e.currentTarget.style.background='#f8fafc'}}
+                onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <div style={{fontSize:12,color:'#94a3b8',whiteSpace:'nowrap',minWidth:80}}>{s.date}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',gap:12,fontSize:13,flexWrap:'wrap'}}>
+                    <span style={{fontWeight:700,color:s.totalA-s.totalL<0?'#ef4444':'#10b981'}}>{fmtSigned(s.totalA-s.totalL)}</span>
+                    <span style={{color:'#64748b'}}>资产¥{fmtM(s.totalA)}</span>
+                    <span style={{color:'#94a3b8'}}>负债¥{fmtM(s.totalL)}</span>
+                  </div>
+                  <div style={{fontSize:11,marginTop:2}}>
+                    {s.note&&<span style={{color:'#94a3b8'}}>{s.note}</span>}
+                    {hasDetail?<span style={{color:'#10b981',marginLeft:s.note?8:0}}>📊 {s.breakdown.length}项明细 · 点击查看占比图</span>:<span style={{color:'#cbd5e1'}}>（无明细 · 编辑可补录构成）</span>}
+                  </div>
+                </div>
+                {hasDetail&&<span style={{color:'#cbd5e1',fontSize:16}}>›</span>}
+                <button className="btni" style={{fontSize:13}} onClick={e=>{e.stopPropagation();setEditSnap(s);setShowSnapModal(true)}}>✏️</button>
+                <button className="btni" style={{fontSize:13}} onClick={e=>{e.stopPropagation();delSnap(s.id)}}>🗑</button>
+              </div>
+              );
+            })}
+          </div>
+        </div>}
+      </div>
+
+      <div className="asset-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+        {grouped.map(([cat,items])=>(
+          <div key={cat} className="card">
+            <div className="ct">
+              {catE[cat]||'📂'} {cat}
+              <span style={{color:isLiab(cat)?'#ef4444':'#10b981',fontWeight:800,fontSize:14}}>{isLiab(cat)?'-':''}¥{fmtM(items.reduce((s,a)=>s+(+a.amount||0),0))}</span>
+            </div>
+            {items.map(item=>(
+              <div key={item.id} className="asset-row">
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:600}}>{item.name}</div>
+                  {item.note&&<div style={{fontSize:11,color:'#94a3b8',marginTop:2}}>{item.note}</div>}
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:15,fontWeight:800,color:isLiab(item.cat)?'#ef4444':'#1e293b'}}>¥{fmtM(item.amount)}</span>
+                  <button className="btni" onClick={()=>{setEditItem(item);setShowModal(true)}}>✏️</button>
+                  <button className="btni" onClick={()=>del(item.id)}>🗑</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {showModal&&<AssetModal item={editItem} onClose={()=>{setShowModal(false);setEditItem(null)}} onSave={save}/>}
+      {showSnapModal&&<SnapshotModal snap={editSnap} defTotalA={totalA} defTotalL={totalL} curAssets={assets} onClose={()=>{setShowSnapModal(false);setEditSnap(null)}} onSave={saveSnap}/>}
+      {viewSnap&&<SnapshotDetailModal snap={viewSnap} onClose={()=>setViewSnapId(null)}/>}
+    </div>
+  );
+}
+
+// ─── BudgetPage ──────────────────────────────────────
+function BudgetModal({item,onClose,onSave}){
+  const[name,setName]=useState(item?.name||'');const[pct,setPct]=useState(item?.pct?.toString()||'');const[desc,setDesc]=useState(item?.desc||'');
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal" style={{maxWidth:440}}>
+        <div className="mhdr"><span className="mtitle">{item?'编辑计划项':'添加计划项'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="frow"><label className="flbl">名称</label><input className="finp" value={name} onChange={e=>setName(e.target.value)} placeholder="如：旅行基金"/></div>
+        <div className="frow"><label className="flbl">占比 (%)</label><input type="number" className="finp" value={pct} onChange={e=>setPct(e.target.value)} placeholder="如：20" min="1" max="100"/></div>
+        <div className="frow"><label className="flbl">用途说明</label><textarea className="finp" rows={2} value={desc} onChange={e=>setDesc(e.target.value)} style={{resize:'none'}} placeholder="这笔钱用于…"/></div>
+        <div className="mfoot"><button className="btn btns" onClick={onClose}>取消</button><button className="btn btnp" onClick={()=>{if(!name.trim()||!pct||+pct<=0){alert('请填写名称和有效占比');return}onSave({...(item||{}),name:name.trim(),pct:+pct,desc})}}>保存</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BudgetPage({budgets,setBudgets,income,setIncome,txs}){
+  const m=curM();
+  // 当月实际结余
+  const curInc=useMemo(()=>txs.filter(t=>t.date?.startsWith(m)&&t.type==='收入').reduce((s,t)=>s+t.amount,0),[txs,m]);
+  const curExp=useMemo(()=>txs.filter(t=>t.date?.startsWith(m)&&t.type==='支出').reduce((s,t)=>s+t.amount,0),[txs,m]);
+  const curBal=curInc-curExp;
+  const[showModal,setShowModal]=useState(false);const[editItem,setEditItem]=useState(null);
+  const[incInp,setIncInp]=useState(income.toString());
+  const totalPct=budgets.reduce((s,b)=>s+b.pct,0);
+  const syncToBalance=()=>{setIncome(curBal);setIncInp(curBal.toString())};
+  const save=item=>{const next=item.id&&budgets.find(b=>b.id===item.id)?budgets.map(b=>b.id===item.id?item:b):[...budgets,{...item,id:nextBudgetId()}];setBudgets(next);setShowModal(false);setEditItem(null)};
+  const del=id=>{if(confirm('确认删除？'))setBudgets(budgets.filter(b=>b.id!==id))};
+  // 收入为默认值时，自动使用当月结余
+  useEffect(()=>{if(income===5000&&curBal>0){setIncome(curBal);setIncInp(curBal.toString())}},[]);
+  return(
+    <div className="page">
+      <div className="phdr"><div className="ptitle">计划清单</div><button className="btn btnp" onClick={()=>{setEditItem(null);setShowModal(true)}}>＋ 添加计划</button></div>
+      <div className="card" style={{marginBottom:20}}>
+        <div className="ct">月收入基准
+          <span style={{fontSize:12,color:'#94a3b8',fontWeight:400}}>可手动修改，或同步本月实际结余</span>
+        </div>
+        {/* 当月结余提示 */}
+        <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'#f8fafc',borderRadius:10,marginBottom:14,flexWrap:'wrap'}}>
+          <div style={{flex:1,minWidth:180}}>
+            <div style={{fontSize:12,color:'#94a3b8',marginBottom:3}}>{fmtYM(m)} 实际数据</div>
+            <div style={{display:'flex',gap:16,fontSize:13,flexWrap:'wrap'}}>
+              <span style={{color:'#10b981',fontWeight:600}}>收入 ¥{fmtM(curInc)}</span>
+              <span style={{color:'#ef4444',fontWeight:600}}>支出 ¥{fmtM(curExp)}</span>
+              <span style={{color:curBal>=0?'#1e293b':'#ef4444',fontWeight:800}}>结余 {fmtSigned(curBal)}</span>
+            </div>
+          </div>
+          <button className="btn btns" style={{whiteSpace:'nowrap',fontSize:12}} onClick={syncToBalance}>
+            🔄 同步本月结余
+          </button>
+        </div>
+        <div style={{display:'flex',gap:16,alignItems:'center'}}>
+          <input type="number" className="finp" style={{maxWidth:200}} value={incInp}
+            onChange={e=>setIncInp(e.target.value)}
+            onBlur={()=>{const v=+incInp;if(!isNaN(v)&&v!==0)setIncome(v)}}/>
+          <span style={{fontSize:24,fontWeight:900,color:'#10b981'}}>¥{fmtM(income)}</span>
+          <div style={{flex:1}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:totalPct!==100?(totalPct>100?'#ef4444':'#94a3b8'):'#10b981',fontWeight:600,marginBottom:6}}>
+              <span>已分配 {totalPct}%</span>
+              <span>{totalPct===100?'✓ 分配完毕':totalPct>100?'⚠️ 超出100%':`还剩 ${100-totalPct}%`}</span>
+            </div>
+            <div className="totbar"><div className="totfill" style={{width:`${Math.min(totalPct,100)}%`,background:totalPct>100?'#ef4444':'#10b981'}}/></div>
+          </div>
+        </div>
+      </div>
+      <div className="budget-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
+        {budgets.map((b,i)=>{
+          const amt=Math.round(income*b.pct/100);const color=BCLRS[i%BCLRS.length];
+          return<div key={b.id} className="card">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+              <div>
+                <div style={{fontSize:16,fontWeight:800}}>{b.name}</div>
+                {b.desc&&<div style={{fontSize:12,color:'#94a3b8',marginTop:4}}>{b.desc}</div>}
+              </div>
+              <div style={{display:'flex',gap:4}}>
+                <button className="btni" onClick={()=>{setEditItem(b);setShowModal(true)}}>✏️</button>
+                <button className="btni" onClick={()=>del(b.id)}>🗑</button>
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
+              <span style={{fontSize:28,fontWeight:900,color}}>¥{fmtM(amt)}</span>
+              <span style={{background:color+'22',color,padding:'3px 10px',borderRadius:20,fontSize:13,fontWeight:700}}>{b.pct}%</span>
+            </div>
+            <div className="bbar"><div className="bfill" style={{width:`${b.pct}%`,background:color}}/></div>
+          </div>;
+        })}
+      </div>
+      {showModal&&<BudgetModal item={editItem} onClose={()=>{setShowModal(false);setEditItem(null)}} onSave={save}/>}
+    </div>
+  );
+}
+
+// ─── Export helper (shared) ──────────────────────────
+function doExport(txs,assets,budgets,income,snapshots,policies,navLinks){
+  try{
+    // 导出前安全网：把任何非数字 ID 规整为数字（仅影响导出，不改内存），保证导出文件 ID 干净
+    const normId=(list,startKey)=>{
+      let c=parseInt(localStorage.getItem(startKey)||'0')||0;
+      return (list||[]).map(x=>{if(/^\d+$/.test(String(x.id??'')))return x;c++;localStorage.setItem(startKey,String(c));return{...x,id:c}});
+    };
+    const nAssets=normId(assets,'_assetIdCnt');
+    const nBudgets=normId(budgets,'_budgetIdCnt');
+    const nSnaps=normId(snapshots,'_snapIdCnt');
+    const nPol=normId(policies,'_insIdCnt');
+    const nNav=normId(navLinks,'_navIdCnt');
+    const wb=XLSX.utils.book_new();
+    const txData=txs.map(t=>({'记录ID':t.id,'日期':t.date,'收支类型':t.type,'金额':t.amount,'别人的钱':t.isOthers?'是':'','关联账单IDs':(t.linkedIds||[]).join(','),'项目总额':t.orderTotal||'','结算状态':t.isOthers?(t.status==='settled'?'已结算':'待结算'):'','分类':t.cat,'所属账本':t.book,'收支账户':t.pay,'备注':t.notes||'','标签':(t.tags||[]).join(',')}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(txData.length?txData:[{'提示':'暂无记录'}]),'生财流水');
+    const assetData=nAssets.map(a=>({'资产ID':a.id,'名称':a.name,'类别':a.cat,'金额':a.amount,'备注':a.note||''}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(assetData.length?assetData:[{}]),'资产负债表');
+    const budgetData=nBudgets.map(b=>({'计划ID':b.id,'储蓄目标':b.name,'建议占比':b.pct,'用途说明':b.desc,'参考月金额':Math.round(income*b.pct/100)}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(budgetData.length?budgetData:[{}]),'计划清单');
+    const snapData=nSnaps.map(s=>({'快照ID':s.id,'日期':s.date,'总资产':s.totalA,'总负债':s.totalL,'净资产':s.totalA-s.totalL,'备注':s.note||'','资产明细JSON':s.breakdown?JSON.stringify(s.breakdown):''}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(snapData.length?snapData:[{}]),'资产快照');
+    // 家庭保单
+    const polData=nPol.map(p=>({'保单ID':p.id,'保险名称':p.name,'保险公司':p.company,'被保险人':p.insured,'保险分类':p.cat,'缴费方式':p.freq,'缴费金额':p.amount,'已结清':p.paidOff?'是':'','缴费起始日':p.payStart||'','总缴费年限':p.payYears||'','保额':p.coverage||0,'保障起始年份':p.startYear||'','保障至':p.endYear||'','投保人':p.holder||'','受益人':p.beneficiary||'','备注':p.note||''}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(polData.length?polData:[{}]),'家庭保单');
+    // 工具导航
+    const navData=nNav.map(l=>({'导航ID':l.id,'图标':l.emoji||'🔗','名称':l.title,'网址':l.url,'描述':l.desc||'','分类':l.cat||''}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(navData.length?navData:[{}]),'工具导航');
+    XLSX.writeFile(wb,`生财记账_${today()}.xlsx`);alert('✅ 导出成功！包含6张表：流水、资产负债、计划清单、资产快照、家庭保单、工具导航');
+  }catch(e){alert('导出失败：'+e.message)}
+}
+
+// ─── Insurance (家庭保单) ────────────────────────────
+// 计算下次缴费日：基于起始缴费日 + 缴费频率推算到未来最近一次
+function calcNextPay(startDate,freq){
+  if(!startDate||freq==='趸交'||!FREQ_MONTHS[freq])return null;
+  const step=FREQ_MONTHS[freq];
+  const d=new Date(startDate);if(isNaN(d))return null;
+  const now=new Date();now.setHours(0,0,0,0);
+  while(d<now)d.setMonth(d.getMonth()+step);
+  return d.toISOString().split('T')[0];
+}
+function daysUntil(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr);if(isNaN(d))return null;
+  const now=new Date();now.setHours(0,0,0,0);d.setHours(0,0,0,0);
+  return Math.round((d-now)/86400000);
+}
+
+function InsuranceModal({policy,members,onClose,onSave}){
+  const[name,setName]=useState(policy?.name||'');
+  const[company,setCompany]=useState(policy?.company||'');
+  const[insured,setInsured]=useState(policy?.insured||(members[0]||'我'));
+  const[cat,setCat]=useState(policy?.cat||'重疾险');
+  const[freq,setFreq]=useState(policy?.freq||'年缴');
+  const[amount,setAmount]=useState(policy?.amount!=null?policy.amount.toString():'');
+  const[paidOff,setPaidOff]=useState(policy?.paidOff||false);
+  const[payStart,setPayStart]=useState(policy?.payStart||today());
+  const[payYears,setPayYears]=useState(policy?.payYears||'');
+  const[coverage,setCoverage]=useState(policy?.coverage!=null?policy.coverage.toString():'');
+  const[startYear,setStartYear]=useState(policy?.startYear||new Date().getFullYear().toString());
+  const[endYear,setEndYear]=useState(policy?.endYear||'');
+  const[holder,setHolder]=useState(policy?.holder||'');
+  const[beneficiary,setBeneficiary]=useState(policy?.beneficiary||'');
+  const[note,setNote]=useState(policy?.note||'');
+  const[customInsured,setCustomInsured]=useState('');const[showCustom,setShowCustom]=useState(false);
+  const allMembers=[...new Set([...members,'我'])];
+  const save=()=>{
+    if(!name.trim()){alert('请填写保险名称');return}
+    if(!company.trim()){alert('请填写保险公司');return}
+    onSave({...(policy||{}),id:policy?.id||nextInsId(),name:name.trim(),company:company.trim(),insured,cat,freq,
+      amount:+amount||0,paidOff,payStart,payYears,coverage:+coverage||0,startYear,endYear,holder,beneficiary,note});
+  };
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal modal-w">
+        <div className="mhdr"><span className="mtitle">{policy?'编辑保单':'录入保单'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">保险名称 <span style={{color:'#ef4444'}}>*</span></label><input className="finp" value={name} onChange={e=>setName(e.target.value)} placeholder="如：平安福重疾险"/></div>
+          <div><label className="flbl">保险公司 <span style={{color:'#ef4444'}}>*</span></label><input className="finp" value={company} onChange={e=>setCompany(e.target.value)} placeholder="如：中国平安"/></div>
+        </div>
+        <div className="frow">
+          <label className="flbl">被保险人 <span style={{color:'#ef4444'}}>*</span></label>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+            {allMembers.map(mem=>(
+              <button key={mem} className={`chip${insured===mem?' on':''}`} onClick={()=>setInsured(mem)}>{mem}</button>
+            ))}
+            {showCustom?(
+              <span style={{display:'inline-flex',gap:4}}>
+                <input className="finp" style={{width:100,padding:'6px 10px'}} value={customInsured} onChange={e=>setCustomInsured(e.target.value)} placeholder="姓名" autoFocus/>
+                <button className="chip on" onClick={()=>{if(customInsured.trim()){setInsured(customInsured.trim());setShowCustom(false);setCustomInsured('')}}}>✓</button>
+              </span>
+            ):<button className="chip" onClick={()=>setShowCustom(true)}>＋ 添加成员</button>}
+          </div>
+        </div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">保险分类 <span style={{color:'#ef4444'}}>*</span></label>
+            <select className="finp" value={cat} onChange={e=>setCat(e.target.value)}>{INS_CATS.map(c=><option key={c}>{c}</option>)}</select>
+          </div>
+          <div><label className="flbl">缴费方式</label>
+            <select className="finp" value={freq} onChange={e=>setFreq(e.target.value)}>{INS_FREQ.map(f=><option key={f}>{f}</option>)}</select>
+          </div>
+        </div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">缴费金额（元）<span style={{color:'#ef4444'}}>*</span></label><input type="number" className="finp" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="每期缴费"/></div>
+          <div><label className="flbl">保额（元）</label><input type="number" className="finp" value={coverage} onChange={e=>setCoverage(e.target.value)} placeholder="保障额度"/></div>
+        </div>
+        <div className="frow" style={{display:'flex',alignItems:'center',gap:8}}>
+          <input type="checkbox" id="paidOff" checked={paidOff} onChange={e=>setPaidOff(e.target.checked)} style={{width:16,height:16}}/>
+          <label htmlFor="paidOff" style={{fontSize:14,color:'#475569',cursor:'pointer'}}>保费已结清（趸交/缴费完成，不再提醒缴费）</label>
+        </div>
+        {!paidOff&&<div className="finp-2col frow">
+          <div><label className="flbl">缴费起始日</label><input type="date" className="finp" value={payStart} onChange={e=>setPayStart(e.target.value)}/></div>
+          <div><label className="flbl">总缴费年限</label><input className="finp" value={payYears} onChange={e=>setPayYears(e.target.value)} placeholder="如：20年"/></div>
+        </div>}
+        <div className="finp-2col frow">
+          <div><label className="flbl">保障起始年份</label><input className="finp" value={startYear} onChange={e=>setStartYear(e.target.value)} placeholder="如：2026"/></div>
+          <div><label className="flbl">保障至</label><input className="finp" value={endYear} onChange={e=>setEndYear(e.target.value)} placeholder="如：2046 或 终身"/></div>
+        </div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">投保人</label><input className="finp" value={holder} onChange={e=>setHolder(e.target.value)} placeholder="缴费人"/></div>
+          <div><label className="flbl">受益人</label><input className="finp" value={beneficiary} onChange={e=>setBeneficiary(e.target.value)} placeholder="受益人"/></div>
+        </div>
+        <div className="frow"><label className="flbl">备注</label><textarea className="finp" rows={2} value={note} onChange={e=>setNote(e.target.value)} style={{resize:'none'}} placeholder="保单号、缴费银行卡、购买渠道等"/></div>
+        <div className="mfoot"><button className="btn btns" onClick={onClose}>取消</button><button className="btn btnp" onClick={save}>💾 保存保单</button></div>
+      </div>
+    </div>
+  );
+}
+
+function InsurancePage({policies,savePolicies}){
+  const[showModal,setShowModal]=useState(false);const[editP,setEditP]=useState(null);const[filterInsured,setFilterInsured]=useState('全部');
+  const members=useMemo(()=>[...new Set(policies.map(p=>p.insured).filter(Boolean))],[policies]);
+  // 年度化保费（统一换算成每年）
+  const annualize=p=>{if(p.paidOff||p.freq==='趸交')return 0;const m=FREQ_MONTHS[p.freq]||12;return p.amount*(12/m)};
+  const totalAnnual=useMemo(()=>policies.reduce((s,p)=>s+annualize(p),0),[policies]);
+  const totalCoverage=useMemo(()=>policies.reduce((s,p)=>s+(+p.coverage||0),0),[policies]);
+  // 缴费提醒：未结清且有下次缴费日的，按紧急程度排序
+  const reminders=useMemo(()=>{
+    return policies.filter(p=>!p.paidOff&&p.freq!=='趸交').map(p=>{
+      const next=calcNextPay(p.payStart,p.freq);const days=daysUntil(next);
+      return{...p,nextPay:next,days};
+    }).filter(p=>p.days!=null&&p.days<=60).sort((a,b)=>a.days-b.days);
+  },[policies]);
+  const filtered=useMemo(()=>filterInsured==='全部'?policies:policies.filter(p=>p.insured===filterInsured),[policies,filterInsured]);
+  const grouped=useMemo(()=>{const m={};filtered.forEach(p=>{const k=p.insured||'未指定';if(!m[k])m[k]=[];m[k].push(p)});return Object.entries(m)},[filtered]);
+  const save=p=>{const next=p.id&&policies.find(x=>x.id===p.id)?policies.map(x=>x.id===p.id?p:x):[...policies,p];savePolicies(next);setShowModal(false);setEditP(null)};
+  const del=id=>{if(confirm('确认删除这份保单？'))savePolicies(policies.filter(p=>p.id!==id))};
+  return(
+    <div className="page">
+      <div className="phdr">
+        <div className="ptitle">家庭保单</div>
+        <button className="btn btnp" onClick={()=>{setEditP(null);setShowModal(true)}}>＋ 录入保单</button>
+      </div>
+      {/* 统计卡片 */}
+      <div className="stat-grid" style={{marginBottom:18}}>
+        <div className="scard"><div className="slbl">保单总数</div><div className="sval">{policies.length} 份</div><div className="ssub">{members.length} 位被保人</div></div>
+        <div className="scard g"><div className="slbl">年度保费</div><div className="sval">¥{fmtM(totalAnnual)}</div><div className="ssub">月均 ¥{fmtM(totalAnnual/12)}</div></div>
+        <div className="scard"><div className="slbl">总保额</div><div className="sval">¥{fmtM(totalCoverage)}</div><div className="ssub">家庭保障额度</div></div>
+        <div className={`scard${reminders.length?' r':''}`}><div className="slbl">近期待缴</div><div className="sval">{reminders.length} 笔</div><div className="ssub">60天内到期</div></div>
+      </div>
+      {/* 缴费提醒 */}
+      {reminders.length>0&&<div className="card" style={{marginBottom:18,borderLeft:'4px solid #f59e0b'}}>
+        <div className="ct">🔔 缴费提醒</div>
+        <div>
+          {reminders.map(p=>(
+            <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #f8fafc',flexWrap:'wrap'}}>
+              <span style={{fontSize:20}}>{INS_CAT_EMOJI[p.cat]||'📋'}</span>
+              <div style={{flex:1,minWidth:150}}>
+                <div style={{fontSize:14,fontWeight:600}}>{p.name} <span style={{fontSize:12,color:'#94a3b8',fontWeight:400}}>· {p.insured}</span></div>
+                <div style={{fontSize:12,color:'#64748b'}}>{p.company} · 应缴 ¥{fmtM(p.amount)}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:13,fontWeight:700,color:p.days<=7?'#ef4444':p.days<=30?'#f59e0b':'#10b981'}}>
+                  {p.days<0?`已逾期${-p.days}天`:p.days===0?'今天到期':`${p.days}天后`}
+                </div>
+                <div style={{fontSize:11,color:'#94a3b8'}}>{p.nextPay}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>}
+      {/* 筛选 */}
+      {members.length>1&&<div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+        <button className={`chip${filterInsured==='全部'?' on':''}`} onClick={()=>setFilterInsured('全部')}>全部</button>
+        {members.map(mem=><button key={mem} className={`chip${filterInsured===mem?' on':''}`} onClick={()=>setFilterInsured(mem)}>{mem}</button>)}
+      </div>}
+      {/* 保单列表（按被保险人分组）*/}
+      {policies.length===0?(
+        <div className="card" style={{textAlign:'center',padding:'48px 20px',color:'#94a3b8'}}>
+          <div style={{fontSize:40,marginBottom:12}}>🛡️</div>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>还没有保单记录</div>
+          <div style={{fontSize:13}}>点击右上角「＋ 录入保单」开始管理家庭保障</div>
+        </div>
+      ):grouped.map(([insured,list])=>(
+        <div key={insured} className="card" style={{marginBottom:16}}>
+          <div className="ct">👤 {insured}<span style={{fontSize:13,color:'#94a3b8',fontWeight:400}}>{list.length} 份保单 · 年保费 ¥{fmtM(list.reduce((s,p)=>s+annualize(p),0))}</span></div>
+          {list.map(p=>{
+            const next=calcNextPay(p.payStart,p.freq);const days=daysUntil(next);
+            return(
+            <div key={p.id} style={{padding:'12px 0',borderBottom:'1px solid #f8fafc'}}>
+              <div style={{display:'flex',alignItems:'flex-start',gap:12}}>
+                <span style={{fontSize:24}}>{INS_CAT_EMOJI[p.cat]||'📋'}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                    <span style={{fontSize:15,fontWeight:700}}>{p.name}</span>
+                    <span className="chip" style={{fontSize:11,padding:'1px 8px'}}>{p.cat}</span>
+                    {p.paidOff&&<span style={{fontSize:11,background:'#ecfdf5',color:'#059669',padding:'1px 8px',borderRadius:6,fontWeight:600}}>已结清</span>}
+                  </div>
+                  <div style={{fontSize:13,color:'#64748b',marginTop:4,display:'flex',gap:16,flexWrap:'wrap'}}>
+                    <span>{p.company}</span>
+                    <span>缴费 <b style={{color:'#1e293b'}}>¥{fmtM(p.amount)}</b>/{p.freq}</span>
+                    {p.coverage>0&&<span>保额 <b style={{color:'#10b981'}}>¥{fmtM(p.coverage)}</b></span>}
+                  </div>
+                  <div style={{fontSize:12,color:'#94a3b8',marginTop:4,display:'flex',gap:16,flexWrap:'wrap'}}>
+                    {p.startYear&&<span>保障 {p.startYear}~{p.endYear||'?'}</span>}
+                    {p.payYears&&<span>缴费年限 {p.payYears}</span>}
+                    {!p.paidOff&&next&&<span style={{color:days<=30?'#f59e0b':'#94a3b8'}}>下次缴费 {next}（{days<0?`逾期${-days}天`:`${days}天后`}）</span>}
+                    {p.holder&&<span>投保人 {p.holder}</span>}
+                    {p.beneficiary&&<span>受益人 {p.beneficiary}</span>}
+                  </div>
+                  {p.note&&<div style={{fontSize:12,color:'#94a3b8',marginTop:4,fontStyle:'italic'}}>📝 {p.note}</div>}
+                </div>
+                <div style={{display:'flex',gap:4}}>
+                  <button className="btni" onClick={()=>{setEditP(p);setShowModal(true)}}>✏️</button>
+                  <button className="btni" onClick={()=>del(p.id)}>🗑</button>
+                </div>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      ))}
+      {showModal&&<InsuranceModal policy={editP} members={members} onClose={()=>{setShowModal(false);setEditP(null)}} onSave={save}/>}
+    </div>
+  );
+}
+
+// ─── NavPage (理财工具导航) ──────────────────────────
+function NavLinkModal({link,cats,onClose,onSave}){
+  const[title,setTitle]=useState(link?.title||'');
+  const[url,setUrl]=useState(link?.url||'');
+  const[desc,setDesc]=useState(link?.desc||'');
+  const[cat,setCat]=useState(link?.cat||cats[0]||'常用理财工具');
+  const[emoji,setEmoji]=useState(link?.emoji||'🔗');
+  const[newCat,setNewCat]=useState('');const[useNewCat,setUseNewCat]=useState(false);
+  const EMOJIS=['🔗','🧮','📈','📊','💱','💰','📋','🏦','💳','📉','🪙','💹','📁','⭐','🔖'];
+  const save=()=>{
+    if(!title.trim()){alert('请填写名称');return}
+    let u=url.trim();if(u&&!/^https?:\/\//.test(u))u='https://'+u;
+    if(!u){alert('请填写网址');return}
+    const finalCat=useNewCat&&newCat.trim()?newCat.trim():cat;
+    onSave({...(link||{}),id:link?.id||nextNavId(),title:title.trim(),url:u,desc:desc.trim(),cat:finalCat,emoji});
+  };
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal" style={{maxWidth:460}}>
+        <div className="mhdr"><span className="mtitle">{link?'编辑网站':'添加网站'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="frow"><label className="flbl">图标</label>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{EMOJIS.map(e=><button key={e} className={`chip${emoji===e?' on':''}`} style={{fontSize:18,padding:'4px 8px'}} onClick={()=>setEmoji(e)}>{e}</button>)}</div>
+        </div>
+        <div className="frow"><label className="flbl">网站名称 <span style={{color:'#ef4444'}}>*</span></label><input className="finp" value={title} onChange={e=>setTitle(e.target.value)} placeholder="如：利息计算器"/></div>
+        <div className="frow"><label className="flbl">网址 <span style={{color:'#ef4444'}}>*</span></label><input className="finp" value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..."/></div>
+        <div className="frow"><label className="flbl">描述</label><input className="finp" value={desc} onChange={e=>setDesc(e.target.value)} placeholder="一句话说明"/></div>
+        <div className="frow"><label className="flbl">分类</label>
+          {!useNewCat?(
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <select className="finp" value={cat} onChange={e=>setCat(e.target.value)}>{cats.map(c=><option key={c}>{c}</option>)}</select>
+              <button className="chip" style={{whiteSpace:'nowrap'}} onClick={()=>setUseNewCat(true)}>＋ 新分类</button>
+            </div>
+          ):(
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <input className="finp" value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="新分类名称" autoFocus/>
+              <button className="chip" style={{whiteSpace:'nowrap'}} onClick={()=>setUseNewCat(false)}>取消</button>
+            </div>
+          )}
+        </div>
+        <div className="mfoot"><button className="btn btns" onClick={onClose}>取消</button><button className="btn btnp" onClick={save}>💾 保存</button></div>
+      </div>
+    </div>
+  );
+}
+
+function NavPage({navLinks,saveNavLinks}){
+  const[showModal,setShowModal]=useState(false);const[editL,setEditL]=useState(null);
+  const cats=useMemo(()=>[...new Set(navLinks.map(l=>l.cat).filter(Boolean))],[navLinks]);
+  const grouped=useMemo(()=>{const m={};navLinks.forEach(l=>{const k=l.cat||'未分类';if(!m[k])m[k]=[];m[k].push(l)});return Object.entries(m)},[navLinks]);
+  const save=l=>{const next=l.id&&navLinks.find(x=>x.id===l.id)?navLinks.map(x=>x.id===l.id?l:x):[...navLinks,l];saveNavLinks(next);setShowModal(false);setEditL(null)};
+  const del=id=>{if(confirm('确认删除这个网站？'))saveNavLinks(navLinks.filter(l=>l.id!==id))};
+  return(
+    <div className="page">
+      <div className="phdr">
+        <div className="ptitle">理财工具导航</div>
+        <button className="btn btnp" onClick={()=>{setEditL(null);setShowModal(true)}}>＋ 添加网站</button>
+      </div>
+      {navLinks.length===0?(
+        <div className="card" style={{textAlign:'center',padding:'48px 20px',color:'#94a3b8'}}>
+          <div style={{fontSize:40,marginBottom:12}}>🔗</div>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>还没有收藏网站</div>
+          <div style={{fontSize:13}}>点击右上角「＋ 添加网站」收藏常用理财工具</div>
+        </div>
+      ):grouped.map(([cat,links])=>(
+        <div key={cat} style={{marginBottom:24}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+            <span style={{fontSize:15,fontWeight:800,color:'#1e293b'}}>{cat}</span>
+            <span style={{fontSize:12,color:'#94a3b8'}}>{links.length} 个</span>
+          </div>
+          <div className="nav-card-grid">
+            {links.map(l=>(
+              <div key={l.id} className="nav-card">
+                <a href={l.url} target="_blank" rel="noopener noreferrer" className="nav-card-link">
+                  <span className="nav-card-emoji">{l.emoji||'🔗'}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className="nav-card-title">{l.title}</div>
+                    {l.desc&&<div className="nav-card-desc">{l.desc}</div>}
+                  </div>
+                </a>
+                <div className="nav-card-actions">
+                  <button className="btni" onClick={e=>{e.stopPropagation();setEditL(l);setShowModal(true)}}>✏️</button>
+                  <button className="btni" onClick={e=>{e.stopPropagation();del(l.id)}}>🗑</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {showModal&&<NavLinkModal link={editL} cats={cats.length?cats:['常用理财工具']} onClose={()=>{setShowModal(false);setEditL(null)}} onSave={save}/>}
+    </div>
+  );
+}
+
+// ─── Sidebar ─────────────────────────────────────────
+const NAV=[{k:'dash',e:'📊',l:'数据看板'},{k:'tx',e:'💸',l:'生财流水'},{k:'asset',e:'🏦',l:'资产负债'},{k:'budget',e:'📋',l:'计划清单'},{k:'insurance',e:'🛡️',l:'家庭保单'},{k:'nav',e:'🔗',l:'理财工具'}];
+function Sidebar({tab,setTab,txs,assets,budgets,income,snapshots,policies,navLinks}){
+  const clearAll=()=>{if(confirm('⚠️ 确认清空所有数据？不可恢复！')){localStorage.clear();location.reload()}};
+  return(
+    <div className="sidebar">
+      <div className="logo"><div className="logo-title">🌱 生财记账</div><div className="logo-sub">本地存储 · 隐私安全</div></div>
+      <div className="nav">
+        {NAV.map(n=><button key={n.k} className={`ni${tab===n.k?' on':''}`} onClick={()=>setTab(n.k)}><span className="ni-ico">{n.e}</span>{n.l}</button>)}
+      </div>
+      <div className="nav-foot">
+        <button className="ni" onClick={()=>doExport(txs,assets,budgets,income,snapshots,policies,navLinks)}><span className="ni-ico">📤</span>导出 Excel</button>
+        <a className="ni" href="https://www.yuque.com/pengzhiqiang999" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'#10b981'}}><span className="ni-ico">🎁</span>获取更多软件/更新</a>
+        <button className="ni" onClick={clearAll} style={{color:'#ef4444'}}><span className="ni-ico">🗑</span>清空数据</button>
+        <div style={{padding:'10px 12px 2px',fontSize:11,color:'#475569',lineHeight:1.7}}>
+          <div style={{fontWeight:700,color:'#64748b'}}>小可耐教你学 RPA</div>
+          <div>全网同名 · 📞 13133870607</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MobileNav ───────────────────────────────────────
+const MOB_NAV=[{k:'dash',e:'📊',l:'看板'},{k:'tx',e:'💸',l:'流水'},{k:'asset',e:'🏦',l:'资产'},{k:'insurance',e:'🛡️',l:'保单'},{k:'more',e:'⚙️',l:'更多'}];
+function MobileNav({tab,setTab}){
+  return(
+    <nav className="mob-nav">
+      {MOB_NAV.map(n=>(
+        <button key={n.k} className={`mob-ni${tab===n.k?' on':''}`} onClick={()=>setTab(n.k)}>
+          <span className="mob-ni-ico">{n.e}</span>
+          <span>{n.l}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+// ─── MobileHeader ─────────────────────────────────────
+const PAGE_TITLES={dash:'数据看板',tx:'生财流水',asset:'资产负债',budget:'计划清单',insurance:'家庭保单',nav:'理财工具',more:'更多'};
+function MobileHeader({tab}){
+  return(
+    <div className="mob-hdr">
+      <div>
+        <div className="mob-hdr-title">🌱 生财记账</div>
+        <div className="mob-hdr-sub">{PAGE_TITLES[tab]||''} · 本地存储</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MorePage (mobile settings) ──────────────────────
+function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,setTab,onImport,saveAssets,saveBudgets,saveSnapshots,savePolicies,saveNavLinks,mergeCats}){
+  const[showImport,setShowImport]=useState(false);
+  const clearAll=()=>{if(confirm('⚠️ 确认清空所有数据？不可恢复！')){localStorage.clear();location.reload()}};
+  const handleImportTxs=rows=>{onImport(rows)};
+  const handleImportAssets=items=>{saveAssets(items)};
+  const handleImportBudgets=items=>{saveBudgets(items)};
+  const handleImportSnaps=items=>{saveSnapshots(items)};
+  const handleImportPolicies=items=>{savePolicies(items)};
+  const handleImportNav=items=>{saveNavLinks(items)};
+  return(
+    <div className="page">
+      <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:8}}>
+        {/* 更多功能入口（手机端底栏放不下的页面）*/}
+        <div className="card">
+          <div style={{fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:14,letterSpacing:.5,textTransform:'uppercase'}}>更多功能</div>
+          {[
+            {ico:'📋',label:'计划清单',sub:'按比例规划月收入分配',color:'#f59e0b',bg:'#fffbeb',fn:()=>setTab('budget')},
+            {ico:'🔗',label:'理财工具导航',sub:'常用理财网站收藏',color:'#ec4899',bg:'#fdf2f8',fn:()=>setTab('nav')},
+          ].map((item,i,arr)=>(
+            <button key={i} onClick={item.fn} style={{width:'100%',display:'flex',alignItems:'center',gap:14,padding:'14px 0',border:'none',background:'none',cursor:'pointer',fontFamily:'inherit',borderBottom:i<arr.length-1?'1px solid #f8fafc':'none'}}>
+              <div style={{width:44,height:44,borderRadius:12,background:item.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{item.ico}</div>
+              <div style={{flex:1,textAlign:'left'}}><div style={{fontSize:15,fontWeight:700,color:item.color}}>{item.label}</div><div style={{fontSize:12,color:'#94a3b8',marginTop:2}}>{item.sub}</div></div>
+              <span style={{color:'#cbd5e1',fontSize:18}}>›</span>
+            </button>
+          ))}
+        </div>
+        <div className="card">
+          <div style={{fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:14,letterSpacing:.5,textTransform:'uppercase'}}>数据管理</div>
+          {[
+            {ico:'📤',label:'导出 Excel',sub:'6张表完整备份（流水/资产/计划/快照/保单/导航）',color:'#10b981',bg:'#ecfdf5',fn:()=>doExport(txs,assets,budgets,income,snapshots,policies,navLinks)},
+            {ico:'📥',label:'导入 Excel',sub:'完整备份一键还原，或导入第三方账单',color:'#3b82f6',bg:'#eff6ff',fn:()=>setShowImport(true)},
+            {ico:'🗑️',label:'清空所有数据',sub:'此操作不可恢复，请谨慎',color:'#ef4444',bg:'#fef2f2',fn:clearAll},
+          ].map((item,i)=>(
+            <button key={i} onClick={item.fn} style={{width:'100%',display:'flex',alignItems:'center',gap:14,padding:'14px 0',border:'none',background:'none',cursor:'pointer',fontFamily:'inherit',borderBottom:i<2?'1px solid #f8fafc':'none'}}>
+              <div style={{width:44,height:44,borderRadius:12,background:item.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{item.ico}</div>
+              <div style={{flex:1,textAlign:'left'}}>
+                <div style={{fontSize:15,fontWeight:700,color:item.color}}>{item.label}</div>
+                <div style={{fontSize:12,color:'#94a3b8',marginTop:2}}>{item.sub}</div>
+              </div>
+              <span style={{color:'#cbd5e1',fontSize:18}}>›</span>
+            </button>
+          ))}
+        </div>
+        {/* 获取更多软件 / 更新 */}
+        <a href="https://www.yuque.com/pengzhiqiang999" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
+          <div className="card" style={{background:'linear-gradient(135deg,#10b981,#059669)',color:'#fff',cursor:'pointer'}}>
+            <div style={{display:'flex',alignItems:'center',gap:14}}>
+              <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,.18)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>🎁</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:15,fontWeight:800}}>获取更多好用软件 & 更新</div>
+                <div style={{fontSize:12,color:'rgba(255,255,255,.85)',marginTop:2}}>点击前往资源库，获取最新版本和更多工具</div>
+              </div>
+              <span style={{fontSize:18,opacity:.8}}>›</span>
+            </div>
+          </div>
+        </a>
+        {/* 作者署名 */}
+        <div className="card">
+          <div style={{fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:12,letterSpacing:.5,textTransform:'uppercase'}}>关于作者</div>
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:48,height:48,borderRadius:'50%',background:'linear-gradient(135deg,#10b981,#3b82f6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0,color:'#fff'}}>🤖</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:800,color:'#1e293b'}}>小可耐教你学 RPA</div>
+              <div style={{fontSize:12,color:'#94a3b8',marginTop:2}}>全网同名 · 欢迎关注</div>
+              <div style={{fontSize:13,color:'#10b981',fontWeight:600,marginTop:4}}>📞 13133870607</div>
+            </div>
+          </div>
+        </div>
+        <div className="card" style={{background:'linear-gradient(135deg,#0f172a,#1e293b)',color:'#fff'}}>
+          <div style={{fontSize:15,fontWeight:800,marginBottom:6}}>🌱 生财记账</div>
+          <div style={{fontSize:12,color:'#64748b',lineHeight:1.8}}>
+            <div>所有数据保存在设备本地浏览器</div>
+            <div>不上传任何服务器，完全隐私</div>
+            <div style={{marginTop:6,color:'#475569'}}>建议定期导出 Excel 备份 📤</div>
+          </div>
+        </div>
+      </div>
+      {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImportTxs={handleImportTxs} onImportAssets={handleImportAssets} onImportBudgets={handleImportBudgets} onImportSnapshots={handleImportSnaps} onImportPolicies={handleImportPolicies} onImportNavLinks={handleImportNav}/>}
+    </div>
+  );
+}
+
+// ─── App ─────────────────────────────────────────────
+function App(){
+  const[tab,setTab]=useState('dash');
+  const[txs,setTxs]=useState([]);
+  const[assets,setAssets]=useState(null);
+  const[budgets,setBudgets]=useState(null);
+  const[snapshots,setSnapshots]=useState([]);
+  const[policies,setPolicies]=useState([]);
+  const[navLinks,setNavLinks]=useState(null);
+  const[income,setIncome]=useState(5000);
+  const[cats,setCats]=useState(DEF_CATS);
+  const[focusTxId,setFocusTxId]=useState(null);
+  const[ready,setReady]=useState(false);
+  const jumpToTx=id=>{setFocusTxId(id);setTab('tx')};
+  useEffect(()=>{
+    const t=S.get('txs');if(t)setTxs(t);
+    const inc=S.get('income');if(inc!=null)setIncome(+inc);
+    // 分类：默认 ∪ 已保存 ∪ 历史 tx 中用过的分类
+    const savedCats=S.get('cats')||[];
+    const txCats=(t||[]).map(tx=>tx.cat).filter(Boolean);
+    const merged=[...new Set([...DEF_CATS,...savedCats,...txCats])];
+    setCats(merged);S.set('cats',merged);
+    // 同步流水 ID 计数器
+    const maxNumId=Math.max(0,...(t||[]).map(tx=>parseInt(tx.id)).filter(n=>Number.isFinite(n)&&n>0));
+    const storedCnt=parseInt(localStorage.getItem('_txIdCnt')||'0')||0;
+    if(maxNumId>=storedCnt)localStorage.setItem('_txIdCnt',String(maxNumId));
+
+    // 迁移函数：把字符串 ID 替换为自增数字 ID，返回迁移后的列表
+    const migrateIds=(list,cntKey)=>{
+      if(!list||!list.length)return list||[];
+      let cnt=parseInt(localStorage.getItem(cntKey)||'0')||0;
+      let changed=false;
+      const migrated=list.map(item=>{
+        if(/^\d+$/.test(String(item.id??'')))return item; // 已是数字，跳过
+        cnt++;changed=true;
+        return{...item,id:cnt};
+      });
+      if(changed)localStorage.setItem(cntKey,String(cnt));
+      return migrated;
+    };
+
+    // 加载并迁移资产/计划/快照
+    const rawA=S.get('assets');
+    const rawB=S.get('budgets');
+    const rawSnap=S.get('snapshots');
+    const rawPol=S.get('policies');
+    const migratedA=migrateIds(rawA||DEF_ASSETS,'_assetIdCnt');
+    const migratedB=migrateIds(rawB||DEF_BUDGETS,'_budgetIdCnt');
+    const migratedSnap=migrateIds(rawSnap||[],'_snapIdCnt');
+    const migratedPol=migrateIds(rawPol||[],'_insIdCnt');
+    // 如果有迁移，写回 localStorage
+    if(rawA)S.set('assets',migratedA);
+    if(rawB)S.set('budgets',migratedB);
+    if(rawSnap)S.set('snapshots',migratedSnap);
+    if(rawPol)S.set('policies',migratedPol);
+    setAssets(migratedA);setBudgets(migratedB);setSnapshots(migratedSnap);setPolicies(migratedPol);
+    // 导航链接
+    const rawNav=S.get('navLinks');
+    setNavLinks(rawNav||DEF_NAV_LINKS);
+
+    setReady(true);
+  },[]);
+  const saveTxs=d=>{setTxs(d);S.set('txs',d)};
+  const saveAssets=d=>{setAssets(d);S.set('assets',d)};
+  const saveBudgets=d=>{setBudgets(d);S.set('budgets',d)};
+  const saveSnapshots=d=>{setSnapshots(d);S.set('snapshots',d)};
+  const savePolicies=d=>{setPolicies(d);S.set('policies',d)};
+  const saveNavLinks=d=>{setNavLinks(d);S.set('navLinks',d)};
+  const saveIncome=v=>{setIncome(v);S.set('income',v)};
+  // 单次批量合并分类（解决 addCat 循环调用时 React 只保留最后一个的 batching 问题）
+  const mergeCats=useCallback(catList=>{
+    setCats(prev=>{
+      const merged=[...new Set([...prev,...catList.filter(Boolean)])];
+      S.set('cats',merged);
+      return merged;
+    });
+  },[]);
+  const addCat=c=>mergeCats([c]);
+  const importTxsGlobal=rows=>{
+    const existingMap=Object.fromEntries(txs.map(t=>[t.id,t]));
+    rows.forEach(r=>{existingMap[r.id]=r});
+    const next=Object.values(existingMap).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    saveTxs(next);
+    syncIdCounter(next); // 同步计数器
+    mergeCats(next.map(t=>t.cat));
+  };
+  if(!ready||!assets||!budgets||!navLinks)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:16,color:'#94a3b8'}}>加载中…</div>;
+  return(
+    <div className="layout">
+      <Sidebar tab={tab} setTab={setTab} txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} navLinks={navLinks}/>
+      <MobileHeader tab={tab}/>
+      <div className="main">
+        {tab==='dash'&&<Dashboard txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} onJumpToTx={jumpToTx}/>}
+        {tab==='tx'&&<TxPage txs={txs} saveTxs={saveTxs} cats={cats} addCat={addCat} mergeCats={mergeCats} books={DEF_BOOKS} pays={DEF_PAYS} saveAssets={saveAssets} saveBudgets={saveBudgets} saveSnapshots={saveSnapshots} savePolicies={savePolicies} saveNavLinks={saveNavLinks} focusTxId={focusTxId} clearFocus={()=>setFocusTxId(null)}/>}
+        {tab==='asset'&&<AssetsPage assets={assets} setAssets={saveAssets} snapshots={snapshots} saveSnapshots={saveSnapshots}/>}
+        {tab==='budget'&&<BudgetPage budgets={budgets} setBudgets={saveBudgets} income={income} setIncome={saveIncome} txs={txs}/>}
+        {tab==='insurance'&&<InsurancePage policies={policies} savePolicies={savePolicies}/>}
+        {tab==='nav'&&<NavPage navLinks={navLinks} saveNavLinks={saveNavLinks}/>}
+        {tab==='more'&&<MorePage txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} navLinks={navLinks} setTab={setTab} onImport={importTxsGlobal} saveAssets={saveAssets} saveBudgets={saveBudgets} saveSnapshots={saveSnapshots} savePolicies={savePolicies} saveNavLinks={saveNavLinks} mergeCats={mergeCats}/>}
+      </div>
+      <MobileNav tab={tab} setTab={setTab}/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
