@@ -299,6 +299,7 @@ const nextBudgetId=()=>nextAutoId('_budgetIdCnt');
 const nextSnapId=()=>nextAutoId('_snapIdCnt');
 const nextInsId=()=>nextAutoId('_insIdCnt');
 const nextNavId=()=>nextAutoId('_navIdCnt');
+const nextBelongId=()=>nextAutoId('_belongIdCnt');
 function syncIdCounter(txList){
   const maxN=Math.max(0,...(txList||[]).map(t=>parseInt(t.id)).filter(n=>Number.isFinite(n)&&n>0));
   const stored=parseInt(localStorage.getItem('_txIdCnt')||'0')||0;
@@ -361,6 +362,16 @@ const DEF_BOOKS=['日常账本','工作账本','投资账本'];
 const DEF_PAYS=['微信','支付宝','银行卡','现金','信用卡'];
 const INS_CATS=['重疾险','医疗险','意外险','寿险','年金险','教育金','财产险','车险','其他'];
 const INS_FREQ=['年缴','半年缴','季缴','月缴','趸交'];
+const BELONG_SPACES=['客厅','厨房','主卧','次卧','儿童房','卫生间','阳台','书房','玄关','储物间','其他'];
+const BELONG_CATS=['家具','家电','数码','厨具','日用品','食品','服饰','贵重物品','订阅服务','其他'];
+const BELONG_CAT_EMOJI={'家具':'🛋️','家电':'📺','数码':'💻','厨具':'🍳','日用品':'🧴','食品':'🍎','服饰':'👕','贵重物品':'💎','订阅服务':'🔄','其他':'📦'};
+const BELONG_SPACE_EMOJI={'客厅':'🛋️','厨房':'🍳','主卧':'🛏️','次卧':'🛏️','儿童房':'🧸','卫生间':'🚿','阳台':'🪴','书房':'📚','玄关':'🚪','储物间':'📦','其他':'📍'};
+// 日均摊销：有启用日期则按已用天数算，否则用自定义日均
+function belongDailyAvg(item){
+  if(item.startDate){const d=new Date(item.startDate);if(!isNaN(d)){const days=Math.max(1,Math.round((new Date().setHours(0,0,0,0)-d.setHours(0,0,0,0))/86400000));return(+item.price||0)/days}}
+  if(item.customDaily!=null&&item.customDaily!=='')return+item.customDaily||0;
+  return null;
+}
 const INS_CAT_EMOJI={'重疾险':'🏥','医疗险':'💊','意外险':'🛡️','寿险':'❤️','年金险':'💰','教育金':'🎓','财产险':'🏠','车险':'🚗','其他':'📋'};
 const FREQ_MONTHS={'年缴':12,'半年缴':6,'季缴':3,'月缴':1,'趸交':0};
 const DEF_NAV_LINKS=[
@@ -560,7 +571,7 @@ function TxModal({tx,onClose,onSave,cats,books,pays,allTxs,onAddCat}){
 }
 
 // ─── ImportModal ─────────────────────────────────────
-function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImportSnapshots,onImportPolicies,onImportNavLinks}){
+function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImportSnapshots,onImportPolicies,onImportNavLinks,onImportBelongings}){
   const[rows,setRows]=useState([]);const[mapping,setMapping]=useState({});const[headers,setHeaders]=useState([]);const[step,setStep]=useState(1);const[sheet,setSheet]=useState('');const[sheets,setSheets]=useState([]);const[wb,setWb]=useState(null);
   const[isFullBackup,setIsFullBackup]=useState(false);const[backupSummary,setBackupSummary]=useState(null);
   const COL_FIELDS=[{key:'rid',label:'记录ID'},{key:'date',label:'日期',required:true},{key:'type',label:'收支类型',required:true},{key:'amount',label:'金额',required:true},{key:'isOthers',label:'别人的钱'},{key:'linkedIds',label:'关联账单IDs'},{key:'cat',label:'分类'},{key:'book',label:'所属账本'},{key:'pay',label:'收支账户'},{key:'notes',label:'备注'},{key:'tags',label:'标签'}];
@@ -605,6 +616,13 @@ function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImpor
     id:r['导航ID']?String(r['导航ID']).trim():nextNavId(),
     emoji:r['图标']||'🔗',title:r['名称']||'',url:r['网址']||'',desc:r['描述']||'',cat:r['分类']||'未分类'
   })).filter(r=>r.title&&r.url);
+
+  const parseBelongSheet=data=>data.map(r=>({
+    id:r['物品ID']?String(r['物品ID']).trim():nextBelongId(),
+    name:r['名称']||'',space:r['归属空间']||'其他',cat:r['物品分类']||'其他',price:+r['价格']||0,
+    startDate:r['启用日期']?parseDate(r['启用日期']):'',expiryDate:r['到期日期']?parseDate(r['到期日期']):'',
+    customDaily:r['自定义日均']!==''&&r['自定义日均']!=null?String(r['自定义日均']):'',note:r['备注']||''
+  })).filter(r=>r.name);
   
   const getSheet=name=>{
     if(!wb||!wb.Sheets[name])return[];
@@ -622,7 +640,7 @@ function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImpor
         const readSheet=name=>book.Sheets[name]?XLSX.utils.sheet_to_json(book.Sheets[name],{raw:true,defval:''}):[];
         const txData=readSheet('生财流水').filter(r=>r['日期']||r['记录ID']); // 过滤掉"暂无记录"占位行
         // 完整备份判定：含任一已知数据表即视为完整备份
-        const isBackup=book.SheetNames.includes('资产负债表')||book.SheetNames.includes('资产快照')||book.SheetNames.includes('计划清单')||book.SheetNames.includes('家庭保单')||book.SheetNames.includes('工具导航');
+        const isBackup=book.SheetNames.includes('资产负债表')||book.SheetNames.includes('资产快照')||book.SheetNames.includes('计划清单')||book.SheetNames.includes('家庭保单')||book.SheetNames.includes('工具导航')||book.SheetNames.includes('归物');
         setIsFullBackup(isBackup);
         if(isBackup){
           const assetData=readSheet('资产负债表').filter(r=>r['名称']);
@@ -630,7 +648,8 @@ function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImpor
           const snapData=readSheet('资产快照').filter(r=>r['日期']);
           const polData=readSheet('家庭保单').filter(r=>r['保险名称']);
           const navData=readSheet('工具导航').filter(r=>r['名称']);
-          setBackupSummary({txData,assetData,budgetData,snapData,polData,navData});
+          const belongData=readSheet('归物').filter(r=>r['名称']);
+          setBackupSummary({txData,assetData,budgetData,snapData,polData,navData,belongData});
           setStep(2);
         }else{
           const ws=book.Sheets[book.SheetNames[0]];
@@ -647,7 +666,7 @@ function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImpor
   
   const doFullRestore=()=>{
     if(!backupSummary)return;
-    const{txData,assetData,budgetData,snapData,polData,navData}=backupSummary;
+    const{txData,assetData,budgetData,snapData,polData,navData,belongData}=backupSummary;
     const txs=parseTxSheet(txData);
     onImportTxs&&onImportTxs(txs);
     if(assetData.length>0&&onImportAssets){const assets=parseAssetSheet(assetData);if(assets.length)onImportAssets(assets)}
@@ -655,8 +674,9 @@ function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImpor
     if(snapData.length>0&&onImportSnapshots){const snaps=parseSnapSheet(snapData);if(snaps.length)onImportSnapshots(snaps.sort((a,b)=>b.date.localeCompare(a.date)))}
     if(polData&&polData.length>0&&onImportPolicies){const pols=parsePolicySheet(polData);if(pols.length)onImportPolicies(pols)}
     if(navData&&navData.length>0&&onImportNavLinks){const navs=parseNavSheet(navData);if(navs.length)onImportNavLinks(navs)}
+    if(belongData&&belongData.length>0&&onImportBelongings){const bel=parseBelongSheet(belongData);if(bel.length)onImportBelongings(bel)}
     onClose();
-    alert(`✅ 完整还原成功！\n流水 ${txData.length} 条\n资产 ${assetData.length} 项\n计划 ${budgetData.length} 项\n快照 ${snapData.length} 条\n保单 ${(polData||[]).length} 份\n导航 ${(navData||[]).length} 个`);
+    alert(`✅ 完整还原成功！\n流水 ${txData.length} 条\n资产 ${assetData.length} 项\n计划 ${budgetData.length} 项\n快照 ${snapData.length} 条\n保单 ${(polData||[]).length} 份\n导航 ${(navData||[]).length} 个\n归物 ${(belongData||[]).length} 件`);
   };
   
   const loadSheet=(book,name)=>{
@@ -711,6 +731,7 @@ function ImportModal({onClose,onImportTxs,onImportAssets,onImportBudgets,onImpor
               {ico:'📈',label:'资产快照',count:bs.snapData.length,unit:'条',color:'#8b5cf6'},
               {ico:'🛡️',label:'家庭保单',count:(bs.polData||[]).length,unit:'份',color:'#06b6d4'},
               {ico:'🔗',label:'工具导航',count:(bs.navData||[]).length,unit:'个',color:'#ec4899'},
+              {ico:'📦',label:'归物',count:(bs.belongData||[]).length,unit:'件',color:'#14b8a6'},
             ].map(item=>(
               <div key={item.label} style={{background:'#f8fafc',borderRadius:10,padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:24}}>{item.ico}</span>
@@ -1214,7 +1235,7 @@ function QuickLinkModal({excludeId,allTxs,initIds,onClose,onConfirm}){
 }
 
 // ─── TxPage ──────────────────────────────────────────
-function TxPage({txs,saveTxs,cats,addCat,mergeCats,books,pays,saveAssets,saveBudgets,saveSnapshots,savePolicies,saveNavLinks,focusTxId,clearFocus}){
+function TxPage({txs,saveTxs,cats,addCat,mergeCats,books,pays,saveAssets,saveBudgets,saveSnapshots,savePolicies,saveNavLinks,saveBelongings,focusTxId,clearFocus}){
   const[showAdd,setShowAdd]=useState(false);const[editTx,setEditTx]=useState(null);const[showImport,setShowImport]=useState(false);const[qlinkTx,setQlinkTx]=useState(null);
   const[month,setMonth]=useState(curM());const[filterType,setFilterType]=useState('全部');const[filterCat,setFilterCat]=useState('全部');const[filterOthers,setFilterOthers]=useState('全部');const[search,setSearch]=useState('');
   const[highlightId,setHighlightId]=useState(null);
@@ -1336,7 +1357,7 @@ function TxPage({txs,saveTxs,cats,addCat,mergeCats,books,pays,saveAssets,saveBud
         </div>}
       </div>
       {showAdd&&<TxModal tx={editTx} cats={cats} books={books} pays={pays} allTxs={txs} onAddCat={addCat} onClose={()=>{setShowAdd(false);setEditTx(null)}} onSave={tx=>{if(editTx)upTx(tx);else addTx(tx);setShowAdd(false);setEditTx(null)}}/>}
-      {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImportTxs={importTxs} onImportAssets={saveAssets} onImportBudgets={saveBudgets} onImportSnapshots={saveSnapshots} onImportPolicies={savePolicies} onImportNavLinks={saveNavLinks}/>}
+      {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImportTxs={importTxs} onImportAssets={saveAssets} onImportBudgets={saveBudgets} onImportSnapshots={saveSnapshots} onImportPolicies={savePolicies} onImportNavLinks={saveNavLinks} onImportBelongings={saveBelongings}/>}
       {qlinkTx&&<QuickLinkModal excludeId={qlinkTx.id} allTxs={txs} initIds={getLinkedIds(qlinkTx,txs)} onClose={()=>setQlinkTx(null)} onConfirm={ids=>upTx({...qlinkTx,linkedIds:ids,orderId:ids[0]||qlinkTx.orderId})}/>}
     </div>
   );
@@ -1569,7 +1590,7 @@ function BudgetPage({budgets,setBudgets,income,setIncome,txs}){
 }
 
 // ─── Export helper (shared) ──────────────────────────
-function doExport(txs,assets,budgets,income,snapshots,policies,navLinks){
+function doExport(txs,assets,budgets,income,snapshots,policies,navLinks,belongings){
   try{
     // 导出前安全网：把任何非数字 ID 规整为数字（仅影响导出，不改内存），保证导出文件 ID 干净
     const normId=(list,startKey)=>{
@@ -1581,6 +1602,7 @@ function doExport(txs,assets,budgets,income,snapshots,policies,navLinks){
     const nSnaps=normId(snapshots,'_snapIdCnt');
     const nPol=normId(policies,'_insIdCnt');
     const nNav=normId(navLinks,'_navIdCnt');
+    const nBelong=normId(belongings,'_belongIdCnt');
     const wb=XLSX.utils.book_new();
     const txData=txs.map(t=>({'记录ID':t.id,'日期':t.date,'收支类型':t.type,'金额':t.amount,'别人的钱':t.isOthers?'是':'','关联账单IDs':(t.linkedIds||[]).join(','),'项目总额':t.orderTotal||'','结算状态':t.isOthers?(t.status==='settled'?'已结算':'待结算'):'','分类':t.cat,'所属账本':t.book,'收支账户':t.pay,'备注':t.notes||'','标签':(t.tags||[]).join(',')}));
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(txData.length?txData:[{'提示':'暂无记录'}]),'生财流水');
@@ -1596,7 +1618,10 @@ function doExport(txs,assets,budgets,income,snapshots,policies,navLinks){
     // 工具导航
     const navData=nNav.map(l=>({'导航ID':l.id,'图标':l.emoji||'🔗','名称':l.title,'网址':l.url,'描述':l.desc||'','分类':l.cat||''}));
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(navData.length?navData:[{}]),'工具导航');
-    XLSX.writeFile(wb,`生财记账_${today()}.xlsx`);alert('✅ 导出成功！包含6张表：流水、资产负债、计划清单、资产快照、家庭保单、工具导航');
+    // 归物·物品
+    const belongData=nBelong.map(b=>({'物品ID':b.id,'名称':b.name,'归属空间':b.space,'物品分类':b.cat,'价格':b.price||0,'启用日期':b.startDate||'','到期日期':b.expiryDate||'','自定义日均':b.customDaily||'','备注':b.note||''}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(belongData.length?belongData:[{}]),'归物');
+    XLSX.writeFile(wb,`生财记账_${today()}.xlsx`);alert('✅ 导出成功！包含7张表：流水、资产负债、计划清单、资产快照、家庭保单、工具导航、归物');
   }catch(e){alert('导出失败：'+e.message)}
 }
 
@@ -1851,6 +1876,156 @@ function NavLinkModal({link,cats,onClose,onSave}){
   );
 }
 
+// ─── Belongings (归物·物品管理) ──────────────────────
+function BelongingModal({item,onClose,onSave}){
+  const[name,setName]=useState(item?.name||'');
+  const[space,setSpace]=useState(item?.space||'客厅');
+  const[cat,setCat]=useState(item?.cat||'家具');
+  const[price,setPrice]=useState(item?.price!=null?item.price.toString():'');
+  const[startDate,setStartDate]=useState(item?.startDate||'');
+  const[expiryDate,setExpiryDate]=useState(item?.expiryDate||'');
+  const[customDaily,setCustomDaily]=useState(item?.customDaily!=null?String(item.customDaily):'');
+  const[note,setNote]=useState(item?.note||'');
+  const preview=belongDailyAvg({price:+price||0,startDate,customDaily});
+  const save=()=>{
+    if(!name.trim()){alert('请填写物品名称');return}
+    onSave({...(item||{}),id:item?.id||nextBelongId(),name:name.trim(),space,cat,price:+price||0,startDate,expiryDate,customDaily:startDate?'':customDaily,note});
+  };
+  return(
+    <div className="modal-bg" onClick={e=>e.currentTarget===e.target&&onClose()}>
+      <div className="modal modal-w">
+        <div className="mhdr"><span className="mtitle">{item?'编辑物品':'添加物品'}</span><button className="mx" onClick={onClose}>×</button></div>
+        <div className="frow"><label className="flbl">物品名称 <span style={{color:'#ef4444'}}>*</span></label><input className="finp" value={name} onChange={e=>setName(e.target.value)} placeholder="如：沙发、洗碗机、儿童床"/></div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">归属空间</label><select className="finp" value={space} onChange={e=>setSpace(e.target.value)}>{BELONG_SPACES.map(s=><option key={s}>{s}</option>)}</select></div>
+          <div><label className="flbl">物品分类</label><select className="finp" value={cat} onChange={e=>setCat(e.target.value)}>{BELONG_CATS.map(c=><option key={c}>{c}</option>)}</select></div>
+        </div>
+        <div className="finp-2col frow">
+          <div><label className="flbl">价格（元）</label><input type="number" className="finp" value={price} onChange={e=>setPrice(e.target.value)} placeholder="购入价格"/></div>
+          <div><label className="flbl">启用日期</label><input type="date" className="finp" value={startDate} onChange={e=>setStartDate(e.target.value)}/></div>
+        </div>
+        {/* 日均摊销 */}
+        <div className="frow">
+          {startDate?(
+            <div style={{background:'#ecfdf5',borderRadius:10,padding:'10px 14px',fontSize:13,color:'#065f46'}}>
+              💡 日均摊销：<b>¥{preview!=null?fmtM(preview):'—'}</b>／天（按已使用天数自动计算，用得越久越划算）
+            </div>
+          ):(
+            <div>
+              <label className="flbl">自定义日均价格（元/天，可选）</label>
+              <input type="number" className="finp" value={customDaily} onChange={e=>setCustomDaily(e.target.value)} placeholder="没有启用日期时，可手动估算每天成本"/>
+            </div>
+          )}
+        </div>
+        <div className="frow"><label className="flbl">到期日期（食品/订阅等，可选）</label><input type="date" className="finp" value={expiryDate} onChange={e=>setExpiryDate(e.target.value)}/></div>
+        <div className="frow"><label className="flbl">备注</label><input className="finp" value={note} onChange={e=>setNote(e.target.value)} placeholder="品牌、型号、购买渠道等"/></div>
+        <div className="mfoot"><button className="btn btns" onClick={onClose}>取消</button><button className="btn btnp" onClick={save}>💾 保存物品</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BelongingsPage({belongings,saveBelongings}){
+  const[showModal,setShowModal]=useState(false);const[editItem,setEditItem]=useState(null);
+  const[fSpace,setFSpace]=useState('全部');const[fCat,setFCat]=useState('全部');const[search,setSearch]=useState('');const[groupBy,setGroupBy]=useState('space');
+  const totalVal=useMemo(()=>belongings.reduce((s,b)=>s+(+b.price||0),0),[belongings]);
+  const totalDaily=useMemo(()=>belongings.reduce((s,b)=>{const d=belongDailyAvg(b);return s+(d||0)},0),[belongings]);
+  // 到期提醒
+  const expiring=useMemo(()=>belongings.map(b=>{if(!b.expiryDate)return null;const d=new Date(b.expiryDate);if(isNaN(d))return null;const days=Math.round((d.setHours(0,0,0,0)-new Date().setHours(0,0,0,0))/86400000);return days<=30?{...b,days}:null}).filter(Boolean).sort((a,b)=>a.days-b.days),[belongings]);
+  const filtered=useMemo(()=>{
+    let r=belongings;
+    if(fSpace!=='全部')r=r.filter(b=>b.space===fSpace);
+    if(fCat!=='全部')r=r.filter(b=>b.cat===fCat);
+    if(search.trim())r=r.filter(b=>[b.name,b.note,b.space,b.cat].join(' ').toLowerCase().includes(search.trim().toLowerCase()));
+    return r;
+  },[belongings,fSpace,fCat,search]);
+  const grouped=useMemo(()=>{const m={};filtered.forEach(b=>{const k=(groupBy==='space'?b.space:b.cat)||'其他';if(!m[k])m[k]=[];m[k].push(b)});return Object.entries(m).sort((a,b)=>b[1].reduce((s,x)=>s+(+x.price||0),0)-a[1].reduce((s,x)=>s+(+x.price||0),0))},[filtered,groupBy]);
+  const usedSpaces=useMemo(()=>[...new Set(belongings.map(b=>b.space).filter(Boolean))],[belongings]);
+  const usedCats=useMemo(()=>[...new Set(belongings.map(b=>b.cat).filter(Boolean))],[belongings]);
+  const save=item=>{const next=item.id&&belongings.find(x=>x.id===item.id)?belongings.map(x=>x.id===item.id?item:x):[...belongings,item];saveBelongings(next);setShowModal(false);setEditItem(null)};
+  const del=id=>{if(confirm('确认删除这件物品？'))saveBelongings(belongings.filter(b=>b.id!==id))};
+  return(
+    <div className="page">
+      <div className="phdr">
+        <div>
+          <div className="ptitle">归物 · 物品管理</div>
+          <div style={{fontSize:13,color:'#94a3b8',marginTop:4}}>整理归纳，掌控每一件属于你的资产物品</div>
+        </div>
+        <button className="btn btnp" onClick={()=>{setEditItem(null);setShowModal(true)}}>＋ 添加物品</button>
+      </div>
+      {/* 统计卡片 */}
+      <div className="stat-grid" style={{marginBottom:18}}>
+        <div className="scard"><div className="slbl">物品总数</div><div className="sval">{belongings.length} 件</div><div className="ssub">{usedSpaces.length} 个空间</div></div>
+        <div className="scard g"><div className="slbl">总价值</div><div className="sval">¥{fmtM(totalVal)}</div><div className="ssub">打造一个家的成本</div></div>
+        <div className="scard"><div className="slbl">日均摊销</div><div className="sval">¥{fmtM(totalDaily)}</div><div className="ssub">每天的物品成本</div></div>
+        <div className={`scard${expiring.length?' r':''}`}><div className="slbl">即将到期</div><div className="sval">{expiring.length} 件</div><div className="ssub">30天内到期</div></div>
+      </div>
+      {/* 到期提醒 */}
+      {expiring.length>0&&<div className="card" style={{marginBottom:18,borderLeft:'4px solid #f59e0b'}}>
+        <div className="ct">🔔 到期提醒</div>
+        {expiring.map(b=>(
+          <div key={b.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'1px solid #f8fafc',fontSize:13,flexWrap:'wrap'}}>
+            <span style={{fontSize:18}}>{BELONG_CAT_EMOJI[b.cat]||'📦'}</span>
+            <span style={{flex:1,minWidth:120,fontWeight:600}}>{b.name}<span style={{color:'#94a3b8',fontWeight:400,fontSize:12}}> · {b.space}</span></span>
+            <span style={{fontWeight:700,color:b.days<0?'#ef4444':b.days<=7?'#f59e0b':'#10b981'}}>{b.days<0?`已过期${-b.days}天`:b.days===0?'今天到期':`${b.days}天后到期`}</span>
+            <span style={{fontSize:11,color:'#94a3b8'}}>{b.expiryDate}</span>
+          </div>
+        ))}
+      </div>}
+      {/* 筛选栏 */}
+      <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+        <select className="fsel" value={groupBy} onChange={e=>setGroupBy(e.target.value)}><option value="space">按空间分组</option><option value="cat">按分类分组</option></select>
+        <select className="fsel" value={fSpace} onChange={e=>setFSpace(e.target.value)}><option>全部</option>{usedSpaces.map(s=><option key={s}>{s}</option>)}</select>
+        <select className="fsel" value={fCat} onChange={e=>setFCat(e.target.value)}><option>全部</option>{usedCats.map(c=><option key={c}>{c}</option>)}</select>
+        <input className="sinp" value={search} onChange={e=>setSearch(e.target.value)} placeholder="搜索物品名称/备注..."/>
+      </div>
+      {/* 物品列表 */}
+      {belongings.length===0?(
+        <div className="card" style={{textAlign:'center',padding:'48px 20px',color:'#94a3b8'}}>
+          <div style={{fontSize:40,marginBottom:12}}>📦</div>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>还没有记录任何物品</div>
+          <div style={{fontSize:13}}>让我轻松记录生活中的每一件物品<br/>从日常用品到贵重财产，都能一键归类管理</div>
+        </div>
+      ):grouped.map(([key,list])=>{
+        const sub=list.reduce((s,b)=>s+(+b.price||0),0);
+        return(
+        <div key={key} className="card" style={{marginBottom:16}}>
+          <div className="ct">
+            {(groupBy==='space'?BELONG_SPACE_EMOJI[key]:BELONG_CAT_EMOJI[key])||'📦'} {key}
+            <span style={{fontSize:13,color:'#94a3b8',fontWeight:400}}>{list.length} 件 · ¥{fmtM(sub)}</span>
+          </div>
+          {list.map(b=>{
+            const daily=belongDailyAvg(b);
+            return(
+            <div key={b.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #f8fafc'}}>
+              <span style={{fontSize:22,width:36,textAlign:'center'}}>{BELONG_CAT_EMOJI[b.cat]||'📦'}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:600}}>{b.name}
+                  <span className="chip" style={{fontSize:11,padding:'1px 8px',marginLeft:6}}>{b.cat}</span>
+                </div>
+                <div style={{fontSize:12,color:'#94a3b8',marginTop:3,display:'flex',gap:14,flexWrap:'wrap'}}>
+                  {daily!=null&&<span>日均 ¥{fmtM(daily)}</span>}
+                  {b.startDate&&<span>启用 {b.startDate}</span>}
+                  {b.expiryDate&&<span>到期 {b.expiryDate}</span>}
+                  {b.note&&<span>📝 {b.note}</span>}
+                </div>
+              </div>
+              <div style={{fontSize:15,fontWeight:800,color:'#1e293b',whiteSpace:'nowrap'}}>¥{fmtM(b.price)}</div>
+              <div style={{display:'flex',gap:2}}>
+                <button className="btni" onClick={()=>{setEditItem(b);setShowModal(true)}}>✏️</button>
+                <button className="btni" onClick={()=>del(b.id)}>🗑</button>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+        );
+      })}
+      {showModal&&<BelongingModal item={editItem} onClose={()=>{setShowModal(false);setEditItem(null)}} onSave={save}/>}
+    </div>
+  );
+}
+
 function NavPage({navLinks,saveNavLinks}){
   const[showModal,setShowModal]=useState(false);const[editL,setEditL]=useState(null);
   const cats=useMemo(()=>[...new Set(navLinks.map(l=>l.cat).filter(Boolean))],[navLinks]);
@@ -1900,8 +2075,8 @@ function NavPage({navLinks,saveNavLinks}){
 }
 
 // ─── Sidebar ─────────────────────────────────────────
-const NAV=[{k:'dash',e:'📊',l:'数据看板'},{k:'tx',e:'💸',l:'生财流水'},{k:'asset',e:'🏦',l:'资产负债'},{k:'budget',e:'📋',l:'计划清单'},{k:'insurance',e:'🛡️',l:'家庭保单'},{k:'nav',e:'🔗',l:'理财工具'}];
-function Sidebar({tab,setTab,txs,assets,budgets,income,snapshots,policies,navLinks}){
+const NAV=[{k:'dash',e:'📊',l:'数据看板'},{k:'tx',e:'💸',l:'生财流水'},{k:'asset',e:'🏦',l:'资产负债'},{k:'belong',e:'📦',l:'归物'},{k:'budget',e:'📋',l:'计划清单'},{k:'insurance',e:'🛡️',l:'家庭保单'},{k:'nav',e:'🔗',l:'理财工具'}];
+function Sidebar({tab,setTab,txs,assets,budgets,income,snapshots,policies,navLinks,belongings}){
   const clearAll=()=>{if(confirm('⚠️ 确认清空所有数据？不可恢复！')){localStorage.clear();location.reload()}};
   return(
     <div className="sidebar">
@@ -1910,7 +2085,7 @@ function Sidebar({tab,setTab,txs,assets,budgets,income,snapshots,policies,navLin
         {NAV.map(n=><button key={n.k} className={`ni${tab===n.k?' on':''}`} onClick={()=>setTab(n.k)}><span className="ni-ico">{n.e}</span>{n.l}</button>)}
       </div>
       <div className="nav-foot">
-        <button className="ni" onClick={()=>doExport(txs,assets,budgets,income,snapshots,policies,navLinks)}><span className="ni-ico">📤</span>导出 Excel</button>
+        <button className="ni" onClick={()=>doExport(txs,assets,budgets,income,snapshots,policies,navLinks,belongings)}><span className="ni-ico">📤</span>导出 Excel</button>
         <a className="ni" href="https://www.yuque.com/pengzhiqiang999" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'#10b981'}}><span className="ni-ico">🎁</span>获取更多软件/更新</a>
         <button className="ni" onClick={clearAll} style={{color:'#ef4444'}}><span className="ni-ico">🗑</span>清空数据</button>
         <div style={{padding:'10px 12px 2px',fontSize:11,color:'#475569',lineHeight:1.7}}>
@@ -1938,7 +2113,7 @@ function MobileNav({tab,setTab}){
 }
 
 // ─── MobileHeader ─────────────────────────────────────
-const PAGE_TITLES={dash:'数据看板',tx:'生财流水',asset:'资产负债',budget:'计划清单',insurance:'家庭保单',nav:'理财工具',more:'更多'};
+const PAGE_TITLES={dash:'数据看板',tx:'生财流水',asset:'资产负债',belong:'归物',budget:'计划清单',insurance:'家庭保单',nav:'理财工具',more:'更多'};
 function MobileHeader({tab}){
   return(
     <div className="mob-hdr">
@@ -1951,7 +2126,7 @@ function MobileHeader({tab}){
 }
 
 // ─── MorePage (mobile settings) ──────────────────────
-function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,setTab,onImport,saveAssets,saveBudgets,saveSnapshots,savePolicies,saveNavLinks,mergeCats}){
+function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,belongings,setTab,onImport,saveAssets,saveBudgets,saveSnapshots,savePolicies,saveNavLinks,saveBelongings,mergeCats}){
   const[showImport,setShowImport]=useState(false);
   const clearAll=()=>{if(confirm('⚠️ 确认清空所有数据？不可恢复！')){localStorage.clear();location.reload()}};
   const handleImportTxs=rows=>{onImport(rows)};
@@ -1960,6 +2135,7 @@ function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,setTab,
   const handleImportSnaps=items=>{saveSnapshots(items)};
   const handleImportPolicies=items=>{savePolicies(items)};
   const handleImportNav=items=>{saveNavLinks(items)};
+  const handleImportBelong=items=>{saveBelongings(items)};
   return(
     <div className="page">
       <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:8}}>
@@ -1967,6 +2143,7 @@ function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,setTab,
         <div className="card">
           <div style={{fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:14,letterSpacing:.5,textTransform:'uppercase'}}>更多功能</div>
           {[
+            {ico:'📦',label:'归物 · 物品管理',sub:'记录每件物品，掌控资产',color:'#14b8a6',bg:'#f0fdfa',fn:()=>setTab('belong')},
             {ico:'📋',label:'计划清单',sub:'按比例规划月收入分配',color:'#f59e0b',bg:'#fffbeb',fn:()=>setTab('budget')},
             {ico:'🔗',label:'理财工具导航',sub:'常用理财网站收藏',color:'#ec4899',bg:'#fdf2f8',fn:()=>setTab('nav')},
           ].map((item,i,arr)=>(
@@ -1980,7 +2157,7 @@ function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,setTab,
         <div className="card">
           <div style={{fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:14,letterSpacing:.5,textTransform:'uppercase'}}>数据管理</div>
           {[
-            {ico:'📤',label:'导出 Excel',sub:'6张表完整备份（流水/资产/计划/快照/保单/导航）',color:'#10b981',bg:'#ecfdf5',fn:()=>doExport(txs,assets,budgets,income,snapshots,policies,navLinks)},
+            {ico:'📤',label:'导出 Excel',sub:'7张表完整备份（含归物、保单、导航）',color:'#10b981',bg:'#ecfdf5',fn:()=>doExport(txs,assets,budgets,income,snapshots,policies,navLinks,belongings)},
             {ico:'📥',label:'导入 Excel',sub:'完整备份一键还原，或导入第三方账单',color:'#3b82f6',bg:'#eff6ff',fn:()=>setShowImport(true)},
             {ico:'🗑️',label:'清空所有数据',sub:'此操作不可恢复，请谨慎',color:'#ef4444',bg:'#fef2f2',fn:clearAll},
           ].map((item,i)=>(
@@ -2028,7 +2205,7 @@ function MorePage({txs,assets,budgets,income,snapshots,policies,navLinks,setTab,
           </div>
         </div>
       </div>
-      {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImportTxs={handleImportTxs} onImportAssets={handleImportAssets} onImportBudgets={handleImportBudgets} onImportSnapshots={handleImportSnaps} onImportPolicies={handleImportPolicies} onImportNavLinks={handleImportNav}/>}
+      {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImportTxs={handleImportTxs} onImportAssets={handleImportAssets} onImportBudgets={handleImportBudgets} onImportSnapshots={handleImportSnaps} onImportPolicies={handleImportPolicies} onImportNavLinks={handleImportNav} onImportBelongings={handleImportBelong}/>}
     </div>
   );
 }
@@ -2041,6 +2218,7 @@ function App(){
   const[budgets,setBudgets]=useState(null);
   const[snapshots,setSnapshots]=useState([]);
   const[policies,setPolicies]=useState([]);
+  const[belongings,setBelongings]=useState([]);
   const[navLinks,setNavLinks]=useState(null);
   const[income,setIncome]=useState(5000);
   const[cats,setCats]=useState(DEF_CATS);
@@ -2079,16 +2257,19 @@ function App(){
     const rawB=S.get('budgets');
     const rawSnap=S.get('snapshots');
     const rawPol=S.get('policies');
+    const rawBelong=S.get('belongings');
     const migratedA=migrateIds(rawA||DEF_ASSETS,'_assetIdCnt');
     const migratedB=migrateIds(rawB||DEF_BUDGETS,'_budgetIdCnt');
     const migratedSnap=migrateIds(rawSnap||[],'_snapIdCnt');
     const migratedPol=migrateIds(rawPol||[],'_insIdCnt');
+    const migratedBelong=migrateIds(rawBelong||[],'_belongIdCnt');
     // 如果有迁移，写回 localStorage
     if(rawA)S.set('assets',migratedA);
     if(rawB)S.set('budgets',migratedB);
     if(rawSnap)S.set('snapshots',migratedSnap);
     if(rawPol)S.set('policies',migratedPol);
-    setAssets(migratedA);setBudgets(migratedB);setSnapshots(migratedSnap);setPolicies(migratedPol);
+    if(rawBelong)S.set('belongings',migratedBelong);
+    setAssets(migratedA);setBudgets(migratedB);setSnapshots(migratedSnap);setPolicies(migratedPol);setBelongings(migratedBelong);
     // 导航链接
     const rawNav=S.get('navLinks');
     setNavLinks(rawNav||DEF_NAV_LINKS);
@@ -2100,6 +2281,7 @@ function App(){
   const saveBudgets=d=>{setBudgets(d);S.set('budgets',d)};
   const saveSnapshots=d=>{setSnapshots(d);S.set('snapshots',d)};
   const savePolicies=d=>{setPolicies(d);S.set('policies',d)};
+  const saveBelongings=d=>{setBelongings(d);S.set('belongings',d)};
   const saveNavLinks=d=>{setNavLinks(d);S.set('navLinks',d)};
   const saveIncome=v=>{setIncome(v);S.set('income',v)};
   // 单次批量合并分类（解决 addCat 循环调用时 React 只保留最后一个的 batching 问题）
@@ -2122,16 +2304,17 @@ function App(){
   if(!ready||!assets||!budgets||!navLinks)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:16,color:'#94a3b8'}}>加载中…</div>;
   return(
     <div className="layout">
-      <Sidebar tab={tab} setTab={setTab} txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} navLinks={navLinks}/>
+      <Sidebar tab={tab} setTab={setTab} txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} navLinks={navLinks} belongings={belongings}/>
       <MobileHeader tab={tab}/>
       <div className="main">
         {tab==='dash'&&<Dashboard txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} onJumpToTx={jumpToTx}/>}
-        {tab==='tx'&&<TxPage txs={txs} saveTxs={saveTxs} cats={cats} addCat={addCat} mergeCats={mergeCats} books={DEF_BOOKS} pays={DEF_PAYS} saveAssets={saveAssets} saveBudgets={saveBudgets} saveSnapshots={saveSnapshots} savePolicies={savePolicies} saveNavLinks={saveNavLinks} focusTxId={focusTxId} clearFocus={()=>setFocusTxId(null)}/>}
+        {tab==='tx'&&<TxPage txs={txs} saveTxs={saveTxs} cats={cats} addCat={addCat} mergeCats={mergeCats} books={DEF_BOOKS} pays={DEF_PAYS} saveAssets={saveAssets} saveBudgets={saveBudgets} saveSnapshots={saveSnapshots} savePolicies={savePolicies} saveNavLinks={saveNavLinks} saveBelongings={saveBelongings} focusTxId={focusTxId} clearFocus={()=>setFocusTxId(null)}/>}
         {tab==='asset'&&<AssetsPage assets={assets} setAssets={saveAssets} snapshots={snapshots} saveSnapshots={saveSnapshots}/>}
+        {tab==='belong'&&<BelongingsPage belongings={belongings} saveBelongings={saveBelongings}/>}
         {tab==='budget'&&<BudgetPage budgets={budgets} setBudgets={saveBudgets} income={income} setIncome={saveIncome} txs={txs}/>}
         {tab==='insurance'&&<InsurancePage policies={policies} savePolicies={savePolicies}/>}
         {tab==='nav'&&<NavPage navLinks={navLinks} saveNavLinks={saveNavLinks}/>}
-        {tab==='more'&&<MorePage txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} navLinks={navLinks} setTab={setTab} onImport={importTxsGlobal} saveAssets={saveAssets} saveBudgets={saveBudgets} saveSnapshots={saveSnapshots} savePolicies={savePolicies} saveNavLinks={saveNavLinks} mergeCats={mergeCats}/>}
+        {tab==='more'&&<MorePage txs={txs} assets={assets} budgets={budgets} income={income} snapshots={snapshots} policies={policies} navLinks={navLinks} belongings={belongings} setTab={setTab} onImport={importTxsGlobal} saveAssets={saveAssets} saveBudgets={saveBudgets} saveSnapshots={saveSnapshots} savePolicies={savePolicies} saveNavLinks={saveNavLinks} saveBelongings={saveBelongings} mergeCats={mergeCats}/>}
       </div>
       <MobileNav tab={tab} setTab={setTab}/>
     </div>
