@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI全自动写书工具 · 小可耐教你学RPA</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #1a1d27;
+  --bg3: #222536;
+  --bg4: #2a2e42;
+  --border: #2e3248;
+  --border2: #3d4260;
+  --text: #e8eaf0;
+  --text2: #9097b5;
+  --text3: #5c6384;
+  --gold: #c9a84c;
+  --gold2: #e8c86a;
+  --blue: #4a90d9;
+  --blue-bg: #1a2840;
+  --green: #4caf7d;
+  --green-bg: #0f2818;
+  --red: #e05555;
+  --red-bg: #2a1010;
+  --warn: #e0a040;
+  --warn-bg: #2a1f0a;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ── LAYOUT ── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 280px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar-top { padding: 16px; border-bottom: 1px solid var(--border); }
+.brand { font-size: 15px; font-weight: 600; color: var(--gold); letter-spacing: 0.02em; }
+.brand-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.key-section { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg3); }
+.key-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+.key-label a { color: var(--blue); text-decoration: none; font-size: 10px; }
+.key-label a:hover { text-decoration: underline; }
+.key-row { display: flex; gap: 6px; }
+.key-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 10px; color: var(--text); font-size: 12px; outline: none; font-family: monospace; }
+.key-input:focus { border-color: var(--blue); }
+.key-save { padding: 7px 12px; background: var(--blue); border: none; border-radius: var(--radius); color: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.key-save:hover { opacity: 0.85; }
+.key-status { font-size: 10px; margin-top: 4px; height: 14px; }
+.key-ok { color: var(--green); }
+.key-err { color: var(--red); }
+
+.toc-header { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
+.toc-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+.toc-stats { font-size: 11px; color: var(--text3); }
+.toc { flex: 1; overflow-y: auto; padding-bottom: 16px; }
+.toc::-webkit-scrollbar { width: 4px; }
+.toc::-webkit-scrollbar-track { background: transparent; }
+.toc::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.part-label { padding: 10px 16px 4px; font-size: 10px; color: var(--gold); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.sec-item { padding: 6px 16px 6px 24px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; border-left: 2px solid transparent; transition: all 0.12s; }
+.sec-item:hover { background: var(--bg3); }
+.sec-item.active { background: var(--bg3); border-left-color: var(--blue); }
+.sec-item.active .sec-name { color: var(--blue); }
+.sec-dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 4px; transition: all 0.3s; }
+.sec-dot.done { background: var(--green); border-color: var(--green); }
+.sec-dot.writing { background: var(--warn); border-color: var(--warn); animation: blink 0.7s infinite; }
+.sec-name { font-size: 12px; color: var(--text2); line-height: 1.5; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* ── TOOLBAR ── */
+.toolbar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg2); flex-wrap: wrap; }
+.toolbar-title { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.12s; white-space: nowrap; font-family: inherit; }
+.btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn-primary:hover { opacity: 0.85; background: var(--blue); }
+.btn-gold { background: var(--gold); border-color: var(--gold); color: #1a1000; font-weight: 600; }
+.btn-gold:hover { opacity: 0.85; background: var(--gold); }
+.btn-green { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.btn-green:hover { background: var(--green); color: #fff; }
+
+/* ── STYLE BAR ── */
+.stylebar { padding: 8px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--bg); }
+.sl { font-size: 11px; color: var(--text3); }
+.tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.12s; }
+.tag:hover { border-color: var(--border2); color: var(--text2); }
+.tag.on { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+
+/* ── EDITOR ── */
+.editor-wrap { flex: 1; overflow-y: auto; padding: 28px 36px; }
+.editor-wrap::-webkit-scrollbar { width: 5px; }
+.editor-wrap::-webkit-scrollbar-track { background: transparent; }
+.editor-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--text3); text-align: center; }
+.placeholder svg { opacity: 0.2; }
+.placeholder h3 { font-size: 15px; color: var(--text2); font-weight: 500; }
+.placeholder p { font-size: 12px; max-width: 300px; line-height: 1.6; }
+
+.ec h1 { font-size: 20px; font-weight: 600; color: var(--gold2); margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); line-height: 1.5; }
+.ec h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 22px 0 10px; }
+.ec p { font-size: 14px; line-height: 1.95; color: var(--text2); margin-bottom: 14px; }
+.ec blockquote { border-left: 3px solid var(--gold); padding: 10px 16px; color: var(--text3); font-style: italic; margin: 16px 0; background: var(--bg3); border-radius: 0 var(--radius) var(--radius) 0; }
+.ec .tip { background: var(--green-bg); border: 1px solid var(--green); border-radius: var(--radius); padding: 12px 16px; margin: 16px 0; font-size: 13px; color: var(--green); }
+.ec .warn-box { background: var(--warn-bg); border: 1px solid var(--warn); border-radius: var(--radius); padding: 12px 16px; margin: 16px 0; font-size: 13px; color: var(--warn); }
+.ec table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+.ec th { background: var(--bg3); color: var(--text); padding: 8px 12px; border: 1px solid var(--border); text-align: left; }
+.ec td { padding: 7px 12px; border: 1px solid var(--border); color: var(--text2); }
+
+/* ── STATUS BAR ── */
+.statusbar { padding: 7px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 20px; background: var(--bg2); flex-wrap: wrap; }
+.stat { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.stat strong { color: var(--text2); }
+.writing-status { font-size: 11px; color: var(--warn); display: none; align-items: center; gap: 5px; }
+.writing-status.show { display: flex; }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.err-status { font-size: 11px; color: var(--red); display: none; }
+.err-status.show { display: block; }
+
+/* ── MODAL ── */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+.modal-bg.show { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 24px; width: 560px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
+.modal h2 { font-size: 16px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+.modal p { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+.modal-close { float: right; background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; margin-top: -4px; }
+.modal-close:hover { color: var(--text); }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+.field input, .field textarea, .field select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; color: var(--text); font-size: 13px; outline: none; font-family: inherit; }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--blue); }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+
+/* ── TOC EDITOR ── */
+.toc-edit-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+.toc-edit-item input { flex: 1; }
+.toc-del { padding: 7px 10px; background: var(--red-bg); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: 12px; flex-shrink: 0; }
+.toc-del:hover { background: var(--red); color: #fff; }
+.add-btn { font-size: 12px; color: var(--blue); background: none; border: 1px dashed var(--blue); border-radius: var(--radius); padding: 6px 12px; cursor: pointer; width: 100%; margin-top: 4px; }
+.add-btn:hover { background: var(--blue-bg); }
+.part-group { margin-bottom: 20px; }
+.part-group-header { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.part-group-header input { flex: 1; font-weight: 600; color: var(--gold); }
+.part-del { padding: 6px 10px; background: var(--red-bg); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: 12px; }
+.part-del:hover { background: var(--red); color: #fff; }
+.add-part-btn { font-size: 12px; color: var(--gold); background: none; border: 1px dashed var(--gold); border-radius: var(--radius); padding: 8px; cursor: pointer; width: 100%; margin-top: 8px; }
+.add-part-btn:hover { background: var(--warn-bg); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar-wrap { height: 2px; background: var(--border); position: relative; }
+.progress-bar { height: 100%; background: var(--blue); transition: width 0.3s; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 18px; font-size: 13px; color: var(--text); z-index: 999; transform: translateY(60px); opacity: 0; transition: all 0.25s; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- MAIN APP -->
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="brand" id="bookTitle">普通人的财富真相</div>
+      <div class="brand-sub">小可耐教你学RPA · 13133870607</div>
+    </div>
+
+    <div class="key-section">
+      <div class="key-label">
+        Claude API Key
+        <a href="https://console.anthropic.com/" target="_blank">获取Key ↗</a>
+      </div>
+      <div class="key-row">
+        <input type="password" class="key-input" id="apiKey" placeholder="sk-ant-..." />
+        <button class="key-save" onclick="saveKey()">保存</button>
+      </div>
+      <div class="key-status" id="keyStatus"></div>
+    </div>
+
+    <div class="toc-header">
+      <span class="toc-title">章节目录</span>
+      <span class="toc-stats" id="tocStats">0/0 节</span>
+    </div>
+    <div class="toc" id="toc"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+
+    <div class="toolbar">
+      <span class="toolbar-title" id="toolbarTitle">选择章节开始创作</span>
+      <button class="btn btn-primary" id="btnWrite" onclick="doWrite()" disabled>✦ AI写这一节</button>
+      <button class="btn" id="btnRegen" onclick="doRegen()" disabled>↺ 重新生成</button>
+      <button class="btn" id="btnCopy" onclick="doCopy()" disabled>⎘ 复制正文</button>
+      <button class="btn btn-green" onclick="doExportTxt()">↓ 导出全书(TXT)</button>
+      <button class="btn btn-gold" onclick="openTocModal()">⊞ 编辑目录</button>
+    </div>
+
+    <div class="stylebar">
+      <span class="sl">写作风格：</span>
+      <span class="tag on" onclick="pickStyle(this,'sharp')">锋利批判</span>
+      <span class="tag" onclick="pickStyle(this,'practical')">实操干货</span>
+      <span class="tag" onclick="pickStyle(this,'story')">故事带入</span>
+      <span class="tag" onclick="pickStyle(this,'academic')">深度分析</span>
+      <span class="sl" style="margin-left:10px">字数：</span>
+      <span class="tag on" onclick="pickWords(this,2000)">2000字</span>
+      <span class="tag" onclick="pickWords(this,1000)">1000字</span>
+      <span class="tag" onclick="pickWords(this,3000)">3000字</span>
+      <span class="sl" style="margin-left:10px">模型：</span>
+      <select id="modelSelect" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:3px 8px;font-size:11px;outline:none;">
+        <option value="claude-sonnet-4-20250514">Sonnet 4（推荐）</option>
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5（快/省）</option>
+        <option value="claude-opus-4-20250514">Opus 4（最强）</option>
+      </select>
+    </div>
+
+    <div class="editor-wrap" id="editorWrap">
+      <div class="placeholder">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <h3>AI全自动写书工具</h3>
+        <p>① 填入Claude API Key 并保存<br>② 点击左侧任意章节<br>③ 选好风格和字数<br>④ 点「AI写这一节」开始创作</p>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <span class="stat">已完成 <strong id="doneCount">0</strong> 节</span>
+      <span class="stat">累计字数 <strong id="totalChars">0</strong></span>
+      <span class="stat">共 <strong id="totalSecs">0</strong> 节</span>
+      <span class="writing-status" id="writingStatus"><span class="spin">⟳</span> AI正在写作，请稍候...</span>
+      <span class="err-status" id="errStatus"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- TOC EDITOR MODAL -->
+<div class="modal-bg" id="tocModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeTocModal()">×</button>
+    <h2>编辑书籍目录</h2>
+    <p>可以修改书名、增删篇章和章节。修改后点「保存目录」生效。</p>
+    <div class="field">
+      <label>书名</label>
+      <input type="text" id="editBookTitle" placeholder="书名" />
+    </div>
+    <div id="partList"></div>
+    <button class="add-part-btn" onclick="addPart()">＋ 添加新篇章</button>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeTocModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveToc()">保存目录</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEFAULT BOOK DATA ──
+const DEFAULT_BOOK = [
+  {part:"前言",secs:[
+    {id:"pre",title:"这本书写给那些工资涨了却越来越穷的人",desc:"你不是不努力，是没人教你规则"}
+  ]},
+  {part:"第一篇 认知重建",secs:[
+    {id:"1a",title:"1.1 工资涨了却越来越穷？通胀在悄悄割你",desc:"购买力、物价与工资的真实关系"},
+    {id:"1b",title:"1.2 什么是真正的资产？用你家冰箱举例",desc:"不是你拥有的，是它替你赚钱的才叫资产"},
+    {id:"1c",title:"1.3 复利是个好东西，但99%的人用错了方向",desc:"时间+方向+坚持，缺一不可"},
+    {id:"1d",title:"1.4 财务自由的数字怎么算？你的目标可能算错了",desc:"FIRE公式与中国实际的差距"},
+    {id:"1e",title:"1.5 消费主义的12个套路，从双十一到分期",desc:"每一个都是精心设计的割韭菜陷阱"},
+    {id:"1f",title:"2.1 印出来的钱去哪了？通胀的真实传导路径",desc:"M2、CPI与你口袋的关系"},
+    {id:"1g",title:"2.2 银行存款真的安全吗？50万存款保险的边界",desc:"民营银行高息的逻辑与风险"},
+    {id:"1h",title:"2.3 你买的低风险理财，可能根本不低风险",desc:"净值型理财与打破刚兑后的世界"},
+  ]},
+  {part:"第二篇 钱的底层",secs:[
+    {id:"2a",title:"3.1 应急金到底存多少？三个月还是六个月",desc:"职业稳定性决定你的应急金厚度"},
+    {id:"2b",title:"3.2 工资卡怎么分仓？三账户法实操",desc:"消费/储蓄/投资账户各放多少"},
+    {id:"2c",title:"3.3 为什么存钱比投资更重要",desc:"投资收益跑不过乱花的速度"},
+    {id:"2d",title:"3.4 债务缠身时该怎么办？雪球法vs雪崩法",desc:"有负债不是原罪，错误的还款顺序才是"},
+    {id:"2e",title:"4.1 信用卡分期的真实年化利率是多少",desc:"从18%到36%，藏在账单里的暗门"},
+    {id:"2f",title:"4.2 消费贷/经营贷/信用贷：谁该用，谁别碰",desc:"三类贷款的成本、风险与适用场景"},
+    {id:"2g",title:"4.3 房贷等额本息vs等额本金，30年差多少钱",desc:"一张表格让你秒懂，别被销售忽悠"},
+    {id:"2h",title:"4.4 提前还房贷到底划不划算？一个公式算清楚",desc:"考虑机会成本之后，答案可能让你意外"},
+  ]},
+  {part:"第三篇 资产配置",secs:[
+    {id:"3a",title:"5.1 什么叫资产配置？和炒股有什么区别",desc:"从单一赌注到多元体系的思维跨越"},
+    {id:"3b",title:"5.2 股票/债券/现金/黄金/房产怎么搭",desc:"各类资产的相关性与实际配比逻辑"},
+    {id:"3c",title:"5.3 人民币贬值普通人要不要配外汇",desc:"QDII基金、港股通与汇率对冲的边界"},
+    {id:"3d",title:"5.4 经济周期下的资产配置策略",desc:"复苏/过热/滞胀/衰退四个阶段怎么调仓"},
+    {id:"3e",title:"5.5 你家也有财宝在角落里睡觉吗",desc:"盘点被遗忘的资产：闲置账户/公积金/碎股"},
+  ]},
+  {part:"第四篇 ETF实战",secs:[
+    {id:"4a",title:"6.1 什么是指数？A股常见指数体系全梳理",desc:"沪深300/中证500/创业板/行业指数怎么选"},
+    {id:"4b",title:"6.2 场内ETF vs 场外基金：到底有什么区别",desc:"LOF/ETF/普通指数基金，该选哪个"},
+    {id:"4c",title:"6.3 消费ETF/红利ETF/沪深300：三类基金实测",desc:"作者实操持仓，真实收益不粉饰"},
+    {id:"4d",title:"6.4 买基金前必须看的5个指标（白话版）",desc:"夏普比率/最大回撤/波动率/换手率/规模"},
+    {id:"4e",title:"6.5 行业指数基金：哪些行业值得长期持有",desc:"消费/医疗/科技/金融，各行业逻辑拆解"},
+    {id:"4f",title:"7.1 定投到底怎么定？时间/金额/频率全拆解",desc:"月定投/周定投/估值定投，哪个真的有效"},
+    {id:"4g",title:"7.2 基金亏损30%了怎么办？教你看回撤不慌",desc:"心理崩溃是定投失败的真正原因"},
+    {id:"4h",title:"7.3 止盈策略：涨多少该卖？",desc:"年化20%止盈 vs 估值分位止盈的实际效果"},
+    {id:"4i",title:"7.4 定投的双杀陷阱：基金选错+节点踩错",desc:"从日本失去30年看定投失败的最大风险"},
+    {id:"4j",title:"7.5 构建属于自己的定投计划（附模板）",desc:"三个完整定投方案案例，对号入座"},
+  ]},
+  {part:"第五篇 税务社保",secs:[
+    {id:"5a",title:"8.1 年终奖单独计税vs合并，哪种省钱？",desc:"一张表格+两个计算案例，数字说话"},
+    {id:"5b",title:"8.2 专项附加扣除6项你都填了吗",desc:"子女教育/住房贷款/赡养老人/继续教育全解"},
+    {id:"5c",title:"8.3 副业收入怎么交税？劳务报酬vs经营所得",desc:"个体工商户核定征收与查账征收的选择逻辑"},
+    {id:"5d",title:"8.4 年度汇算清缴怎么退税？手把手操作",desc:"退税申请步骤+常见坑位提示"},
+    {id:"5e",title:"9.1 社保断缴1个月有什么影响？分情况讲清楚",desc:"上海落户/医保报销/养老金的三条影响链"},
+    {id:"5f",title:"9.2 灵活就业社保 vs 单位缴纳，退休差多少",desc:"实际测算：缴15年/20年/25年的养老金差距"},
+    {id:"5g",title:"9.3 公积金的隐藏玩法：提取条件与提前还贷",desc:"租房提取/商业贷款冲抵/组合贷的操作"},
+  ]},
+  {part:"第六篇 保险规划",secs:[
+    {id:"6a",title:"10.1 普通人最值得买的4种保险及顺序",desc:"医疗险先行/意外险兜底/重疾险补充/寿险托家"},
+    {id:"6b",title:"10.2 百万医疗险：理赔为什么那么难",desc:"免赔额/社保报销顺序/续保风险全拆解"},
+    {id:"6c",title:"10.3 重疾险保额怎么定？不是越高越好",desc:"保额=治疗费+康复期收入损失，公式算清楚"},
+    {id:"6d",title:"10.4 保险销售说的附加险，大多数不用买",desc:"返还型/分红型：揭开包装后的真实成本"},
+    {id:"6e",title:"10.5 夫妻双方的保险怎么搭？家庭保障方案",desc:"收入主力/全职配偶/子女各自的配置逻辑"},
+  ]},
+  {part:"第七篇 进阶认知",secs:[
+    {id:"7a",title:"11.1 通缩比通胀更可怕：日本失去30年的教训",desc:"工资下降/资产缩水/债务陷阱的组合拳"},
+    {id:"7b",title:"11.2 什么是流动性陷阱？钱多了为什么还借钱",desc:"中国经济现象的底层解释"},
+    {id:"7c",title:"11.3 人民币贬值普通人该怎么办",desc:"外汇配置/QDII基金/港股通，哪个适合你"},
+    {id:"7d",title:"11.4 黄金真的是避险资产吗？普通人该不该买",desc:"实物金/黄金ETF/纸黄金的逻辑与坑位"},
+    {id:"7e",title:"12.1 为什么涨时贪婪/跌时恐惧是写进基因的",desc:"大脑对损失的反应比收益强2倍"},
+    {id:"7f",title:"12.2 锚定效应：你的买入价是最大的认知陷阱",desc:"成本价与市值的正确思维方式"},
+    {id:"7g",title:"12.3 金融骗局识别手册：高收益的背后是什么",desc:"P2P/私募/虚假理财/杠杆配资的共同特征"},
+    {id:"7h",title:"12.4 建立自己的投资系统：原则/记录/复盘",desc:"不靠感觉靠系统，普通人长期盈利的基础"},
+  ]},
+  {part:"结语与附录",secs:[
+    {id:"end1",title:"结语：写给五年后的你",desc:"别在错误的赛道上努力，别在正确的赛道上放弃"},
+    {id:"end2",title:"附录A：本书公式与计算工具汇总",desc:"复利/定投/房贷/税务计算器一站式"},
+  ]},
+];
+
+const STYLE_PROMPTS = {
+  sharp: "写作风格：锋利、批判性强、直接戳痛点，不说废话，敢于挑战常识，有真实数据支撑，有作者自己鲜明的立场，像一个有10年经验的老手在和朋友说真话，绝不教科书式行文。句子可以短，可以反问，可以有情绪。",
+  practical: "写作风格：接地气、实操为主，每个概念配真实例子，有计算过程和操作步骤，读完就能直接用，像手把手教程。遇到数字就算出来，遇到步骤就一步步列清楚。",
+  story: "写作风格：先讲一个真实感强的普通人故事切入（可以虚构但要真实感），再用故事引出核心知识点，最后给行动建议，有代入感，读起来像在看故事，但干货不打折。",
+  academic: "写作风格：有深度的分析视角，引入经济学/行为金融学原理，但不要堆砌术语，每个概念都要用大白话解释清楚。有逻辑链，有数据来源，适合想深入理解的读者。"
+};
+
+// ── STATE ──
+let book = JSON.parse(localStorage.getItem('bookData') || 'null') || DEFAULT_BOOK;
+let bookTitle = localStorage.getItem('bookTitle') || '普通人的财富真相';
+let content = JSON.parse(localStorage.getItem('bookContent') || '{}');
+let cur = null;
+let style = 'sharp';
+let words = 2000;
+let busy = false;
+
+// ── INIT ──
+function init() {
+  const savedKey = localStorage.getItem('claudeKey') || '';
+  if (savedKey) {
+    document.getElementById('apiKey').value = savedKey;
+    document.getElementById('keyStatus').innerHTML = '<span class="key-ok">✓ 已保存</span>';
+  }
+  document.getElementById('bookTitle').textContent = bookTitle;
+  buildToc();
+}
+
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (!k) { document.getElementById('keyStatus').innerHTML = '<span class="key-err">请输入Key</span>'; return; }
+  if (!k.startsWith('sk-ant-')) { document.getElementById('keyStatus').innerHTML = '<span class="key-err">格式有误，应以 sk-ant- 开头</span>'; return; }
+  localStorage.setItem('claudeKey', k);
+  document.getElementById('keyStatus').innerHTML = '<span class="key-ok">✓ 保存成功</span>';
+  showToast('API Key 已保存', 'success');
+}
+
+// ── TOC ──
+function buildToc() {
+  const toc = document.getElementById('toc');
+  toc.innerHTML = '';
+  const allSecs = book.flatMap(p => p.secs);
+  const done = allSecs.filter(s => content[s.id]).length;
+  document.getElementById('tocStats').textContent = done + '/' + allSecs.length + ' 节';
+  document.getElementById('totalSecs').textContent = allSecs.length;
+  document.getElementById('progressBar').style.width = (allSecs.length ? done / allSecs.length * 100 : 0).toFixed(1) + '%';
+
+  book.forEach(p => {
+    const lbl = document.createElement('div');
+    lbl.className = 'part-label';
+    lbl.textContent = p.part;
+    toc.appendChild(lbl);
+    p.secs.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'sec-item' + (cur && cur.id === s.id ? ' active' : '');
+      el.id = 'si-' + s.id;
+      const dotClass = content[s.id] ? 'done' : '';
+      el.innerHTML = `<span class="sec-dot ${dotClass}" id="dot-${s.id}"></span><span class="sec-name">${s.title}</span>`;
+      el.onclick = () => pick(s);
+      toc.appendChild(el);
+    });
+  });
+  updateStats();
+}
+
+function pick(s) {
+  if (busy) return;
+  cur = s;
+  document.querySelectorAll('.sec-item').forEach(e => e.classList.remove('active'));
+  const el = document.getElementById('si-' + s.id);
+  if (el) { el.classList.add('active'); el.scrollIntoView({ block: 'nearest' }); }
+  document.getElementById('toolbarTitle').textContent = s.title;
+  document.getElementById('btnWrite').disabled = false;
+  document.getElementById('btnRegen').disabled = !content[s.id];
+  document.getElementById('btnCopy').disabled = !content[s.id];
+  showContent(s.id);
+}
+
+function showContent(id) {
+  const ed = document.getElementById('editorWrap');
+  if (content[id]) {
+    ed.innerHTML = `<div class="ec">${content[id]}</div>`;
+  } else {
+    const s = book.flatMap(p => p.secs).find(x => x.id === id);
+    ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><h3>${s ? s.title : ''}</h3><p>${s ? s.desc : ''}</p></div>`;
+  }
+}
+
+function updateStats() {
+  const allSecs = book.flatMap(p => p.secs);
+  const done = allSecs.filter(s => content[s.id]).length;
+  document.getElementById('doneCount').textContent = done;
+  const chars = Object.values(content).join('').replace(/<[^>]+>/g, '').length;
+  document.getElementById('totalChars').textContent = chars.toLocaleString();
+  document.getElementById('tocStats').textContent = done + '/' + allSecs.length + ' 节';
+  document.getElementById('progressBar').style.width = (allSecs.length ? done / allSecs.length * 100 : 0).toFixed(1) + '%';
+}
+
+// ── STYLE/WORDS ──
+function pickStyle(el, s) {
+  document.querySelectorAll('.stylebar .tag').forEach(t => { if (['锋利批判','实操干货','故事带入','深度分析'].includes(t.textContent)) t.classList.remove('on'); });
+  el.classList.add('on'); style = s;
+}
+function pickWords(el, w) {
+  document.querySelectorAll('.stylebar .tag').forEach(t => { if (['2000字','1000字','3000字'].includes(t.textContent)) t.classList.remove('on'); });
+  el.classList.add('on'); words = w;
+}
+
+// ── WRITE ──
+async function doWrite() { await writeSection(false); }
+async function doRegen() { await writeSection(true); }
+
+async function writeSection(regen) {
+  if (!cur || busy) return;
+  const key = localStorage.getItem('claudeKey') || '';
+  if (!key) { showToast('请先填入并保存 API Key', 'error'); return; }
+
+  busy = true;
+  document.getElementById('btnWrite').disabled = true;
+  document.getElementById('btnRegen').disabled = true;
+  document.getElementById('btnCopy').disabled = true;
+  document.getElementById('writingStatus').classList.add('show');
+  document.getElementById('errStatus').classList.remove('show');
+
+  const dot = document.getElementById('dot-' + cur.id);
+  if (dot) { dot.className = 'sec-dot writing'; }
+
+  const ed = document.getElementById('editorWrap');
+  ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="animation:spin 1.5s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><h3>AI 正在写作中...</h3><p>约需 15-30 秒，请稍候</p></div>`;
+
+  const s = cur;
+  const model = document.getElementById('modelSelect').value;
+  const prompt = `你是财经博主"小可耐教你学RPA"，正在写一本面向普通上班族的财经书籍《${bookTitle}》。
+
+当前章节：${s.title}
+核心内容：${s.desc}
+${STYLE_PROMPTS[style]}
+
+要求：
+- 约${words}字
+- 用自然段落，不要"第一/第二"机械列举
+- 可以有数据、案例、计算过程增强说服力
+- 结尾给1-2句具体可执行的行动建议
+- 第一段开门见山，不要"本节我们来讲..."式废话开头
+- 作者背景：1996年生男性，上海上班族，有消费ETF/红利ETF定投实操，有副业收入，关注税务节税和社保问题，风格批判不中立
+
+输出规则：
+- 纯HTML格式，只允许使用：<h1>节标题</h1> <p>段落</p> <h2>小标题</h2> <blockquote>金句</blockquote> <div class="tip">行动建议</div> <div class="warn-box">风险提示</div>
+- 不要输出任何解释、前言或Markdown，直接从<h1>开始`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      let errMsg = `HTTP ${res.status}`;
+      try { const j = JSON.parse(errText); errMsg = j.error?.message || errMsg; } catch(e) {}
+      throw new Error(errMsg);
+    }
+
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    if (!text) throw new Error('返回内容为空');
+
+    content[s.id] = text;
+    localStorage.setItem('bookContent', JSON.stringify(content));
+
+    if (dot) dot.className = 'sec-dot done';
+    showContent(s.id);
+    document.getElementById('btnCopy').disabled = false;
+    document.getElementById('btnRegen').disabled = false;
+    updateStats();
+    showToast('写作完成！', 'success');
+
+  } catch (e) {
+    if (dot) dot.className = 'sec-dot';
+    ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e05555" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3 style="color:#e05555">生成失败</h3><p style="color:#9097b5">${e.message}</p></div>`;
+    document.getElementById('errStatus').textContent = e.message;
+    document.getElementById('errStatus').classList.add('show');
+    showToast('生成失败：' + e.message, 'error');
+  }
+
+  busy = false;
+  document.getElementById('btnWrite').disabled = false;
+  document.getElementById('writingStatus').classList.remove('show');
+}
+
+// ── COPY ──
+function doCopy() {
+  if (!cur || !content[cur.id]) return;
+  const text = content[cur.id].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板', 'success'));
+}
+
+// ── EXPORT ──
+function doExportTxt() {
+  const lines = [];
+  lines.push(bookTitle);
+  lines.push('作者：小可耐教你学RPA · 13133870607');
+  lines.push('生成时间：' + new Date().toLocaleString());
+  lines.push('='.repeat(50));
+  book.forEach(p => {
+    lines.push('\n' + '━'.repeat(30));
+    lines.push(p.part);
+    lines.push('━'.repeat(30) + '\n');
+    p.secs.forEach(s => {
+      lines.push('【' + s.title + '】');
+      if (content[s.id]) {
+        lines.push(content[s.id].replace(/<[^>]+>/g, '').replace(/\n\s*\n/g, '\n').trim());
+      } else {
+        lines.push('（待写）');
+      }
+      lines.push('');
+    });
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = bookTitle + '_小可耐教你学RPA.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('导出成功', 'success');
+}
+
+// ── TOC MODAL ──
+function openTocModal() {
+  document.getElementById('editBookTitle').value = bookTitle;
+  renderPartList();
+  document.getElementById('tocModal').classList.add('show');
+}
+function closeTocModal() {
+  document.getElementById('tocModal').classList.remove('show');
+}
+
+function renderPartList() {
+  const el = document.getElementById('partList');
+  el.innerHTML = '';
+  book.forEach((p, pi) => {
+    const pg = document.createElement('div');
+    pg.className = 'part-group';
+    pg.innerHTML = `
+      <div class="part-group-header">
+        <input type="text" value="${p.part}" onchange="book[${pi}].part=this.value" style="font-weight:600;color:var(--gold);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;outline:none;" />
+        <button class="part-del" onclick="delPart(${pi})">删除篇</button>
+      </div>
+      <div id="secList-${pi}"></div>
+      <button class="add-btn" onclick="addSec(${pi})">＋ 添加章节</button>`;
+    el.appendChild(pg);
+    renderSecList(pi);
+  });
+}
+
+function renderSecList(pi) {
+  const el = document.getElementById('secList-' + pi);
+  if (!el) return;
+  el.innerHTML = '';
+  book[pi].secs.forEach((s, si) => {
+    const row = document.createElement('div');
+    row.className = 'toc-edit-item';
+    row.innerHTML = `
+      <input type="text" value="${s.title}" onchange="book[${pi}].secs[${si}].title=this.value" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);outline:none;" />
+      <button class="toc-del" onclick="delSec(${pi},${si})">删</button>`;
+    el.appendChild(row);
+  });
+}
+
+function addPart() {
+  book.push({ part: '新篇章', secs: [{ id: 'new_' + Date.now(), title: '新章节', desc: '章节描述' }] });
+  renderPartList();
+}
+function delPart(pi) {
+  if (!confirm('确定删除这个篇章及其所有章节？')) return;
+  book.splice(pi, 1);
+  renderPartList();
+}
+function addSec(pi) {
+  book[pi].secs.push({ id: 'sec_' + Date.now(), title: '新章节标题', desc: '章节核心内容描述' });
+  renderSecList(pi);
+}
+function delSec(pi, si) {
+  book[pi].secs.splice(pi, 1);
+  renderSecList(pi);
+}
+
+function saveToc() {
+  bookTitle = document.getElementById('editBookTitle').value || bookTitle;
+  localStorage.setItem('bookTitle', bookTitle);
+  localStorage.setItem('bookData', JSON.stringify(book));
+  document.getElementById('bookTitle').textContent = bookTitle;
+  closeTocModal();
+  buildToc();
+  showToast('目录已保存', 'success');
+}
+
+// ── TOAST ──
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
