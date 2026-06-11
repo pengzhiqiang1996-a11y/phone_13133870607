@@ -3,171 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI全自动写书工具 · 小可耐教你学RPA</title>
+<title>AI全自动写书工具 v2 · 小可耐教你学RPA</title>
 <style>
 :root {
-  --bg: #0f1117;
-  --bg2: #1a1d27;
-  --bg3: #222536;
-  --bg4: #2a2e42;
-  --border: #2e3248;
-  --border2: #3d4260;
-  --text: #e8eaf0;
-  --text2: #9097b5;
-  --text3: #5c6384;
-  --gold: #c9a84c;
-  --gold2: #e8c86a;
-  --blue: #4a90d9;
-  --blue-bg: #1a2840;
-  --green: #4caf7d;
-  --green-bg: #0f2818;
-  --red: #e05555;
-  --red-bg: #2a1010;
-  --warn: #e0a040;
-  --warn-bg: #2a1f0a;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --bg:#0f1117;--bg2:#1a1d27;--bg3:#222536;--bg4:#2a2e42;
+  --border:#2e3248;--border2:#3d4260;
+  --text:#e8eaf0;--text2:#9097b5;--text3:#5c6384;
+  --gold:#c9a84c;--gold2:#e8c86a;
+  --blue:#4a90d9;--blue-bg:#1a2840;
+  --green:#4caf7d;--green-bg:#0f2818;
+  --red:#e05555;--red-bg:#2a1010;
+  --warn:#e0a040;--warn-bg:#2a1f0a;
+  --purple:#9b7de8;--purple-bg:#1e1535;
+  --radius:8px;--radius-lg:12px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'PingFang SC','Microsoft YaHei',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+.app{display:flex;height:100vh;overflow:hidden;}
 
-/* ── LAYOUT ── */
-.app { display: flex; height: 100vh; overflow: hidden; }
-.sidebar { width: 280px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+/* sidebar */
+.sidebar{width:285px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-top{padding:16px;border-bottom:1px solid var(--border);}
+.brand{font-size:15px;font-weight:600;color:var(--gold);}
+.brand-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.key-section{padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.key-label{font-size:11px;color:var(--text3);margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;}
+.key-label a{color:var(--blue);text-decoration:none;font-size:10px;}
+.key-row{display:flex;gap:6px;}
+.key-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-size:12px;outline:none;font-family:monospace;}
+.key-input:focus{border-color:var(--blue);}
+.key-save{padding:6px 12px;background:var(--blue);border:none;border-radius:var(--radius);color:#fff;font-size:12px;cursor:pointer;}
+.key-save:hover{opacity:0.85;}
+.key-status{font-size:10px;margin-top:3px;height:13px;}
+.key-ok{color:var(--green);}
+.key-err{color:var(--red);}
+.toc-header{padding:9px 16px;display:flex;align-items:center;justify-content:space-between;}
+.toc-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
+.toc-stats{font-size:11px;color:var(--text3);}
+.toc{flex:1;overflow-y:auto;padding-bottom:16px;}
+.toc::-webkit-scrollbar{width:4px;}
+.toc::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.part-label{padding:10px 16px 4px;font-size:10px;color:var(--gold);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
+.sec-item{padding:5px 16px 5px 24px;cursor:pointer;display:flex;align-items:flex-start;gap:8px;border-left:2px solid transparent;transition:all 0.1s;}
+.sec-item:hover{background:var(--bg3);}
+.sec-item.active{background:var(--bg3);border-left-color:var(--blue);}
+.sec-item.active .sec-name{color:var(--blue);}
+.sec-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;margin-top:4px;transition:all 0.3s;}
+.sec-dot.done{background:var(--green);border-color:var(--green);}
+.sec-dot.writing{background:var(--warn);border-color:var(--warn);animation:blink 0.7s infinite;}
+.sec-name{font-size:12px;color:var(--text2);line-height:1.5;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* ── SIDEBAR ── */
-.sidebar-top { padding: 16px; border-bottom: 1px solid var(--border); }
-.brand { font-size: 15px; font-weight: 600; color: var(--gold); letter-spacing: 0.02em; }
-.brand-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+/* main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.progress-bar-wrap{height:2px;background:var(--border);}
+.progress-bar{height:100%;background:var(--blue);transition:width 0.4s;}
+.toolbar{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg2);}
+.toolbar-title{flex:1;font-size:13px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.1s;white-space:nowrap;font-family:inherit;}
+.btn:hover{background:var(--bg3);color:var(--text);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn-primary:hover{opacity:0.85;background:var(--blue);}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#1a1000;font-weight:600;}
+.btn-gold:hover{opacity:0.85;background:var(--gold);}
+.btn-green{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+.btn-green:hover{background:var(--green);color:#fff;}
+.btn-purple{background:var(--purple-bg);border-color:var(--purple);color:var(--purple);}
+.btn-purple:hover{background:var(--purple);color:#fff;}
 
-.key-section { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg3); }
-.key-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
-.key-label a { color: var(--blue); text-decoration: none; font-size: 10px; }
-.key-label a:hover { text-decoration: underline; }
-.key-row { display: flex; gap: 6px; }
-.key-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 10px; color: var(--text); font-size: 12px; outline: none; font-family: monospace; }
-.key-input:focus { border-color: var(--blue); }
-.key-save { padding: 7px 12px; background: var(--blue); border: none; border-radius: var(--radius); color: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.key-save:hover { opacity: 0.85; }
-.key-status { font-size: 10px; margin-top: 4px; height: 14px; }
-.key-ok { color: var(--green); }
-.key-err { color: var(--red); }
+/* style bar */
+.stylebar{padding:7px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--bg);}
+.sl{font-size:11px;color:var(--text3);}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all 0.1s;}
+.tag:hover{border-color:var(--border2);color:var(--text2);}
+.tag.on{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
 
-.toc-header { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
-.toc-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
-.toc-stats { font-size: 11px; color: var(--text3); }
-.toc { flex: 1; overflow-y: auto; padding-bottom: 16px; }
-.toc::-webkit-scrollbar { width: 4px; }
-.toc::-webkit-scrollbar-track { background: transparent; }
-.toc::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+/* memory bar */
+.memory-bar{padding:6px 18px;border-bottom:1px solid var(--border);background:var(--purple-bg);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.mem-label{font-size:11px;color:var(--purple);display:flex;align-items:center;gap:5px;}
+.mem-toggle{display:flex;align-items:center;gap:6px;}
+.switch{position:relative;display:inline-block;width:32px;height:18px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider-sw{position:absolute;cursor:pointer;inset:0;background:var(--bg4);border-radius:18px;transition:0.2s;}
+.slider-sw:before{position:absolute;content:"";height:12px;width:12px;left:3px;bottom:3px;background:var(--text3);border-radius:50%;transition:0.2s;}
+input:checked + .slider-sw{background:var(--purple);}
+input:checked + .slider-sw:before{transform:translateX(14px);background:#fff;}
+.mem-info{font-size:11px;color:var(--text3);flex:1;}
+.mem-count{font-size:11px;color:var(--purple);font-weight:500;}
+.mem-clear{font-size:11px;padding:2px 8px;border-radius:12px;border:1px solid var(--purple);background:transparent;color:var(--purple);cursor:pointer;}
+.mem-clear:hover{background:var(--purple);color:#fff;}
 
-.part-label { padding: 10px 16px 4px; font-size: 10px; color: var(--gold); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-.sec-item { padding: 6px 16px 6px 24px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; border-left: 2px solid transparent; transition: all 0.12s; }
-.sec-item:hover { background: var(--bg3); }
-.sec-item.active { background: var(--bg3); border-left-color: var(--blue); }
-.sec-item.active .sec-name { color: var(--blue); }
-.sec-dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 4px; transition: all 0.3s; }
-.sec-dot.done { background: var(--green); border-color: var(--green); }
-.sec-dot.writing { background: var(--warn); border-color: var(--warn); animation: blink 0.7s infinite; }
-.sec-name { font-size: 12px; color: var(--text2); line-height: 1.5; }
-@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+/* editor */
+.editor-wrap{flex:1;overflow-y:auto;padding:26px 34px;}
+.editor-wrap::-webkit-scrollbar{width:5px;}
+.editor-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3);text-align:center;}
+.placeholder svg{opacity:0.2;}
+.placeholder h3{font-size:15px;color:var(--text2);font-weight:500;}
+.placeholder p{font-size:12px;max-width:320px;line-height:1.7;}
+.ec h1{font-size:20px;font-weight:600;color:var(--gold2);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);line-height:1.5;}
+.ec h2{font-size:15px;font-weight:600;color:var(--text);margin:22px 0 10px;}
+.ec p{font-size:14px;line-height:1.95;color:var(--text2);margin-bottom:14px;}
+.ec blockquote{border-left:3px solid var(--gold);padding:10px 16px;color:var(--text3);font-style:italic;margin:16px 0;background:var(--bg3);border-radius:0 var(--radius) var(--radius) 0;}
+.ec .tip{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);padding:12px 16px;margin:16px 0;font-size:13px;color:var(--green);}
+.ec .warn-box{background:var(--warn-bg);border:1px solid var(--warn);border-radius:var(--radius);padding:12px 16px;margin:16px 0;font-size:13px;color:var(--warn);}
+.ec table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;}
+.ec th{background:var(--bg3);color:var(--text);padding:8px 12px;border:1px solid var(--border);text-align:left;}
+.ec td{padding:7px 12px;border:1px solid var(--border);color:var(--text2);}
 
-/* ── TOOLBAR ── */
-.toolbar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg2); flex-wrap: wrap; }
-.toolbar-title { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.12s; white-space: nowrap; font-family: inherit; }
-.btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
-.btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
-.btn-primary:hover { opacity: 0.85; background: var(--blue); }
-.btn-gold { background: var(--gold); border-color: var(--gold); color: #1a1000; font-weight: 600; }
-.btn-gold:hover { opacity: 0.85; background: var(--gold); }
-.btn-green { background: var(--green-bg); border-color: var(--green); color: var(--green); }
-.btn-green:hover { background: var(--green); color: #fff; }
+/* memory panel */
+.mem-panel{background:var(--bg2);border-top:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height 0.3s ease;}
+.mem-panel.open{max-height:220px;}
+.mem-panel-inner{padding:14px 18px;overflow-y:auto;max-height:200px;}
+.mem-panel-inner::-webkit-scrollbar{width:4px;}
+.mem-panel-inner::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.mem-item{margin-bottom:10px;padding:10px 14px;background:var(--bg3);border-radius:var(--radius);border-left:3px solid var(--purple);}
+.mem-item-title{font-size:11px;color:var(--purple);margin-bottom:4px;font-weight:500;}
+.mem-item-text{font-size:12px;color:var(--text3);line-height:1.6;}
 
-/* ── STYLE BAR ── */
-.stylebar { padding: 8px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--bg); }
-.sl { font-size: 11px; color: var(--text3); }
-.tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.12s; }
-.tag:hover { border-color: var(--border2); color: var(--text2); }
-.tag.on { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+/* statusbar */
+.statusbar{padding:6px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:18px;background:var(--bg2);flex-wrap:wrap;}
+.stat{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;}
+.stat strong{color:var(--text2);}
+.writing-status{font-size:11px;color:var(--warn);display:none;align-items:center;gap:5px;}
+.writing-status.show{display:flex;}
+.spin{animation:spin 1s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-status{font-size:11px;color:var(--red);display:none;}
+.err-status.show{display:block;}
 
-/* ── EDITOR ── */
-.editor-wrap { flex: 1; overflow-y: auto; padding: 28px 36px; }
-.editor-wrap::-webkit-scrollbar { width: 5px; }
-.editor-wrap::-webkit-scrollbar-track { background: transparent; }
-.editor-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-.placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--text3); text-align: center; }
-.placeholder svg { opacity: 0.2; }
-.placeholder h3 { font-size: 15px; color: var(--text2); font-weight: 500; }
-.placeholder p { font-size: 12px; max-width: 300px; line-height: 1.6; }
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px;width:580px;max-width:92vw;max-height:82vh;overflow-y:auto;}
+.modal h2{font-size:16px;font-weight:600;color:var(--gold);margin-bottom:6px;}
+.modal p{font-size:12px;color:var(--text3);margin-bottom:16px;}
+.modal-close{float:right;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;margin-top:-4px;}
+.modal-close:hover{color:var(--text);}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11px;color:var(--text3);margin-bottom:5px;}
+.field input,.field textarea,.field select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 11px;color:var(--text);font-size:13px;outline:none;font-family:inherit;}
+.field textarea{resize:vertical;min-height:70px;line-height:1.6;}
+.field input:focus,.field textarea:focus{border-color:var(--blue);}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;border-top:1px solid var(--border);padding-top:14px;}
+.part-group{margin-bottom:18px;}
+.part-group-header{display:flex;gap:8px;align-items:center;margin-bottom:7px;}
+.part-name-input{flex:1;font-weight:600;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--gold);outline:none;}
+.part-del{padding:6px 10px;background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius);color:var(--red);cursor:pointer;font-size:12px;}
+.part-del:hover{background:var(--red);color:#fff;}
+.toc-edit-item{display:flex;gap:7px;align-items:flex-start;margin-bottom:7px;}
+.toc-edit-item input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);outline:none;font-size:12px;}
+.toc-edit-item input:focus{border-color:var(--blue);}
+.toc-del{padding:7px 10px;background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius);color:var(--red);cursor:pointer;font-size:12px;flex-shrink:0;}
+.toc-del:hover{background:var(--red);color:#fff;}
+.add-btn{font-size:12px;color:var(--blue);background:none;border:1px dashed var(--blue);border-radius:var(--radius);padding:6px 12px;cursor:pointer;width:100%;margin-top:3px;}
+.add-btn:hover{background:var(--blue-bg);}
+.add-part-btn{font-size:12px;color:var(--gold);background:none;border:1px dashed var(--gold);border-radius:var(--radius);padding:8px;cursor:pointer;width:100%;margin-top:6px;}
+.add-part-btn:hover{background:var(--warn-bg);}
 
-.ec h1 { font-size: 20px; font-weight: 600; color: var(--gold2); margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); line-height: 1.5; }
-.ec h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 22px 0 10px; }
-.ec p { font-size: 14px; line-height: 1.95; color: var(--text2); margin-bottom: 14px; }
-.ec blockquote { border-left: 3px solid var(--gold); padding: 10px 16px; color: var(--text3); font-style: italic; margin: 16px 0; background: var(--bg3); border-radius: 0 var(--radius) var(--radius) 0; }
-.ec .tip { background: var(--green-bg); border: 1px solid var(--green); border-radius: var(--radius); padding: 12px 16px; margin: 16px 0; font-size: 13px; color: var(--green); }
-.ec .warn-box { background: var(--warn-bg); border: 1px solid var(--warn); border-radius: var(--radius); padding: 12px 16px; margin: 16px 0; font-size: 13px; color: var(--warn); }
-.ec table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
-.ec th { background: var(--bg3); color: var(--text); padding: 8px 12px; border: 1px solid var(--border); text-align: left; }
-.ec td { padding: 7px 12px; border: 1px solid var(--border); color: var(--text2); }
-
-/* ── STATUS BAR ── */
-.statusbar { padding: 7px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 20px; background: var(--bg2); flex-wrap: wrap; }
-.stat { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
-.stat strong { color: var(--text2); }
-.writing-status { font-size: 11px; color: var(--warn); display: none; align-items: center; gap: 5px; }
-.writing-status.show { display: flex; }
-.spin { animation: spin 1s linear infinite; display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.err-status { font-size: 11px; color: var(--red); display: none; }
-.err-status.show { display: block; }
-
-/* ── MODAL ── */
-.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
-.modal-bg.show { display: flex; }
-.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 24px; width: 560px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
-.modal h2 { font-size: 16px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
-.modal p { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
-.modal-close { float: right; background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; margin-top: -4px; }
-.modal-close:hover { color: var(--text); }
-.field { margin-bottom: 14px; }
-.field label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 5px; }
-.field input, .field textarea, .field select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; color: var(--text); font-size: 13px; outline: none; font-family: inherit; }
-.field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
-.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--blue); }
-.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
-
-/* ── TOC EDITOR ── */
-.toc-edit-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
-.toc-edit-item input { flex: 1; }
-.toc-del { padding: 7px 10px; background: var(--red-bg); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: 12px; flex-shrink: 0; }
-.toc-del:hover { background: var(--red); color: #fff; }
-.add-btn { font-size: 12px; color: var(--blue); background: none; border: 1px dashed var(--blue); border-radius: var(--radius); padding: 6px 12px; cursor: pointer; width: 100%; margin-top: 4px; }
-.add-btn:hover { background: var(--blue-bg); }
-.part-group { margin-bottom: 20px; }
-.part-group-header { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.part-group-header input { flex: 1; font-weight: 600; color: var(--gold); }
-.part-del { padding: 6px 10px; background: var(--red-bg); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: 12px; }
-.part-del:hover { background: var(--red); color: #fff; }
-.add-part-btn { font-size: 12px; color: var(--gold); background: none; border: 1px dashed var(--gold); border-radius: var(--radius); padding: 8px; cursor: pointer; width: 100%; margin-top: 8px; }
-.add-part-btn:hover { background: var(--warn-bg); }
-
-/* ── PROGRESS BAR ── */
-.progress-bar-wrap { height: 2px; background: var(--border); position: relative; }
-.progress-bar { height: 100%; background: var(--blue); transition: width 0.3s; }
-
-/* ── TOAST ── */
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 18px; font-size: 13px; color: var(--text); z-index: 999; transform: translateY(60px); opacity: 0; transition: all 0.25s; pointer-events: none; }
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.success { border-color: var(--green); color: var(--green); }
-.toast.error { border-color: var(--red); color: var(--red); }
+/* toast */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:9px 16px;font-size:13px;color:var(--text);z-index:999;transform:translateY(60px);opacity:0;transition:all 0.22s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
 </style>
 </head>
 <body>
-
-<!-- MAIN APP -->
 <div class="app">
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -175,7 +177,6 @@ html, body { height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', -apple
       <div class="brand" id="bookTitle">普通人的财富真相</div>
       <div class="brand-sub">小可耐教你学RPA · 13133870607</div>
     </div>
-
     <div class="key-section">
       <div class="key-label">
         Claude API Key
@@ -187,10 +188,9 @@ html, body { height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', -apple
       </div>
       <div class="key-status" id="keyStatus"></div>
     </div>
-
     <div class="toc-header">
       <span class="toc-title">章节目录</span>
-      <span class="toc-stats" id="tocStats">0/0 节</span>
+      <span class="toc-stats" id="tocStats">0/0</span>
     </div>
     <div class="toc" id="toc"></div>
   </div>
@@ -203,59 +203,78 @@ html, body { height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', -apple
       <span class="toolbar-title" id="toolbarTitle">选择章节开始创作</span>
       <button class="btn btn-primary" id="btnWrite" onclick="doWrite()" disabled>✦ AI写这一节</button>
       <button class="btn" id="btnRegen" onclick="doRegen()" disabled>↺ 重新生成</button>
-      <button class="btn" id="btnCopy" onclick="doCopy()" disabled>⎘ 复制正文</button>
-      <button class="btn btn-green" onclick="doExportTxt()">↓ 导出全书(TXT)</button>
+      <button class="btn" id="btnCopy" onclick="doCopy()" disabled>⎘ 复制</button>
+      <button class="btn btn-purple" onclick="toggleMemPanel()">◈ 记忆摘要</button>
+      <button class="btn btn-green" onclick="doExport()">↓ 导出全书</button>
       <button class="btn btn-gold" onclick="openTocModal()">⊞ 编辑目录</button>
     </div>
 
     <div class="stylebar">
-      <span class="sl">写作风格：</span>
+      <span class="sl">风格：</span>
       <span class="tag on" onclick="pickStyle(this,'sharp')">锋利批判</span>
       <span class="tag" onclick="pickStyle(this,'practical')">实操干货</span>
       <span class="tag" onclick="pickStyle(this,'story')">故事带入</span>
       <span class="tag" onclick="pickStyle(this,'academic')">深度分析</span>
-      <span class="sl" style="margin-left:10px">字数：</span>
+      <span class="sl" style="margin-left:8px">字数：</span>
       <span class="tag on" onclick="pickWords(this,2000)">2000字</span>
       <span class="tag" onclick="pickWords(this,1000)">1000字</span>
       <span class="tag" onclick="pickWords(this,3000)">3000字</span>
-      <span class="sl" style="margin-left:10px">模型：</span>
-      <select id="modelSelect" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:3px 8px;font-size:11px;outline:none;">
+      <span class="sl" style="margin-left:8px">模型：</span>
+      <select id="modelSel" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:3px 8px;font-size:11px;outline:none;">
         <option value="claude-sonnet-4-20250514">Sonnet 4（推荐）</option>
         <option value="claude-haiku-4-5-20251001">Haiku 4.5（快/省）</option>
         <option value="claude-opus-4-20250514">Opus 4（最强）</option>
       </select>
     </div>
 
+    <!-- 记忆开关栏 -->
+    <div class="memory-bar">
+      <span class="mem-label">◈ 上下文记忆</span>
+      <div class="mem-toggle">
+        <label class="switch">
+          <input type="checkbox" id="memToggle" checked onchange="onMemToggle()">
+          <span class="slider-sw"></span>
+        </label>
+        <span class="mem-info" id="memInfo">已开启 · 写作时自动携带前文摘要，保持全书风格一致</span>
+      </div>
+      <span class="mem-count" id="memCount">0 条摘要</span>
+      <button class="mem-clear" onclick="clearMemory()">清空记忆</button>
+    </div>
+
     <div class="editor-wrap" id="editorWrap">
       <div class="placeholder">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        <h3>AI全自动写书工具</h3>
-        <p>① 填入Claude API Key 并保存<br>② 点击左侧任意章节<br>③ 选好风格和字数<br>④ 点「AI写这一节」开始创作</p>
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <h3>AI 全自动写书工具 v2</h3>
+        <p>已支持上下文记忆<br>每节写完自动提取摘要<br>下一节写作时自动携带前文记忆</p>
       </div>
+    </div>
+
+    <!-- 记忆面板 -->
+    <div class="mem-panel" id="memPanel">
+      <div class="mem-panel-inner" id="memPanelInner"></div>
     </div>
 
     <div class="statusbar">
       <span class="stat">已完成 <strong id="doneCount">0</strong> 节</span>
-      <span class="stat">累计字数 <strong id="totalChars">0</strong></span>
+      <span class="stat">累计 <strong id="totalChars">0</strong> 字</span>
       <span class="stat">共 <strong id="totalSecs">0</strong> 节</span>
-      <span class="writing-status" id="writingStatus"><span class="spin">⟳</span> AI正在写作，请稍候...</span>
+      <span class="writing-status" id="writingStatus"><span class="spin">⟳</span> <span id="writingMsg">AI正在写作...</span></span>
       <span class="err-status" id="errStatus"></span>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- TOC EDITOR MODAL -->
+<!-- TOC 编辑弹窗 -->
 <div class="modal-bg" id="tocModal">
   <div class="modal">
     <button class="modal-close" onclick="closeTocModal()">×</button>
     <h2>编辑书籍目录</h2>
-    <p>可以修改书名、增删篇章和章节。修改后点「保存目录」生效。</p>
+    <p>修改书名、篇章、章节。保存后生效，已生成内容不受影响。</p>
     <div class="field">
       <label>书名</label>
-      <input type="text" id="editBookTitle" placeholder="书名" />
+      <input type="text" id="editBookTitle" />
     </div>
     <div id="partList"></div>
     <button class="add-part-btn" onclick="addPart()">＋ 添加新篇章</button>
@@ -267,7 +286,7 @@ html, body { height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', -apple
 </div>
 
 <script>
-// ── DEFAULT BOOK DATA ──
+// ── 默认书籍数据 ──
 const DEFAULT_BOOK = [
   {part:"前言",secs:[
     {id:"pre",title:"这本书写给那些工资涨了却越来越穷的人",desc:"你不是不努力，是没人教你规则"}
@@ -344,30 +363,46 @@ const DEFAULT_BOOK = [
 ];
 
 const STYLE_PROMPTS = {
-  sharp: "写作风格：锋利、批判性强、直接戳痛点，不说废话，敢于挑战常识，有真实数据支撑，有作者自己鲜明的立场，像一个有10年经验的老手在和朋友说真话，绝不教科书式行文。句子可以短，可以反问，可以有情绪。",
-  practical: "写作风格：接地气、实操为主，每个概念配真实例子，有计算过程和操作步骤，读完就能直接用，像手把手教程。遇到数字就算出来，遇到步骤就一步步列清楚。",
-  story: "写作风格：先讲一个真实感强的普通人故事切入（可以虚构但要真实感），再用故事引出核心知识点，最后给行动建议，有代入感，读起来像在看故事，但干货不打折。",
-  academic: "写作风格：有深度的分析视角，引入经济学/行为金融学原理，但不要堆砌术语，每个概念都要用大白话解释清楚。有逻辑链，有数据来源，适合想深入理解的读者。"
+  sharp:"写作风格：锋利批判，直接戳痛点，不说废话，敢于挑战常识，有数据支撑，有作者鲜明立场，像10年经验老手和朋友说真话，绝不教科书式。句子可以短，可以反问，可以有情绪。",
+  practical:"写作风格：接地气实操，每个概念配真实例子，有计算过程和操作步骤，读完就能直接用，像手把手教程。遇到数字就算出来，遇到步骤就一步步列清楚。",
+  story:"写作风格：先讲真实感强的普通人故事切入（可虚构但要有真实感），用故事引出核心知识点，最后给行动建议，有代入感，读起来像在看故事，但干货不打折。",
+  academic:"写作风格：有深度的分析视角，引入经济学/行为金融学原理，但不堆砌术语，每个概念用大白话解释。有逻辑链，有数据，适合想深入理解的读者。"
 };
 
-// ── STATE ──
-let book = JSON.parse(localStorage.getItem('bookData') || 'null') || DEFAULT_BOOK;
-let bookTitle = localStorage.getItem('bookTitle') || '普通人的财富真相';
-let content = JSON.parse(localStorage.getItem('bookContent') || '{}');
-let cur = null;
-let style = 'sharp';
-let words = 2000;
-let busy = false;
+// ── 状态 ──
+let book = JSON.parse(localStorage.getItem('bookData2') || 'null') || DEFAULT_BOOK;
+let bookTitle = localStorage.getItem('bookTitle2') || '普通人的财富真相';
+let content = JSON.parse(localStorage.getItem('bookContent2') || '{}');
+// memory: { secId: { title, summary } }
+let memory = JSON.parse(localStorage.getItem('bookMemory2') || '{}');
+let cur = null, style = 'sharp', words = 2000, busy = false;
+let memPanelOpen = false;
 
-// ── INIT ──
-function init() {
-  const savedKey = localStorage.getItem('claudeKey') || '';
-  if (savedKey) {
-    document.getElementById('apiKey').value = savedKey;
-    document.getElementById('keyStatus').innerHTML = '<span class="key-ok">✓ 已保存</span>';
+// ── 摘要提取：用AI提取，失败则用本地截取 ──
+async function extractSummary(secTitle, htmlContent, apiKey, model) {
+  const plainText = htmlContent.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0, 1200);
+  const prompt = `请用100字以内总结以下文章的核心观点，要点式，供后续章节参考，不要废话：\n\n章节：${secTitle}\n内容：${plainText}\n\n直接输出摘要，不要任何前缀。`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model, max_tokens:200, messages:[{role:'user',content:prompt}]})
+    });
+    if (!res.ok) throw new Error('摘要提取失败');
+    const data = await res.json();
+    return data.content?.map(b=>b.text||'').join('').trim() || plainText.slice(0,150);
+  } catch(e) {
+    return plainText.slice(0, 150) + '...';
   }
+}
+
+// ── 初始化 ──
+function init() {
+  const k = localStorage.getItem('claudeKey') || '';
+  if (k) { document.getElementById('apiKey').value = k; document.getElementById('keyStatus').innerHTML = '<span class="key-ok">✓ 已保存</span>'; }
   document.getElementById('bookTitle').textContent = bookTitle;
   buildToc();
+  updateMemCount();
 }
 
 function saveKey() {
@@ -379,16 +414,15 @@ function saveKey() {
   showToast('API Key 已保存', 'success');
 }
 
-// ── TOC ──
+// ── 目录 ──
 function buildToc() {
   const toc = document.getElementById('toc');
   toc.innerHTML = '';
-  const allSecs = book.flatMap(p => p.secs);
-  const done = allSecs.filter(s => content[s.id]).length;
-  document.getElementById('tocStats').textContent = done + '/' + allSecs.length + ' 节';
-  document.getElementById('totalSecs').textContent = allSecs.length;
-  document.getElementById('progressBar').style.width = (allSecs.length ? done / allSecs.length * 100 : 0).toFixed(1) + '%';
-
+  const all = book.flatMap(p=>p.secs);
+  const done = all.filter(s=>content[s.id]).length;
+  document.getElementById('tocStats').textContent = done+'/'+all.length;
+  document.getElementById('totalSecs').textContent = all.length;
+  document.getElementById('progressBar').style.width = (all.length ? done/all.length*100 : 0).toFixed(1)+'%';
   book.forEach(p => {
     const lbl = document.createElement('div');
     lbl.className = 'part-label';
@@ -396,10 +430,9 @@ function buildToc() {
     toc.appendChild(lbl);
     p.secs.forEach(s => {
       const el = document.createElement('div');
-      el.className = 'sec-item' + (cur && cur.id === s.id ? ' active' : '');
-      el.id = 'si-' + s.id;
-      const dotClass = content[s.id] ? 'done' : '';
-      el.innerHTML = `<span class="sec-dot ${dotClass}" id="dot-${s.id}"></span><span class="sec-name">${s.title}</span>`;
+      el.className = 'sec-item' + (cur&&cur.id===s.id?' active':'');
+      el.id = 'si-'+s.id;
+      el.innerHTML = `<span class="sec-dot ${content[s.id]?'done':''}" id="dot-${s.id}"></span><span class="sec-name">${s.title}</span>`;
       el.onclick = () => pick(s);
       toc.appendChild(el);
     });
@@ -410,9 +443,9 @@ function buildToc() {
 function pick(s) {
   if (busy) return;
   cur = s;
-  document.querySelectorAll('.sec-item').forEach(e => e.classList.remove('active'));
-  const el = document.getElementById('si-' + s.id);
-  if (el) { el.classList.add('active'); el.scrollIntoView({ block: 'nearest' }); }
+  document.querySelectorAll('.sec-item').forEach(e=>e.classList.remove('active'));
+  const el = document.getElementById('si-'+s.id);
+  if (el) { el.classList.add('active'); el.scrollIntoView({block:'nearest'}); }
   document.getElementById('toolbarTitle').textContent = s.title;
   document.getElementById('btnWrite').disabled = false;
   document.getElementById('btnRegen').disabled = !content[s.id];
@@ -425,32 +458,70 @@ function showContent(id) {
   if (content[id]) {
     ed.innerHTML = `<div class="ec">${content[id]}</div>`;
   } else {
-    const s = book.flatMap(p => p.secs).find(x => x.id === id);
-    ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><h3>${s ? s.title : ''}</h3><p>${s ? s.desc : ''}</p></div>`;
+    const s = book.flatMap(p=>p.secs).find(x=>x.id===id);
+    ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><h3>${s?s.title:''}</h3><p>${s?s.desc:''}</p></div>`;
   }
 }
 
 function updateStats() {
-  const allSecs = book.flatMap(p => p.secs);
-  const done = allSecs.filter(s => content[s.id]).length;
+  const all = book.flatMap(p=>p.secs);
+  const done = all.filter(s=>content[s.id]).length;
   document.getElementById('doneCount').textContent = done;
-  const chars = Object.values(content).join('').replace(/<[^>]+>/g, '').length;
+  const chars = Object.values(content).join('').replace(/<[^>]+>/g,'').length;
   document.getElementById('totalChars').textContent = chars.toLocaleString();
-  document.getElementById('tocStats').textContent = done + '/' + allSecs.length + ' 节';
-  document.getElementById('progressBar').style.width = (allSecs.length ? done / allSecs.length * 100 : 0).toFixed(1) + '%';
+  document.getElementById('tocStats').textContent = done+'/'+all.length;
+  document.getElementById('progressBar').style.width = (all.length?done/all.length*100:0).toFixed(1)+'%';
 }
 
-// ── STYLE/WORDS ──
+function updateMemCount() {
+  const n = Object.keys(memory).length;
+  document.getElementById('memCount').textContent = n + ' 条摘要';
+}
+
+// ── 风格/字数 ──
 function pickStyle(el, s) {
-  document.querySelectorAll('.stylebar .tag').forEach(t => { if (['锋利批判','实操干货','故事带入','深度分析'].includes(t.textContent)) t.classList.remove('on'); });
-  el.classList.add('on'); style = s;
+  document.querySelectorAll('.stylebar .tag').forEach(t=>{if(['锋利批判','实操干货','故事带入','深度分析'].includes(t.textContent))t.classList.remove('on');});
+  el.classList.add('on'); style=s;
 }
 function pickWords(el, w) {
-  document.querySelectorAll('.stylebar .tag').forEach(t => { if (['2000字','1000字','3000字'].includes(t.textContent)) t.classList.remove('on'); });
-  el.classList.add('on'); words = w;
+  document.querySelectorAll('.stylebar .tag').forEach(t=>{if(['2000字','1000字','3000字'].includes(t.textContent))t.classList.remove('on');});
+  el.classList.add('on'); words=w;
 }
 
-// ── WRITE ──
+// ── 记忆面板 ──
+function onMemToggle() {
+  const on = document.getElementById('memToggle').checked;
+  document.getElementById('memInfo').textContent = on
+    ? '已开启 · 写作时自动携带前文摘要，保持全书风格一致'
+    : '已关闭 · 每节独立写作，不携带前文记忆';
+}
+
+function toggleMemPanel() {
+  memPanelOpen = !memPanelOpen;
+  document.getElementById('memPanel').classList.toggle('open', memPanelOpen);
+  if (memPanelOpen) renderMemPanel();
+}
+
+function renderMemPanel() {
+  const el = document.getElementById('memPanelInner');
+  const keys = Object.keys(memory);
+  if (!keys.length) { el.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px">暂无记忆摘要，写完章节后自动生成</div>'; return; }
+  el.innerHTML = keys.map(id => {
+    const m = memory[id];
+    return `<div class="mem-item"><div class="mem-item-title">${m.title}</div><div class="mem-item-text">${m.summary}</div></div>`;
+  }).join('');
+}
+
+function clearMemory() {
+  if (!confirm('确定清空所有记忆摘要？已生成的文章内容不受影响。')) return;
+  memory = {};
+  localStorage.setItem('bookMemory2', '{}');
+  updateMemCount();
+  if (memPanelOpen) renderMemPanel();
+  showToast('记忆已清空', 'success');
+}
+
+// ── 写作核心 ──
 async function doWrite() { await writeSection(false); }
 async function doRegen() { await writeSection(true); }
 
@@ -466,62 +537,66 @@ async function writeSection(regen) {
   document.getElementById('writingStatus').classList.add('show');
   document.getElementById('errStatus').classList.remove('show');
 
-  const dot = document.getElementById('dot-' + cur.id);
-  if (dot) { dot.className = 'sec-dot writing'; }
+  const dot = document.getElementById('dot-'+cur.id);
+  if (dot) dot.className = 'sec-dot writing';
 
-  const ed = document.getElementById('editorWrap');
-  ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="animation:spin 1.5s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><h3>AI 正在写作中...</h3><p>约需 15-30 秒，请稍候</p></div>`;
+  document.getElementById('editorWrap').innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="animation:spin 1.5s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><h3>AI 正在写作中...</h3><p>约需 15~30 秒，请稍候</p></div>`;
 
+  const model = document.getElementById('modelSel').value;
+  const memOn = document.getElementById('memToggle').checked;
   const s = cur;
-  const model = document.getElementById('modelSelect').value;
-  const prompt = `你是财经博主"小可耐教你学RPA"，正在写一本面向普通上班族的财经书籍《${bookTitle}》。
 
-当前章节：${s.title}
-核心内容：${s.desc}
+  // ── 组装记忆上下文 ──
+  let memContext = '';
+  if (memOn && Object.keys(memory).length > 0) {
+    // 按书籍顺序，取当前节之前的所有摘要（最多取最近8条避免prompt过长）
+    const allSecs = book.flatMap(p=>p.secs);
+    const curIdx = allSecs.findIndex(x=>x.id===s.id);
+    const prevSecs = allSecs.slice(0, curIdx).filter(x=>memory[x.id]);
+    const recent = prevSecs.slice(-8);
+    if (recent.length > 0) {
+      memContext = `\n\n【前文已写内容摘要（供参考，保持风格和内容一致性，避免重复）】\n` +
+        recent.map(x=>`• ${memory[x.id].title}：${memory[x.id].summary}`).join('\n');
+    }
+  }
+
+  const prompt = `你是财经博主"小可耐教你学RPA"，正在写财经书籍《${bookTitle}》。
+${memContext}
+【当前要写的章节】
+标题：${s.title}
+核心：${s.desc}
 ${STYLE_PROMPTS[style]}
 
 要求：
 - 约${words}字
-- 用自然段落，不要"第一/第二"机械列举
-- 可以有数据、案例、计算过程增强说服力
-- 结尾给1-2句具体可执行的行动建议
-- 第一段开门见山，不要"本节我们来讲..."式废话开头
-- 作者背景：1996年生男性，上海上班族，有消费ETF/红利ETF定投实操，有副业收入，关注税务节税和社保问题，风格批判不中立
+- 自然段落行文，不用"第一/第二"机械列举
+- 可有数据、案例、计算过程
+- 结尾1-2句具体可执行行动建议
+- 开门见山，不要"本节我们来讲"式废话开头
+- 若前文有相关内容，本节从不同角度切入，避免重复
+- 作者：1996年生男，上海上班族，有消费ETF/红利ETF定投实操，有副业，关注税务节税
 
-输出规则：
-- 纯HTML格式，只允许使用：<h1>节标题</h1> <p>段落</p> <h2>小标题</h2> <blockquote>金句</blockquote> <div class="tip">行动建议</div> <div class="warn-box">风险提示</div>
-- 不要输出任何解释、前言或Markdown，直接从<h1>开始`;
+输出格式：纯HTML，只用 <h1> <h2> <p> <blockquote> <div class="tip"> <div class="warn-box">，直接从<h1>开始，不要任何解释。`;
 
   try {
+    document.getElementById('writingMsg').textContent = 'AI正在写作...';
     const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: model,
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      method:'POST',
+      headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model, max_tokens:2000, messages:[{role:'user',content:prompt}]})
     });
-
     if (!res.ok) {
-      const errText = await res.text();
-      let errMsg = `HTTP ${res.status}`;
-      try { const j = JSON.parse(errText); errMsg = j.error?.message || errMsg; } catch(e) {}
-      throw new Error(errMsg);
+      const t = await res.text();
+      let msg = `HTTP ${res.status}`;
+      try { msg = JSON.parse(t).error?.message || msg; } catch(e){}
+      throw new Error(msg);
     }
-
     const data = await res.json();
-    const text = data.content?.map(b => b.text || '').join('') || '';
+    const text = data.content?.map(b=>b.text||'').join('') || '';
     if (!text) throw new Error('返回内容为空');
 
     content[s.id] = text;
-    localStorage.setItem('bookContent', JSON.stringify(content));
-
+    localStorage.setItem('bookContent2', JSON.stringify(content));
     if (dot) dot.className = 'sec-dot done';
     showContent(s.id);
     document.getElementById('btnCopy').disabled = false;
@@ -529,12 +604,22 @@ ${STYLE_PROMPTS[style]}
     updateStats();
     showToast('写作完成！', 'success');
 
-  } catch (e) {
+    // ── 异步提取摘要 ──
+    if (memOn) {
+      document.getElementById('writingMsg').textContent = '提取章节摘要中...';
+      const summary = await extractSummary(s.title, text, key, model);
+      memory[s.id] = { title: s.title, summary };
+      localStorage.setItem('bookMemory2', JSON.stringify(memory));
+      updateMemCount();
+      if (memPanelOpen) renderMemPanel();
+    }
+
+  } catch(e) {
     if (dot) dot.className = 'sec-dot';
-    ed.innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e05555" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3 style="color:#e05555">生成失败</h3><p style="color:#9097b5">${e.message}</p></div>`;
+    document.getElementById('editorWrap').innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e05555" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3 style="color:#e05555">生成失败</h3><p style="color:#9097b5">${e.message}</p></div>`;
     document.getElementById('errStatus').textContent = e.message;
     document.getElementById('errStatus').classList.add('show');
-    showToast('生成失败：' + e.message, 'error');
+    showToast('失败：' + e.message, 'error');
   }
 
   busy = false;
@@ -542,124 +627,82 @@ ${STYLE_PROMPTS[style]}
   document.getElementById('writingStatus').classList.remove('show');
 }
 
-// ── COPY ──
+// ── 复制 ──
 function doCopy() {
   if (!cur || !content[cur.id]) return;
-  const text = content[cur.id].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板', 'success'));
+  const text = content[cur.id].replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+  navigator.clipboard.writeText(text).then(()=>showToast('已复制到剪贴板','success'));
 }
 
-// ── EXPORT ──
-function doExportTxt() {
-  const lines = [];
-  lines.push(bookTitle);
-  lines.push('作者：小可耐教你学RPA · 13133870607');
-  lines.push('生成时间：' + new Date().toLocaleString());
-  lines.push('='.repeat(50));
+// ── 导出 ──
+function doExport() {
+  const lines = [bookTitle,'作者：小可耐教你学RPA · 13133870607','生成时间：'+new Date().toLocaleString(),'='.repeat(50)];
   book.forEach(p => {
-    lines.push('\n' + '━'.repeat(30));
-    lines.push(p.part);
-    lines.push('━'.repeat(30) + '\n');
+    lines.push('\n'+'━'.repeat(28)+'\n'+p.part+'\n'+'━'.repeat(28)+'\n');
     p.secs.forEach(s => {
-      lines.push('【' + s.title + '】');
-      if (content[s.id]) {
-        lines.push(content[s.id].replace(/<[^>]+>/g, '').replace(/\n\s*\n/g, '\n').trim());
-      } else {
-        lines.push('（待写）');
-      }
+      lines.push('【'+s.title+'】');
+      lines.push(content[s.id] ? content[s.id].replace(/<[^>]+>/g,'').replace(/\n\s*\n/g,'\n').trim() : '（待写）');
       lines.push('');
     });
   });
-  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = bookTitle + '_小可耐教你学RPA.txt';
-  a.click();
+  a.href=url; a.download=bookTitle+'_小可耐教你学RPA.txt'; a.click();
   URL.revokeObjectURL(url);
-  showToast('导出成功', 'success');
+  showToast('导出成功','success');
 }
 
-// ── TOC MODAL ──
+// ── 目录弹窗 ──
 function openTocModal() {
   document.getElementById('editBookTitle').value = bookTitle;
   renderPartList();
   document.getElementById('tocModal').classList.add('show');
 }
-function closeTocModal() {
-  document.getElementById('tocModal').classList.remove('show');
-}
+function closeTocModal() { document.getElementById('tocModal').classList.remove('show'); }
 
 function renderPartList() {
   const el = document.getElementById('partList');
   el.innerHTML = '';
-  book.forEach((p, pi) => {
+  book.forEach((p,pi) => {
     const pg = document.createElement('div');
     pg.className = 'part-group';
-    pg.innerHTML = `
-      <div class="part-group-header">
-        <input type="text" value="${p.part}" onchange="book[${pi}].part=this.value" style="font-weight:600;color:var(--gold);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;outline:none;" />
-        <button class="part-del" onclick="delPart(${pi})">删除篇</button>
-      </div>
-      <div id="secList-${pi}"></div>
-      <button class="add-btn" onclick="addSec(${pi})">＋ 添加章节</button>`;
+    pg.innerHTML = `<div class="part-group-header"><input class="part-name-input" type="text" value="${p.part}" onchange="book[${pi}].part=this.value"/><button class="part-del" onclick="delPart(${pi})">删除篇</button></div><div id="sl-${pi}"></div><button class="add-btn" onclick="addSec(${pi})">＋ 添加章节</button>`;
     el.appendChild(pg);
     renderSecList(pi);
   });
 }
-
 function renderSecList(pi) {
-  const el = document.getElementById('secList-' + pi);
+  const el = document.getElementById('sl-'+pi);
   if (!el) return;
   el.innerHTML = '';
-  book[pi].secs.forEach((s, si) => {
+  book[pi].secs.forEach((s,si) => {
     const row = document.createElement('div');
     row.className = 'toc-edit-item';
-    row.innerHTML = `
-      <input type="text" value="${s.title}" onchange="book[${pi}].secs[${si}].title=this.value" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);outline:none;" />
-      <button class="toc-del" onclick="delSec(${pi},${si})">删</button>`;
+    row.innerHTML = `<input type="text" value="${s.title}" onchange="book[${pi}].secs[${si}].title=this.value"/><button class="toc-del" onclick="delSec(${pi},${si})">删</button>`;
     el.appendChild(row);
   });
 }
-
-function addPart() {
-  book.push({ part: '新篇章', secs: [{ id: 'new_' + Date.now(), title: '新章节', desc: '章节描述' }] });
-  renderPartList();
-}
-function delPart(pi) {
-  if (!confirm('确定删除这个篇章及其所有章节？')) return;
-  book.splice(pi, 1);
-  renderPartList();
-}
-function addSec(pi) {
-  book[pi].secs.push({ id: 'sec_' + Date.now(), title: '新章节标题', desc: '章节核心内容描述' });
-  renderSecList(pi);
-}
-function delSec(pi, si) {
-  book[pi].secs.splice(pi, 1);
-  renderSecList(pi);
-}
-
+function addPart() { book.push({part:'新篇章',secs:[{id:'new_'+Date.now(),title:'新章节',desc:'章节描述'}]}); renderPartList(); }
+function delPart(pi) { if(!confirm('确定删除？'))return; book.splice(pi,1); renderPartList(); }
+function addSec(pi) { book[pi].secs.push({id:'sec_'+Date.now(),title:'新章节标题',desc:'章节核心内容'}); renderSecList(pi); }
+function delSec(pi,si) { book[pi].secs.splice(si,1); renderSecList(pi); }
 function saveToc() {
   bookTitle = document.getElementById('editBookTitle').value || bookTitle;
-  localStorage.setItem('bookTitle', bookTitle);
-  localStorage.setItem('bookData', JSON.stringify(book));
+  localStorage.setItem('bookTitle2', bookTitle);
+  localStorage.setItem('bookData2', JSON.stringify(book));
   document.getElementById('bookTitle').textContent = bookTitle;
-  closeTocModal();
-  buildToc();
-  showToast('目录已保存', 'success');
+  closeTocModal(); buildToc();
+  showToast('目录已保存','success');
 }
 
-// ── TOAST ──
-function showToast(msg, type = '') {
+// ── Toast ──
+function showToast(msg, type='') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+  t.textContent = msg; t.className = 'toast show '+type;
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// ── START ──
 init();
 </script>
 </body>
