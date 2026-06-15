@@ -76,6 +76,16 @@
     background:rgba(62,207,142,.14);color:var(--成功);border:1px solid rgba(62,207,142,.3);
   }
   .标签.离线{background:rgba(255,180,84,.14);color:var(--强调);border-color:rgba(255,180,84,.3)}
+  .标签.库{background:rgba(122,162,255,.14);color:var(--主色亮);border-color:rgba(122,162,255,.3)}
+
+  /* 知识库卡片：强调色描边区分于工具 */
+  .卡片.知识库{
+    background:linear-gradient(180deg,rgba(255,180,84,.06),var(--卡片底));
+    border-color:rgba(255,180,84,.3);
+  }
+  .卡片.知识库:hover{border-color:var(--强调);box-shadow:0 8px 30px rgba(255,180,84,.18)}
+  .btn.强调{background:var(--强调);color:#1a1205}
+  .btn.强调:hover{opacity:.88}
 
   /* 按钮 */
   .按钮组{display:flex;gap:10px;margin-top:4px}
@@ -128,6 +138,10 @@
   <!-- ===== 本地工具（exe / zip，需下载） ===== -->
   <div class="组标题">本地工具 · 下载运行</div>
   <div class="网格" id="本地网格"></div>
+
+  <!-- ===== 知识库（外部链接） ===== -->
+  <div class="组标题">知识库 · 常用够用</div>
+  <div class="网格" id="知识库网格"></div>
 
   <div class="页脚">
     <div>作者 <b>13133870607</b> · 小可耐教你学RPA</div>
@@ -212,6 +226,36 @@ const 本地网格 = document.getElementById("本地网格");
       <a class="btn 主" href="${仓库地址}" target="_blank" rel="noopener">前往下载</a>
     </div>`;
   本地网格.appendChild(卡片);
+});
+// 知识库：外部链接，常用够用
+const 知识库列表 = [
+  {
+    图标:"📚", 名称:"语雀知识库",
+    描述:"小可耐的语雀知识库，RPA 教程、自媒体运营与实战笔记的体系化沉淀。",
+    链接:"https://www.yuque.com/pengzhiqiang999",
+    平台:"语雀"
+  },
+  {
+    图标:"🧠", 名称:"ima 知识库 · 小可耐爱分享",
+    描述:"腾讯 ima 知识库「和小可耐学 RPA」，问答式检索，一般人够用、最常翻的一份。",
+    链接:"https://ima.qq.com/wiki/?shareId=1e69ccc009e4dacb05b68411481e87288b3d43d15254e75ead6b0e14d55bf393",
+    平台:"ima"
+  }
+];
+
+// 渲染知识库卡片
+const 知识库网格 = document.getElementById("知识库网格");
+知识库列表.forEach(项 => {
+  const 卡片 = document.createElement("div");
+  卡片.className = "卡片 知识库";
+  卡片.innerHTML = `
+    <div class="图标">${项.图标}</div>
+    <div class="名称">${项.名称} <span class="标签 库">${项.平台}</span></div>
+    <div class="描述">${项.描述}</div>
+    <div class="按钮组">
+      <a class="btn 强调" href="${项.链接}" target="_blank" rel="noopener">进入知识库</a>
+    </div>`;
+  知识库网格.appendChild(卡片);
 });
 </script>
 </body>
