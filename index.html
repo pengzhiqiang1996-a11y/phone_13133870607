@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="13133870607 小可耐教你学RPA">
+<title>小可耐工具箱 · 13133870607</title>
+<style>
+  /* ===== 作者：13133870607 小可耐教你学RPA ===== */
+  :root{
+    --底色:#0e1320;
+    --卡片底:#161d2e;
+    --卡片底亮:#1c2540;
+    --描边:#2a3550;
+    --主色:#5b8cff;
+    --主色亮:#7aa2ff;
+    --强调:#ffb454;
+    --文字:#e8edf7;
+    --文字次:#94a2c0;
+    --成功:#3ecf8e;
+    --圆角:16px;
+    --阴影:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%,rgba(91,140,255,.18),transparent 60%),
+      radial-gradient(1000px 500px at 0% 110%,rgba(255,180,84,.12),transparent 55%),
+      var(--底色);
+    color:var(--文字);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .容器{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+
+  /* 头部 */
+  .头部{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+  .头像{
+    width:64px;height:64px;border-radius:18px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--主色),var(--强调));
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;font-weight:800;color:#fff;
+    box-shadow:var(--阴影);
+  }
+  .头部 h1{font-size:30px;letter-spacing:.5px}
+  .头部 .签名{color:var(--文字次);font-size:14px;margin-top:4px}
+  .头部 .签名 b{color:var(--主色亮);font-weight:600}
+  .标语{
+    margin:22px 0 38px;color:var(--文字次);font-size:15px;line-height:1.7;
+    max-width:640px;border-left:3px solid var(--主色);padding-left:14px;
+  }
+
+  /* 分组标题 */
+  .组标题{
+    display:flex;align-items:center;gap:10px;
+    margin:38px 0 18px;font-size:14px;letter-spacing:2px;
+    color:var(--文字次);text-transform:uppercase;
+  }
+  .组标题::after{content:"";flex:1;height:1px;background:var(--描边)}
+
+  /* 卡片网格 */
+  .网格{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .卡片{
+    background:linear-gradient(180deg,var(--卡片底亮),var(--卡片底));
+    border:1px solid var(--描边);border-radius:var(--圆角);
+    padding:20px;display:flex;flex-direction:column;gap:12px;
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .卡片:hover{transform:translateY(-4px);border-color:var(--主色);box-shadow:var(--阴影)}
+  .卡片 .图标{font-size:26px}
+  .卡片 .名称{font-size:18px;font-weight:700}
+  .卡片 .描述{font-size:13px;color:var(--文字次);line-height:1.6;flex:1}
+  .标签{
+    display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;
+    background:rgba(62,207,142,.14);color:var(--成功);border:1px solid rgba(62,207,142,.3);
+  }
+  .标签.离线{background:rgba(255,180,84,.14);color:var(--强调);border-color:rgba(255,180,84,.3)}
+
+  /* 按钮 */
+  .按钮组{display:flex;gap:10px;margin-top:4px}
+  .btn{
+    flex:1;text-align:center;text-decoration:none;
+    padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;
+    transition:background .15s ease,opacity .15s ease;
+  }
+  .btn.主{background:var(--主色);color:#fff}
+  .btn.主:hover{background:var(--主色亮)}
+  .btn.次{background:transparent;color:var(--文字次);border:1px solid var(--描边)}
+  .btn.次:hover{color:var(--文字);border-color:var(--主色)}
+
+  /* 页脚 */
+  .页脚{
+    margin-top:60px;padding-top:24px;border-top:1px solid var(--描边);
+    text-align:center;color:var(--文字次);font-size:13px;line-height:1.8;
+  }
+  .页脚 b{color:var(--主色亮)}
+  .页脚 a{color:var(--文字次);text-decoration:none}
+  .页脚 a:hover{color:var(--主色亮)}
+
+  @media(max-width:520px){
+    .容器{padding:32px 16px 60px}
+    .头部 h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<!-- 作者：13133870607 小可耐教你学RPA -->
+<div class="容器">
+
+  <div class="头部">
+    <div class="头像">可</div>
+    <div>
+      <h1>小可耐工具箱</h1>
+      <div class="签名">作者 <b>13133870607</b> · 小可耐教你学RPA</div>
+    </div>
+  </div>
+
+  <p class="标语">
+    自研的一批小工具，覆盖 RPA、自媒体运营、个人财务与效率场景。
+    在线工具点开即用，本地工具从 GitHub 下载后运行。技术服务业务，能跑出结果才是好工具。
+  </p>
+
+  <!-- ===== 在线工具（可直接访问的 HTML） ===== -->
+  <div class="组标题">在线工具 · 点开即用</div>
+  <div class="网格" id="在线网格"></div>
+
+  <!-- ===== 本地工具（exe / zip，需下载） ===== -->
+  <div class="组标题">本地工具 · 下载运行</div>
+  <div class="网格" id="本地网格"></div>
+
+  <div class="页脚">
+    <div>作者 <b>13133870607</b> · 小可耐教你学RPA</div>
+    <div>
+      下载仓库：<a href="https://github.com/pengzhiqiang1996-a11y/phone_13133870607" target="_blank" rel="noopener">github.com/pengzhiqiang1996-a11y/phone_13133870607</a>
+    </div>
+    <div>抖音 · 小红书 · 公众号 · 视频号 同名搜索「小可耐教你学RPA」</div>
+  </div>
+
+</div>
+
+<script>
+/* ===== 作者：13133870607 小可耐教你学RPA ===== */
+const 站点基址 = "https://pengzhiqiang1996-a11y.github.io/phone_13133870607/";
+const 仓库地址 = "https://github.com/pengzhiqiang1996-a11y/phone_13133870607";
+
+// 在线工具：直接拼接 GitHub Pages 地址访问
+const 在线工具列表 = [
+  {
+    图标:"✍️", 名称:"AI 写书工具",
+    描述:"AI 辅助长文/书稿创作，结构化生成、分章续写，给自媒体内容提效。",
+    文件:"AI写书工具_小可耐教你学RPA.html"
+  },
+  {
+    图标:"💰", 名称:"生财记账",
+    描述:"轻量记账工具，收支分类与统计，适合个人财务与副业账目管理。",
+    文件:"生财记账.html"
+  },
+  {
+    图标:"📊", 名称:"知识看板",
+    描述:"个人知识库可视化看板，分类聚合、检索与导出，盘活沉淀内容。",
+    文件:"知识看板.html"
+  }
+];
+
+// 本地工具：从 GitHub 仓库下载后运行
+const 本地工具列表 = [
+  {
+    图标:"📋", 名称:"剪切板助手",
+    描述:"常驻剪切板增强工具，历史记录与快速复用，提升日常操作效率。",
+    文件:"剪切板助手20260611.exe"
+  },
+  {
+    图标:"📺", 名称:"哔哩哔哩评论获取插件",
+    描述:"批量抓取 B 站视频评论，导出结构化数据，做内容分析与选题参考。",
+    文件:"哔哩哔哩评论获取插件.zip"
+  },
+  {
+    图标:"🏨", 名称:"携程抓取房型插件",
+    描述:"拦截携程酒店房型接口，导出房型/价格数据，自动标记售罄与差价。",
+    文件:"携程抓取房型插件 小可耐.zip"
+  }
+];
+
+// 渲染在线工具卡片
+const 在线网格 = document.getElementById("在线网格");
+在线工具列表.forEach(项 => {
+  const 访问链接 = 站点基址 + encodeURIComponent(项.文件);
+  const 卡片 = document.createElement("div");
+  卡片.className = "卡片";
+  卡片.innerHTML = `
+    <div class="图标">${项.图标}</div>
+    <div class="名称">${项.名称} <span class="标签">在线</span></div>
+    <div class="描述">${项.描述}</div>
+    <div class="按钮组">
+      <a class="btn 主" href="${访问链接}" target="_blank" rel="noopener">打开工具</a>
+      <a class="btn 次" href="${仓库地址}" target="_blank" rel="noopener">源码</a>
+    </div>`;
+  在线网格.appendChild(卡片);
+});
+
+// 渲染本地工具卡片
+const 本地网格 = document.getElementById("本地网格");
+本地工具列表.forEach(项 => {
+  const 卡片 = document.createElement("div");
+  卡片.className = "卡片";
+  卡片.innerHTML = `
+    <div class="图标">${项.图标}</div>
+    <div class="名称">${项.名称} <span class="标签 离线">下载</span></div>
+    <div class="描述">${项.描述}</div>
+    <div class="按钮组">
+      <a class="btn 主" href="${仓库地址}" target="_blank" rel="noopener">前往下载</a>
+    </div>`;
+  本地网格.appendChild(卡片);
+});
+</script>
+</body>
+</html>
