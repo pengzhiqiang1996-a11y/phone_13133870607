@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全平台电商运营看板</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#161f33; --panel2:#1c2740; --line:#26314d;
+    --ink:#e8edf7; --sub:#8a98b8; --accent:#3b82f6; --accent2:#22d3ee;
+    --good:#34d399; --bad:#f87171; --warn:#fbbf24; --grad:linear-gradient(135deg,#3b82f6,#22d3ee);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","微软雅黑","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:13px;line-height:1.5}
+  .wrap{max-width:1480px;margin:0 auto;padding:22px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .title h1{font-size:24px;font-weight:800;letter-spacing:1px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .title .sub{color:var(--sub);font-size:12px;margin-top:4px;letter-spacing:.5px}
+  .brand{text-align:right;font-size:12px;color:var(--sub)}
+  .brand b{color:var(--accent2)}
+  .upload{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{background:var(--grad);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12.5px;font-family:inherit}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--sub)}
+  .btn:hover{opacity:.9}
+  .hint{color:var(--sub);font-size:11.5px}
+  /* filter bar */
+  .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:18px}
+  .filters label{display:block;font-size:11px;color:var(--sub);margin-bottom:5px;letter-spacing:.5px}
+  .filters select,.filters input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:7px 9px;font-size:12.5px;font-family:inherit}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:18px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:var(--grad)}
+  .kpi .k{font-size:11px;color:var(--sub);letter-spacing:.5px}
+  .kpi .v{font-size:22px;font-weight:800;margin-top:6px}
+  .kpi .v small{font-size:12px;font-weight:600;color:var(--sub)}
+  .kpi .tag{display:inline-block;margin-top:7px;font-size:11px;padding:2px 8px;border-radius:20px}
+  .tag.g{background:rgba(52,211,153,.14);color:var(--good)}
+  .tag.b{background:rgba(248,113,113,.14);color:var(--bad)}
+  .tag.w{background:rgba(251,191,36,.14);color:var(--warn)}
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{font-size:13.5px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card h3::before{content:"";width:4px;height:14px;background:var(--grad);border-radius:2px}
+  .card .cap{color:var(--sub);font-size:11px;margin-bottom:12px}
+  .col-12{grid-column:span 12}.col-8{grid-column:span 8}.col-6{grid-column:span 6}.col-4{grid-column:span 4}
+  .chartbox{position:relative;height:300px}
+  .chartbox.sm{height:240px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--sub);font-weight:600;font-size:11px;position:sticky;top:0;background:var(--panel)}
+  .tbl-scroll{max-height:340px;overflow:auto}
+  .warnbadge{color:var(--bad);font-weight:700}
+  .empty{text-align:center;padding:60px 20px;color:var(--sub)}
+  .empty .big{font-size:48px;margin-bottom:14px}
+  footer{margin-top:24px;text-align:center;color:var(--sub);font-size:11.5px;border-top:1px solid var(--line);padding-top:14px}
+  @media(max-width:900px){.col-8,.col-6,.col-4{grid-column:span 12}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <h1>全平台电商运营看板</h1>
+      <div class="sub">上传明细 Excel → 自动解析 · 筛选联动 · 实时刷新</div>
+    </div>
+    <div class="upload">
+      <input type="file" id="file" accept=".xlsx,.xls" style="display:none">
+      <button class="btn" onclick="document.getElementById('file').click()">上传我的 Excel</button>
+      <button class="btn ghost" onclick="loadDemo()">重置为示例数据</button>
+      <span class="hint" id="fileinfo">当前为示例数据 · 上传模板可替换</span>
+    </div>
+  </header>
+
+  <div class="filters" id="filters" style="display:none">
+    <div><label>开始日期</label><input type="date" id="f_start"></div>
+    <div><label>结束日期</label><input type="date" id="f_end"></div>
+    <div><label>平台</label><select id="f_plat"><option value="">全部平台</option></select></div>
+    <div><label>店铺</label><select id="f_shop"><option value="">全部店铺</option></select></div>
+    <div><label>品类(商品分析)</label><select id="f_cat"><option value="">全部品类</option></select></div>
+    <div><label>新老客</label><select id="f_no"><option value="">全部</option><option>新客</option><option>老客</option></select></div>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="card col-8">
+        <h3>各平台 GMV 趋势</h3><div class="cap">按所选筛选条件，各平台每日成交金额走势</div>
+        <div class="chartbox"><canvas id="c_trend"></canvas></div>
+      </div>
+      <div class="card col-4">
+        <h3>平台销售占比</h3><div class="cap">GMV 在各平台间的结构分布</div>
+        <div class="chartbox"><canvas id="c_share"></canvas></div>
+      </div>
+
+      <div class="card col-6">
+        <h3>各平台业绩对比</h3><div class="cap">GMV / 净销售额 / 退款金额（元）</div>
+        <div class="chartbox"><canvas id="c_platbar"></canvas></div>
+      </div>
+      <div class="card col-6">
+        <h3>退款占比与原因</h3><div class="cap">左：各平台退款占比 · 右：退款原因构成</div>
+        <div class="chartbox"><canvas id="c_refund"></canvas></div>
+      </div>
+
+      <div class="card col-4">
+        <h3>新老客贡献</h3><div class="cap">GMV 中新客与老客占比</div>
+        <div class="chartbox sm"><canvas id="c_newold"></canvas></div>
+      </div>
+      <div class="card col-8">
+        <h3>各平台体验分（履约/DSR）</h3><div class="cap">DSR描述·物流·服务评分(满分5) + 平均发货时长(小时)</div>
+        <div class="chartbox sm"><canvas id="c_exp"></canvas></div>
+      </div>
+
+      <div class="card col-12">
+        <h3>店铺健康榜</h3><div class="cap">按 GMV 排序 · 退款占比超 15% / 发货超 36h / DSR低于4.7 标红预警</div>
+        <div class="tbl-scroll"><table id="t_shop"><thead><tr>
+          <th>店铺</th><th>平台</th><th>GMV(元)</th><th>净销售额</th><th>退款占比</th><th>费率</th><th>ROI</th><th>毛利率</th><th>平均发货(h)</th><th>DSR均分</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card col-6">
+        <h3>品类销售占比</h3><div class="cap">来源：商品明细</div>
+        <div class="chartbox sm"><canvas id="c_cat"></canvas></div>
+      </div>
+      <div class="card col-6">
+        <h3>商品销售明细 TOP</h3><div class="cap">按成交金额排序 · 动销率=成交/(成交+库存)</div>
+        <div class="tbl-scroll"><table id="t_prod"><thead><tr>
+          <th>商品</th><th>平台</th><th>品类</th><th>成交金额</th><th>件数</th><th>动销率</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="placeholder" class="empty">
+    <div class="big">📊</div>
+    <div>上传配套模板的 Excel，或点「载入示例数据」预览看板效果</div>
+    <div style="margin-top:8px;font-size:11px">所有解析在你的浏览器本地完成，数据不会上传到任何服务器</div>
+  </div>
+
+  <footer>作者：小可耐教你学RPA · 13133870607 ｜ 本看板仅本地运行</footer>
+</div>
+
+<script>
+const PLAT_COLORS={'淘系':'#fb923c','拼多多':'#f87171','抖音':'#22d3ee','京东':'#f43f5e','快手':'#fbbf24','小红书':'#a78bfa'};
+const PIE=['#3b82f6','#22d3ee','#34d399','#fbbf24','#fb923c','#f87171','#a78bfa','#60a5fa','#f472b6','#4ade80'];
+let ORDERS=[], PRODUCTS=[], charts={};
+const fmt=n=>n>=1e8?(n/1e8).toFixed(2)+'亿':n>=1e4?(n/1e4).toFixed(2)+'万':n.toFixed(0);
+const pct=n=>isFinite(n)?(n*100).toFixed(2)+'%':'-';
+
+document.getElementById('file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{ try{parseWB(XLSX.read(new Uint8Array(ev.target.result),{type:'array'})); document.getElementById('fileinfo').textContent='已载入：'+f.name;}catch(err){alert('解析失败：'+err.message);} };
+  r.readAsArrayBuffer(f);
+});
+
+function pickSheet(wb,keys){for(const n of wb.SheetNames){if(keys.some(k=>n.includes(k)))return n;}return null;}
+function parseWB(wb){
+  const os=pickSheet(wb,['订单明细','订单']), ps=pickSheet(wb,['商品明细','商品']);
+  if(!os){alert('未找到「订单明细」工作表');return;}
+  const O=XLSX.utils.sheet_to_json(wb.Sheets[os]);
+  ORDERS=O.map(r=>({date:String(r['日期']||'').slice(0,10),plat:r['平台'],shop:r['店铺名称'],
+    gmv:+r['成交金额']||0,qty:+r['成交件数']||0,cust:+r['成交客户数']||0,refund:+r['退款金额']||0,
+    reason:r['退款原因']||'其他',ad:+r['推广花费']||0,adgmv:+r['推广带来成交']||0,uv:+r['访客数']||0,
+    cost:+r['商品成本']||0,no:r['新老客']||'老客',
+    ship:+r['平均发货时长']||0,dsr_d:+r['DSR描述']||0,dsr_l:+r['DSR物流']||0,dsr_s:+r['DSR服务']||0}))
+    .filter(x=>x.date&&x.plat);
+  PRODUCTS = ps ? XLSX.utils.sheet_to_json(wb.Sheets[ps]).map(r=>({plat:r['平台'],cat:r['品类'],
+    name:r['商品名称'],amt:+r['成交金额']||0,qty:+r['成交件数']||0,stock:+r['库存']||0})) : [];
+  initFilters(); render();
+}
+
+function loadDemo(){
+  const plats=Object.keys(PLAT_COLORS), base={'淘系':2.2,'拼多多':1.4,'抖音':1.1,'京东':0.7,'快手':0.45,'小红书':0.18};
+  const reasons=['质量问题','不喜欢/不想要','物流太慢','拍错/多拍','商品与描述不符','其他'];
+  const cats=['品类A','品类B','品类C','品类D','品类E','品类F','品类G','品类H'];
+  ORDERS=[];PRODUCTS=[]; const s=new Date('2024-02-01');
+  const shipBase={'淘系':28,'拼多多':40,'抖音':34,'京东':14,'快手':38,'小红书':32};
+  const dsrBase={'淘系':4.82,'拼多多':4.66,'抖音':4.74,'京东':4.9,'快手':4.7,'小红书':4.85};
+  for(let d=0;d<60;d++){const day=new Date(s);day.setDate(s.getDate()+d);const ds=day.toISOString().slice(0,10);
+    plats.forEach(p=>{for(let i=1;i<=3;i++){const gmv=Math.random()*0.8*base[p]*33000+base[p]*22000;
+      const qty=Math.round(gmv/(60+Math.random()*60)),cust=Math.round(qty*(0.6+Math.random()*0.35));
+      const db=dsrBase[p];
+      ORDERS.push({date:ds,plat:p,shop:`${p}-店铺${i}`,gmv,qty,cust,refund:gmv*(0.04+Math.random()*0.14),
+        reason:reasons[Math.floor(Math.random()*reasons.length)],ad:gmv*(0.15+Math.random()*0.2),
+        adgmv:gmv*(0.4+Math.random()*0.7),uv:Math.round(cust*(8+Math.random()*14)),cost:gmv*(0.45+Math.random()*0.27),
+        no:Math.random()<0.4?'新客':'老客',
+        ship:shipBase[p]*(0.7+Math.random()*0.7),
+        dsr_d:Math.min(5,db+(Math.random()-0.5)*0.2),dsr_l:Math.min(5,db-0.04+(Math.random()-0.5)*0.2),dsr_s:Math.min(5,db+0.02+(Math.random()-0.5)*0.2)});}});}
+  for(let i=0;i<120;i++){const p=plats[Math.floor(Math.random()*plats.length)],c=cats[Math.floor(Math.random()*cats.length)];
+    const qty=200+Math.floor(Math.random()*3300);PRODUCTS.push({plat:p,cat:c,name:`${c}-热销款${i+1}`,
+      amt:8000+Math.random()*112000,qty,stock:Math.floor(Math.random()*5000)});}
+  document.getElementById('fileinfo').textContent='已载入示例数据';
+  initFilters(); render();
+}
+
+function uniq(a){return [...new Set(a)].filter(x=>x!=null&&x!=='');}
+function initFilters(){
+  const dates=ORDERS.map(o=>o.date).sort();
+  document.getElementById('f_start').value=dates[0];
+  document.getElementById('f_end').value=dates[dates.length-1];
+  fill('f_plat',uniq(ORDERS.map(o=>o.plat)),'全部平台');
+  fill('f_shop',uniq(ORDERS.map(o=>o.shop)),'全部店铺');
+  fill('f_cat',uniq(PRODUCTS.map(p=>p.cat)),'全部品类');
+  ['f_start','f_end','f_plat','f_shop','f_cat','f_no'].forEach(id=>document.getElementById(id).onchange=render);
+  document.getElementById('filters').style.display='grid';
+  document.getElementById('dash').style.display='block';
+  document.getElementById('placeholder').style.display='none';
+}
+function fill(id,arr,allLabel){const s=document.getElementById(id);s.innerHTML=`<option value="">${allLabel}</option>`+arr.map(v=>`<option>${v}</option>`).join('');}
+
+function getF(){return {start:document.getElementById('f_start').value,end:document.getElementById('f_end').value,
+  plat:document.getElementById('f_plat').value,shop:document.getElementById('f_shop').value,
+  cat:document.getElementById('f_cat').value,no:document.getElementById('f_no').value};}
+function filtered(){const f=getF();return ORDERS.filter(o=>(!f.start||o.date>=f.start)&&(!f.end||o.date<=f.end)
+  &&(!f.plat||o.plat===f.plat)&&(!f.shop||o.shop===f.shop)&&(!f.no||o.no===f.no));}
+
+function dchart(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg);}
+const gridc='#26314d', tickc='#8a98b8';
+const axisOpt=(money=false)=>({grid:{color:gridc},ticks:{color:tickc,callback:money?v=>fmt(v):undefined}});
+
+function render(){
+  const D=filtered();
+  const sum=k=>D.reduce((a,o)=>a+o[k],0);
+  const gmv=sum('gmv'),refund=sum('refund'),qty=sum('qty'),cust=sum('cust'),uv=sum('uv'),ad=sum('ad'),adgmv=sum('adgmv'),cost=sum('cost');
+  const net=gmv-refund;
+  const kpis=[
+    {k:'GMV(元)',v:fmt(gmv),tag:'g',t:'成交总额'},
+    {k:'净销售额(元)',v:fmt(net),tag:'g',t:'扣退款'},
+    {k:'退款金额(元)',v:fmt(refund),tag:'b',t:'退款占比 '+pct(refund/gmv)},
+    {k:'退款占比',v:pct(refund/gmv),tag:refund/gmv>0.15?'b':'g',t:refund/gmv>0.15?'高于健康线':'健康'},
+    {k:'件单价(元)',v:(gmv/qty||0).toFixed(2),tag:'w',t:'GMV/件数'},
+    {k:'客单价(元)',v:(gmv/cust||0).toFixed(2),tag:'w',t:'GMV/客户'},
+    {k:'成交转化率',v:pct(cust/uv),tag:'g',t:'客户/访客'},
+    {k:'费率',v:pct(ad/gmv),tag:'w',t:'广告/GMV'},
+    {k:'推广ROI',v:(adgmv/ad||0).toFixed(2),tag:adgmv/ad<1?'b':'g',t:'广告产出比'},
+    {k:'毛利率',v:pct((net-cost)/gmv),tag:'g',t:'含退款后毛利'},
+  ];
+  document.getElementById('kpis').innerHTML=kpis.map(x=>`<div class="kpi"><div class="k">${x.k}</div>
+    <div class="v">${x.v}</div><span class="tag ${x.tag}">${x.t}</span></div>`).join('');
+
+  // trend by platform
+  const days=uniq(D.map(o=>o.date)).sort();
+  const platsIn=uniq(D.map(o=>o.plat));
+  dchart('c_trend',{type:'line',data:{labels:days,datasets:platsIn.map(p=>({label:p,
+    data:days.map(d=>D.filter(o=>o.date===d&&o.plat===p).reduce((a,o)=>a+o.gmv,0)),
+    borderColor:PLAT_COLORS[p]||'#3b82f6',backgroundColor:'transparent',tension:.35,pointRadius:0,borderWidth:2}))},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:tickc,boxWidth:12}}},scales:{x:axisOpt(),y:axisOpt(true)}}});
+
+  // share pie
+  const byPlat=platsIn.map(p=>({p,v:D.filter(o=>o.plat===p).reduce((a,o)=>a+o.gmv,0)})).sort((a,b)=>b.v-a.v);
+  dchart('c_share',{type:'doughnut',data:{labels:byPlat.map(x=>x.p),datasets:[{data:byPlat.map(x=>x.v),
+    backgroundColor:byPlat.map(x=>PLAT_COLORS[x.p]||'#3b82f6'),borderColor:'#161f33',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:tickc,boxWidth:12,font:{size:11}}}}}});
+
+  // platform bar gmv/net/refund
+  dchart('c_platbar',{type:'bar',data:{labels:byPlat.map(x=>x.p),datasets:[
+    {label:'GMV',data:byPlat.map(x=>x.v),backgroundColor:'#3b82f6'},
+    {label:'净销售额',data:byPlat.map(x=>{const o=D.filter(o=>o.plat===x.p);return o.reduce((a,c)=>a+c.gmv-c.refund,0)}),backgroundColor:'#22d3ee'},
+    {label:'退款金额',data:byPlat.map(x=>D.filter(o=>o.plat===x.p).reduce((a,c)=>a+c.refund,0)),backgroundColor:'#f87171'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickc,boxWidth:12}}},scales:{x:axisOpt(),y:axisOpt(true)}}});
+
+  // refund: rate by platform (bar) + reasons share — combine into one: reasons doughnut
+  const reasons=uniq(D.map(o=>o.reason));
+  dchart('c_refund',{type:'bar',data:{labels:byPlat.map(x=>x.p),datasets:[{label:'退款占比',
+    data:byPlat.map(x=>{const o=D.filter(o=>o.plat===x.p);const g=o.reduce((a,c)=>a+c.gmv,0);return g?o.reduce((a,c)=>a+c.refund,0)/g*100:0}),
+    backgroundColor:byPlat.map(x=>PLAT_COLORS[x.p])}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(2)+'%'}}},scales:{x:axisOpt(),y:{...axisOpt(),ticks:{color:tickc,callback:v=>v+'%'}}}}});
+
+  // new vs old
+  const nv=D.filter(o=>o.no==='新客').reduce((a,o)=>a+o.gmv,0), ov=D.filter(o=>o.no==='老客').reduce((a,o)=>a+o.gmv,0);
+  dchart('c_newold',{type:'doughnut',data:{labels:['新客','老客'],datasets:[{data:[nv,ov],
+    backgroundColor:['#22d3ee','#3b82f6'],borderColor:'#161f33',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:tickc,boxWidth:12}}}}});
+
+  // experience: DSR (3 grouped bars, left axis) + avg ship hours (line, right axis)
+  const avg=(arr,k)=>arr.length?arr.reduce((a,c)=>a+c[k],0)/arr.length:0;
+  dchart('c_exp',{data:{labels:byPlat.map(x=>x.p),datasets:[
+    {type:'bar',label:'DSR描述',yAxisID:'y',data:byPlat.map(x=>avg(D.filter(o=>o.plat===x.p),'dsr_d')),backgroundColor:'#3b82f6'},
+    {type:'bar',label:'DSR物流',yAxisID:'y',data:byPlat.map(x=>avg(D.filter(o=>o.plat===x.p),'dsr_l')),backgroundColor:'#22d3ee'},
+    {type:'bar',label:'DSR服务',yAxisID:'y',data:byPlat.map(x=>avg(D.filter(o=>o.plat===x.p),'dsr_s')),backgroundColor:'#34d399'},
+    {type:'line',label:'平均发货(h)',yAxisID:'y1',data:byPlat.map(x=>avg(D.filter(o=>o.plat===x.p),'ship')),
+      borderColor:'#fbbf24',backgroundColor:'#fbbf24',tension:.35,pointRadius:4,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickc,boxWidth:12,font:{size:11}}}},
+      scales:{x:axisOpt(),y:{position:'left',min:4.4,max:5,grid:{color:gridc},ticks:{color:tickc}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#fbbf24',callback:v=>v+'h'}}}}});
+
+  // shop health table
+  const shops=uniq(D.map(o=>o.shop)).map(s=>{const o=D.filter(x=>x.shop===s);
+    const g=o.reduce((a,c)=>a+c.gmv,0),rf=o.reduce((a,c)=>a+c.refund,0),adc=o.reduce((a,c)=>a+c.ad,0),
+      agm=o.reduce((a,c)=>a+c.adgmv,0),cst=o.reduce((a,c)=>a+c.cost,0);
+    const dsr=(avg(o,'dsr_d')+avg(o,'dsr_l')+avg(o,'dsr_s'))/3;
+    return {s,plat:o[0].plat,g,net:g-rf,rr:rf/g,fee:adc/g,roi:agm/adc,gm:(g-rf-cst)/g,ship:avg(o,'ship'),dsr};}).sort((a,b)=>b.g-a.g);
+  document.querySelector('#t_shop tbody').innerHTML=shops.map(x=>`<tr><td>${x.s}</td><td>${x.plat}</td>
+    <td>${fmt(x.g)}</td><td>${fmt(x.net)}</td><td class="${x.rr>0.15?'warnbadge':''}">${pct(x.rr)}</td>
+    <td>${pct(x.fee)}</td><td>${isFinite(x.roi)?x.roi.toFixed(2):'-'}</td><td>${pct(x.gm)}</td>
+    <td class="${x.ship>36?'warnbadge':''}">${x.ship?x.ship.toFixed(1):'-'}</td>
+    <td class="${x.dsr&&x.dsr<4.7?'warnbadge':''}">${x.dsr?x.dsr.toFixed(2):'-'}</td></tr>`).join('');
+
+  renderProducts();
+}
+
+function renderProducts(){
+  const f=getF();
+  let P=PRODUCTS.filter(p=>(!f.plat||p.plat===f.plat)&&(!f.cat||p.cat===f.cat));
+  // category pie
+  const cats=uniq(P.map(p=>p.cat)).map(c=>({c,v:P.filter(p=>p.cat===c).reduce((a,p)=>a+p.amt,0)})).sort((a,b)=>b.v-a.v);
+  dchart('c_cat',{type:'doughnut',data:{labels:cats.map(x=>x.c),datasets:[{data:cats.map(x=>x.v),
+    backgroundColor:cats.map((_,i)=>PIE[i%PIE.length]),borderColor:'#161f33',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:tickc,boxWidth:12,font:{size:11}}}}}});
+  const top=[...P].sort((a,b)=>b.amt-a.amt).slice(0,40);
+  document.querySelector('#t_prod tbody').innerHTML=top.map(p=>{const sell=p.qty/(p.qty+p.stock||1);
+    return `<tr><td>${p.name}</td><td>${p.plat}</td><td>${p.cat}</td><td>${fmt(p.amt)}</td><td>${p.qty.toLocaleString()}</td>
+    <td class="${sell<0.3?'warnbadge':''}">${pct(sell)}</td></tr>`;}).join('')
+    ||'<tr><td colspan="6" style="text-align:center;color:var(--sub)">无商品明细数据</td></tr>';
+}
+
+// 打开即默认展示示例数据
+loadDemo();
+</script>
+</body>
+</html>
