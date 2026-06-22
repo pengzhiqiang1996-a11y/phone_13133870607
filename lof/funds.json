@@ -1,16 +1,688 @@
 {
   "date": "2026-06-22",
+  "更新时间": "2026-06-22 14:43:08",
   "a": [
-    { "code": "501096", "name": "国联安科创LOF", "premium_rate": 13.45, "purchase_up_limit": 0.0, "status": 1, "arbitrage_types": [1] },
-    { "code": "501015", "name": "财通升级混合LOF", "premium_rate": 12.15, "purchase_up_limit": 0.0, "status": 1, "arbitrage_types": [1] },
-    { "code": "501001", "name": "财通精选混合LOF", "premium_rate": 10.68, "purchase_up_limit": 0.0, "status": 1, "arbitrage_types": [1] },
-    { "code": "501026", "name": "财通福享混合LOF", "premium_rate": 9.21, "purchase_up_limit": 0.0, "status": 1, "arbitrage_types": [1] },
-    { "code": "501073", "name": "华安智联", "premium_rate": 9.03, "purchase_up_limit": 0.0, "status": 1, "arbitrage_types": [1] }
+    {
+      "code": "501225",
+      "name": "全球芯片LOF",
+      "premium_rate": 31.54,
+      "purchase_up_limit": 100.0,
+      "status": 2,
+      "arbitrage_types": [
+        2
+      ]
+    },
+    {
+      "code": "501018",
+      "name": "南方原油LOF",
+      "premium_rate": 12.26,
+      "purchase_up_limit": 1.0,
+      "status": 2,
+      "arbitrage_types": [
+        2
+      ]
+    },
+    {
+      "code": "161129",
+      "name": "原油基金LOF",
+      "premium_rate": 7.8,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160723",
+      "name": "嘉实原油LOF",
+      "premium_rate": 7.63,
+      "purchase_up_limit": 5.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161128",
+      "name": "标普科技LOF",
+      "premium_rate": 7.15,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161130",
+      "name": "纳斯达克100LOF",
+      "premium_rate": 6.53,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161125",
+      "name": "标普500LOF",
+      "premium_rate": 3.36,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160644",
+      "name": "港美互联网LOF",
+      "premium_rate": 2.94,
+      "purchase_up_limit": 10000.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "164701",
+      "name": "黄金lof",
+      "premium_rate": -1.45,
+      "purchase_up_limit": 500.0,
+      "status": 1,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "165513",
+      "name": "中信保诚商品LOF",
+      "premium_rate": -1.49,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "161116",
+      "name": "黄金主题LOF",
+      "premium_rate": -1.51,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "161815",
+      "name": "抗通胀LOF",
+      "premium_rate": -1.75,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "163208",
+      "name": "全球油气能源LOF",
+      "premium_rate": -2.45,
+      "purchase_up_limit": 500.0,
+      "status": 2,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "160216",
+      "name": "国泰商品LOF",
+      "premium_rate": -2.51,
+      "purchase_up_limit": 1000.0,
+      "status": 1,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "160719",
+      "name": "嘉实黄金LOF",
+      "premium_rate": -2.6,
+      "purchase_up_limit": 5.0,
+      "status": 2,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "162719",
+      "name": "石油LOF",
+      "premium_rate": -3.01,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "162411",
+      "name": "华宝油气",
+      "premium_rate": -3.03,
+      "purchase_up_limit": 10.0,
+      "status": 2,
+      "arbitrage_types": [
+        4
+      ]
+    },
+    {
+      "code": "160416",
+      "name": "石油基金LOF",
+      "premium_rate": -3.07,
+      "purchase_up_limit": 2.0,
+      "status": 2,
+      "arbitrage_types": [
+        4
+      ]
+    }
   ],
   "overseas": [
-    { "code": "161129", "name": "原油基金LOF", "premium_rate": 8.0, "purchase_up_limit": 10.0, "status": 2, "arbitrage_types": [1] },
-    { "code": "160723", "name": "嘉实原油LOF", "premium_rate": 7.74, "purchase_up_limit": 5.0, "status": 2, "arbitrage_types": [1] },
-    { "code": "161128", "name": "标普科技LOF", "premium_rate": 6.59, "purchase_up_limit": 10.0, "status": 2, "arbitrage_types": [1] },
-    { "code": "161130", "name": "纳斯达克100LOF", "premium_rate": 5.89, "purchase_up_limit": 10.0, "status": 2, "arbitrage_types": [1] }
+    {
+      "code": "501096",
+      "name": "国联安科创LOF",
+      "premium_rate": 13.64,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501015",
+      "name": "财通升级混合LOF",
+      "premium_rate": 11.93,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501001",
+      "name": "财通精选混合LOF",
+      "premium_rate": 10.68,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501073",
+      "name": "华安智联",
+      "premium_rate": 9.52,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501026",
+      "name": "财通福享混合LOF",
+      "premium_rate": 8.34,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501082",
+      "name": "科创投资",
+      "premium_rate": 6.7,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161720",
+      "name": "证券基金",
+      "premium_rate": 6.09,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161027",
+      "name": "证券",
+      "premium_rate": 6.09,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "163113",
+      "name": "申万证券LOF",
+      "premium_rate": 5.92,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501201",
+      "name": "科创红土LOF",
+      "premium_rate": 5.56,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501032",
+      "name": "财通福盛混合LOF",
+      "premium_rate": 5.16,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "167301",
+      "name": "保险主题",
+      "premium_rate": 4.85,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161226",
+      "name": "白银基金",
+      "premium_rate": 4.42,
+      "purchase_up_limit": 100.0,
+      "status": 2,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "168401",
+      "name": "红土精选",
+      "premium_rate": 4.31,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160221",
+      "name": "有色金属LOF",
+      "premium_rate": 4.15,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "165520",
+      "name": "有色LOF",
+      "premium_rate": 4.12,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "168701",
+      "name": "金融科技LOF",
+      "premium_rate": 3.85,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160620",
+      "name": "资源LOF",
+      "premium_rate": 3.68,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501097",
+      "name": "科创国寿LOF",
+      "premium_rate": 3.66,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501079",
+      "name": "科创大成LOF",
+      "premium_rate": 3.28,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161217",
+      "name": "国投资源LOF",
+      "premium_rate": 3.08,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160921",
+      "name": "多策略LOF",
+      "premium_rate": 2.81,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161715",
+      "name": "大宗商品LOF",
+      "premium_rate": 2.77,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501085",
+      "name": "财通科创",
+      "premium_rate": 2.57,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160225",
+      "name": "新能源汽车LOF",
+      "premium_rate": 2.39,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160638",
+      "name": "带路LOF",
+      "premium_rate": 2.38,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161810",
+      "name": "银华内需",
+      "premium_rate": 2.35,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501045",
+      "name": "沪深300LOFC",
+      "premium_rate": 2.05,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "166023",
+      "name": "中欧瑞丰LOF",
+      "premium_rate": 2.03,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501036",
+      "name": "中证500LOF",
+      "premium_rate": 1.94,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160637",
+      "name": "创业板LOF基金",
+      "premium_rate": 1.85,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160324",
+      "name": "华夏磐晟LOF",
+      "premium_rate": 1.83,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "166006",
+      "name": "中欧成长",
+      "premium_rate": 1.82,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "165512",
+      "name": "中信保诚机遇LOF",
+      "premium_rate": 1.82,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160223",
+      "name": "创业板LOF",
+      "premium_rate": 1.79,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501205",
+      "name": "鹏华创新未来LOF",
+      "premium_rate": 1.79,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "502048",
+      "name": "上证50LOF",
+      "premium_rate": 1.77,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "163114",
+      "name": "申万环保",
+      "premium_rate": 1.74,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501312",
+      "name": "海外科技LOF",
+      "premium_rate": 1.74,
+      "purchase_up_limit": 100.0,
+      "status": 1,
+      "arbitrage_types": [
+        2
+      ]
+    },
+    {
+      "code": "160919",
+      "name": "产业升级LOF",
+      "premium_rate": 1.66,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501058",
+      "name": "新能车C",
+      "premium_rate": 1.64,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160629",
+      "name": "传媒LOF",
+      "premium_rate": 1.62,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161035",
+      "name": "医药增强LOF",
+      "premium_rate": 1.5,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161028",
+      "name": "新能源车",
+      "premium_rate": 1.49,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "160505",
+      "name": "博时主题",
+      "premium_rate": 1.48,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501099",
+      "name": "平安新兴产业LOF",
+      "premium_rate": 1.39,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161124",
+      "name": "港股小盘LOF",
+      "premium_rate": 1.39,
+      "purchase_up_limit": 3000.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "501098",
+      "name": "科创建信LOF",
+      "premium_rate": 1.38,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "161812",
+      "name": "深证100LOF",
+      "premium_rate": 1.35,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    },
+    {
+      "code": "163801",
+      "name": "中银中国LOF",
+      "premium_rate": 1.35,
+      "purchase_up_limit": 0.0,
+      "status": 1,
+      "arbitrage_types": [
+        1
+      ]
+    }
   ]
 }
