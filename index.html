@@ -149,9 +149,17 @@
   <div class="组标题">效率工具 · 点开即用</div>
   <div class="网格" id="效率网格"></div>
 
-  <!-- ===== 本地工具（exe / zip，需下载） ===== -->
-  <div class="组标题">本地工具 · 下载运行</div>
-  <div class="网格" id="本地网格"></div>
+  <!-- ===== RPA 自动化（exe，需下载） ===== -->
+  <div class="组标题">RPA 自动化 · 下载运行</div>
+  <div class="网格" id="rpa网格"></div>
+
+  <!-- ===== WPS 办公（exe，需下载） ===== -->
+  <div class="组标题">WPS 办公 · 下载运行</div>
+  <div class="网格" id="wps网格"></div>
+
+  <!-- ===== 抓取 / 效率（exe / zip，需下载） ===== -->
+  <div class="组标题">抓取 / 效率 · 下载运行</div>
+  <div class="网格" id="抓取网格"></div>
 
   <!-- ===== 知识库（外部链接） ===== -->
   <div class="组标题">知识库 · 常用够用</div>
@@ -219,13 +227,31 @@ const 效率工具列表 = [
   }
 ];
 
-// 本地工具：从 GitHub 仓库下载后运行
-const 本地工具列表 = [
+// RPA 自动化：从 GitHub 仓库下载后运行
+const rpa工具列表 = [
+  {
+    图标:"🔁", 名称:"影刀 RPA 元素库替换工具",
+    描述:"批量替换影刀 RPA 流程里的元素库，迁移改版一键搞定，省去手动改。",
+    文件:"影刀RPA元素库替换工具.exe"
+  }
+];
+
+// WPS 办公：从 GitHub 仓库下载后运行
+const wps工具列表 = [
+  {
+    图标:"🖌️", 名称:"WPS 图片嵌入工具",
+    描述:"批量把图片嵌入 WPS/Office 文档，告别浮动错位，排版稳定不跑偏。",
+    文件:"WPS图片嵌入工具.exe"
+  },
   {
     图标:"🖼️", 名称:"WPS 图片导出工具",
     描述:"批量从 WPS/Office 文档导出图片并自动重命名，告别一张张右键另存。",
     文件:"WPS图片导出工具.exe"
-  },
+  }
+];
+
+// 抓取 / 效率：从 GitHub 仓库下载后运行
+const 抓取工具列表 = [
   {
     图标:"📦", 名称:"语雀知识库备份工具",
     描述:"批量把语雀知识库文档导出到本地，整库备份留底，不怕内容丢失。",
@@ -269,20 +295,26 @@ function 渲染在线(网格ID, 列表){
 渲染在线("电商网格", 电商看板列表);
 渲染在线("效率网格", 效率工具列表);
 
-// 渲染本地工具卡片
-const 本地网格 = document.getElementById("本地网格");
-本地工具列表.forEach(项 => {
-  const 卡片 = document.createElement("div");
-  卡片.className = "卡片";
-  卡片.innerHTML = `
-    <div class="图标">${项.图标}</div>
-    <div class="名称">${项.名称} <span class="标签 离线">下载</span></div>
-    <div class="描述">${项.描述}</div>
-    <div class="按钮组">
-      <a class="btn 主" href="${仓库地址}" target="_blank" rel="noopener">前往下载</a>
-    </div>`;
-  本地网格.appendChild(卡片);
-});
+// 通用：渲染本地工具卡片到指定网格
+function 渲染本地(网格ID, 列表){
+  const 网格 = document.getElementById(网格ID);
+  列表.forEach(项 => {
+    const 卡片 = document.createElement("div");
+    卡片.className = "卡片";
+    卡片.innerHTML = `
+      <div class="图标">${项.图标}</div>
+      <div class="名称">${项.名称} <span class="标签 离线">下载</span></div>
+      <div class="描述">${项.描述}</div>
+      <div class="按钮组">
+        <a class="btn 主" href="${仓库地址}" target="_blank" rel="noopener">前往下载</a>
+      </div>`;
+    网格.appendChild(卡片);
+  });
+}
+渲染本地("rpa网格", rpa工具列表);
+渲染本地("wps网格", wps工具列表);
+渲染本地("抓取网格", 抓取工具列表);
+
 // 知识库：外部链接，常用够用
 const 知识库列表 = [
   {
