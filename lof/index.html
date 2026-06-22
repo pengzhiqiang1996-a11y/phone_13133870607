@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOF场内套利溢价榜 | 小可耐教你学RPA</title>
+<!-- 作者:小可耐教你学RPA | 微信:13133870607 -->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f6f8;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; background: #fff; min-height: 100vh; }
+
+  /* 顶部标题 */
+  .topbar {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .topbar h1 { font-size: 17px; font-weight: 700; color: #222; }
+  .topbar .date { font-size: 12px; color: #999; margin-top: 4px; }
+
+  /* tab 切换 */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px;
+  }
+  .tab {
+    padding: 6px 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    cursor: pointer;
+    background: #f2f3f5;
+    color: #666;
+    user-select: none;
+    transition: all .15s;
+  }
+  .tab.active {
+    background: #ff4d3d;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* 表头 */
+  .thead {
+    display: grid;
+    grid-template-columns: 2.2fr 1.2fr 1.2fr 1.6fr;
+    padding: 10px 18px;
+    background: #fdeceb;
+    font-size: 13px;
+    color: #b66;
+  }
+
+  /* 行 */
+  .row {
+    display: grid;
+    grid-template-columns: 2.2fr 1.2fr 1.2fr 1.6fr;
+    align-items: center;
+    padding: 16px 18px;
+    border-bottom: 1px solid #f3f3f3;
+    font-size: 14px;
+  }
+  .row:hover { background: #fafafa; }
+  .fund-name { color: #2b6cb0; font-weight: 500; line-height: 1.5; }
+  .fund-code { color: #999; font-size: 12px; font-weight: 400; }
+  .rate { color: #ff4d3d; font-weight: 700; font-size: 15px; }
+  .limit { font-size: 13px; }
+  .limit.normal { color: #333; }
+  .limit.suspend { color: #ff4d3d; }
+  .arb { color: #555; font-size: 13px; }
+  .arb::before { content: "· "; color: #999; }
+
+  .empty { padding: 60px 0; text-align: center; color: #bbb; font-size: 14px; }
+
+  /* 底部引流 */
+  .footer {
+    margin-top: 24px;
+    padding: 18px;
+    background: #fafafa;
+    border-top: 1px solid #eee;
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.8;
+  }
+  .footer a { color: #ff4d3d; text-decoration: none; }
+  .footer .wx { color: #333; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>LOF 场内套利溢价榜</h1>
+    <div class="date" id="date">数据日期:加载中…</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab" data-type="2">海外</div>
+    <div class="tab active" data-type="1">A股</div>
+  </div>
+
+  <div class="thead">
+    <div>基金名称&代码</div>
+    <div>溢价率</div>
+    <div>限额</div>
+    <div>套利方式</div>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="footer">
+    作者:<span class="wx">小可耐教你学 RPA</span> &nbsp;|&nbsp; 微信:<span class="wx">13133870607</span><br>
+    <a href="https://pengzhiqiang1996-a11y.github.io/phone_13133870607/index.html" target="_blank">▶ 点击进入工具箱主页</a>
+  </div>
+</div>
+
+<script>
+// ====== 字段翻译规则(对不上时改这里) ======
+// status: 1=不限购/正常  2=暂停申购   如果实际相反,把下面两行的文案对调即可
+var STATUS_TEXT = { 1: "不限购", 2: "暂停申购" };
+var STATUS_SUSPEND = 2;  // 哪个 status 算"暂停"(红字)
+
+// arbitrage_types 数字 -> 文案
+var ARB_TEXT = { 1: "场内申购", 2: "场内申购" };
+
+var DATA = null;       // 全量数据 { date, a, overseas }
+var currentType = "1"; // 当前 tab
+
+function fmtLimit(f) {
+  // purchase_up_limit: 0 => 不限额;否则限购 X 万
+  if (f.status === STATUS_SUSPEND) {
+    return { text: STATUS_TEXT[f.status] || "暂停申购", cls: "suspend" };
+  }
+  if (!f.purchase_up_limit || f.purchase_up_limit === 0) {
+    return { text: STATUS_TEXT[1] || "不限购", cls: "normal" };
+  }
+  return { text: "限购 " + f.purchase_up_limit + " 万", cls: "normal" };
+}
+
+function fmtArb(types) {
+  if (!types || !types.length) return "—";
+  return types.map(function(t){ return ARB_TEXT[t] || "场内申购"; })
+              .filter(function(v,i,a){ return a.indexOf(v)===i; }) // 去重
+              .join(" / ");
+}
+
+function render() {
+  var list = document.getElementById("list");
+  var funds = currentType === "1" ? (DATA && DATA.a) : (DATA && DATA.overseas);
+  if (!funds || !funds.length) {
+    list.innerHTML = '<div class="empty">暂无数据</div>';
+    return;
+  }
+  list.innerHTML = funds.map(function(f) {
+    var lim = fmtLimit(f);
+    return '<div class="row">' +
+      '<div class="fund-name">' + f.name + '<br><span class="fund-code">' + f.code + '</span></div>' +
+      '<div class="rate">' + f.premium_rate.toFixed(2) + '%</div>' +
+      '<div class="limit ' + lim.cls + '">' + lim.text + '</div>' +
+      '<div class="arb">' + fmtArb(f.arbitrage_types) + '</div>' +
+    '</div>';
+  }).join("");
+}
+
+// tab 点击
+document.querySelectorAll(".tab").forEach(function(t) {
+  t.addEventListener("click", function() {
+    document.querySelectorAll(".tab").forEach(function(x){ x.classList.remove("active"); });
+    t.classList.add("active");
+    currentType = t.getAttribute("data-type");
+    render();
+  });
+});
+
+// 加载数据
+fetch("funds.json?_=" + Date.now())
+  .then(function(r){ return r.json(); })
+  .then(function(j) {
+    DATA = j;
+    document.getElementById("date").textContent = "数据日期:" + (j.date || "—");
+    render();
+  })
+  .catch(function(e) {
+    document.getElementById("list").innerHTML =
+      '<div class="empty">数据加载失败,请确认 funds.json 已生成</div>';
+  });
+</script>
+</body>
+</html>
