@@ -109,6 +109,9 @@
   .btn.次{background:transparent;color:var(--文字次);border:1px solid var(--描边)}
   .btn.次:hover{color:var(--文字);border-color:var(--主色)}
 
+  .提取码{font-size:12px;color:var(--文字次);margin-top:2px}
+  .提取码 b{color:var(--强调);letter-spacing:1px}
+
   /* 页脚 */
   .页脚{
     margin-top:60px;padding-top:24px;border-top:1px solid var(--描边);
@@ -176,7 +179,7 @@
   <div class="页脚">
     <div>作者 <b>13133870607</b> · 小可耐教你学RPA</div>
     <div>
-      下载仓库：<a href="https://github.com/pengzhiqiang1996-a11y/phone_13133870607" target="_blank" rel="noopener">github.com/pengzhiqiang1996-a11y/phone_13133870607</a>
+      软件下载：<a href="https://pan.baidu.com/s/1_O4lsbTp13s7Be2adiYe5w?pwd=6666" target="_blank" rel="noopener">百度网盘 · 提取码 6666</a>
     </div>
     <div>抖音 · 小红书 · 公众号 · 视频号 同名搜索「小可耐教你学RPA」</div>
   </div>
@@ -187,6 +190,8 @@
 /* ===== 作者：13133870607 小可耐教你学RPA ===== */
 const 站点基址 = "https://pengzhiqiang1996-a11y.github.io/phone_13133870607/";
 const 仓库地址 = "https://github.com/pengzhiqiang1996-a11y/phone_13133870607";
+const 网盘地址 = "https://pan.baidu.com/s/1_O4lsbTp13s7Be2adiYe5w?pwd=6666";
+const 网盘提取码 = "6666";
 
 // 金融工具：在线 HTML（支持子目录路径）
 const 金融工具列表 = [
@@ -325,8 +330,9 @@ function 渲染本地(网格ID, 列表){
       <div class="名称">${项.名称} <span class="标签 离线">下载</span></div>
       <div class="描述">${项.描述}</div>
       <div class="按钮组">
-        <a class="btn 主" href="${仓库地址}" target="_blank" rel="noopener">前往下载</a>
-      </div>`;
+        <a class="btn 主" href="${网盘地址}" target="_blank" rel="noopener">百度网盘下载</a>
+      </div>
+      <div class="提取码">百度网盘APP · 提取码 <b>${网盘提取码}</b></div>`;
     网格.appendChild(卡片);
   });
 }
