@@ -47,21 +47,57 @@
   .头部 .签名{color:var(--文字次);font-size:14px;margin-top:4px}
   .头部 .签名 b{color:var(--主色亮);font-weight:600}
   .标语{
-    margin:22px 0 38px;color:var(--文字次);font-size:15px;line-height:1.7;
+    margin:22px 0 28px;color:var(--文字次);font-size:15px;line-height:1.7;
     max-width:640px;border-left:3px solid var(--主色);padding-left:14px;
   }
+
+  /* 搜索 + 筛选工具条 */
+  .工具条{
+    position:sticky;top:0;z-index:20;
+    background:rgba(14,19,32,.82);backdrop-filter:blur(12px);
+    margin:0 -24px 8px;padding:16px 24px 12px;
+    border-bottom:1px solid var(--描边);
+  }
+  .搜索框{position:relative;margin-bottom:12px}
+  .搜索框 input{
+    width:100%;padding:12px 44px 12px 42px;font-size:15px;
+    background:var(--卡片底);border:1px solid var(--描边);border-radius:12px;
+    color:var(--文字);outline:none;transition:border-color .15s ease;
+  }
+  .搜索框 input:focus{border-color:var(--主色)}
+  .搜索框 input::placeholder{color:var(--文字次)}
+  .搜索框 .图{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;opacity:.7}
+  .搜索框 .清除{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    cursor:pointer;font-size:18px;color:var(--文字次);
+    width:24px;height:24px;display:none;align-items:center;justify-content:center;
+    border-radius:50%;
+  }
+  .搜索框 .清除:hover{background:var(--描边);color:var(--文字)}
+
+  .筛选条{display:flex;gap:8px;flex-wrap:wrap}
+  .筛选{
+    padding:6px 14px;font-size:13px;cursor:pointer;user-select:none;
+    background:var(--卡片底);border:1px solid var(--描边);border-radius:999px;
+    color:var(--文字次);transition:all .15s ease;white-space:nowrap;
+  }
+  .筛选:hover{color:var(--文字);border-color:var(--主色)}
+  .筛选.激活{background:var(--主色);border-color:var(--主色);color:#fff;font-weight:600}
+  .筛选 .数{opacity:.7;font-size:11px;margin-left:3px}
 
   /* 分组标题 */
   .组标题{
     display:flex;align-items:center;gap:10px;
-    margin:38px 0 18px;font-size:14px;letter-spacing:2px;
+    margin:34px 0 18px;font-size:14px;letter-spacing:2px;
     color:var(--文字次);text-transform:uppercase;
   }
   .组标题::after{content:"";flex:1;height:1px;background:var(--描边)}
+  .组{margin-bottom:4px}
 
   /* 卡片网格 */
   .网格{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
   .卡片{
+    position:relative;
     background:linear-gradient(180deg,var(--卡片底亮),var(--卡片底));
     border:1px solid var(--描边);border-radius:var(--圆角);
     padding:20px;display:flex;flex-direction:column;gap:12px;
@@ -69,33 +105,32 @@
   }
   .卡片:hover{transform:translateY(-4px);border-color:var(--主色);box-shadow:var(--阴影)}
   .卡片 .图标{font-size:26px}
-  .卡片 .名称{font-size:18px;font-weight:700}
+  .卡片 .名称{font-size:18px;font-weight:700;line-height:1.3}
   .卡片 .描述{font-size:13px;color:var(--文字次);line-height:1.6;flex:1}
   .标签{
     display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;
-    background:rgba(62,207,142,.14);color:var(--成功);border:1px solid rgba(62,207,142,.3);
+    background:rgba(91,140,255,.14);color:var(--主色亮);border:1px solid rgba(91,140,255,.3);
+    vertical-align:middle;
   }
   .标签.离线{background:rgba(255,180,84,.14);color:var(--强调);border-color:rgba(255,180,84,.3)}
   .标签.库{background:rgba(122,162,255,.14);color:var(--主色亮);border-color:rgba(122,162,255,.3)}
-
-  /* 知识库卡片：强调色描边区分于工具 */
-  .卡片.知识库{
-    background:linear-gradient(180deg,rgba(255,180,84,.06),var(--卡片底));
-    border-color:rgba(255,180,84,.3);
-  }
-  .卡片.知识库:hover{border-color:var(--强调);box-shadow:0 8px 30px rgba(255,180,84,.18)}
-  .btn.强调{background:var(--强调);color:#1a1205}
-  .btn.强调:hover{opacity:.88}
-
-  /* 分享清单卡片：成功绿描边区分 */
   .标签.单{background:rgba(62,207,142,.14);color:var(--成功);border-color:rgba(62,207,142,.3)}
-  .卡片.分享{
-    background:linear-gradient(180deg,rgba(62,207,142,.06),var(--卡片底));
-    border-color:rgba(62,207,142,.3);
+
+  /* NEW 角标 */
+  .new角标{
+    position:absolute;top:-8px;right:14px;
+    font-size:10px;font-weight:800;letter-spacing:.5px;
+    padding:3px 8px;border-radius:999px;
+    background:linear-gradient(135deg,#ff5b7f,#ff8a5b);color:#fff;
+    box-shadow:0 4px 12px rgba(255,91,127,.4);
   }
+
+  /* 知识库卡片：强调色描边区分 */
+  .卡片.知识库{background:linear-gradient(180deg,rgba(255,180,84,.06),var(--卡片底));border-color:rgba(255,180,84,.3)}
+  .卡片.知识库:hover{border-color:var(--强调);box-shadow:0 8px 30px rgba(255,180,84,.18)}
+  /* 分享清单卡片：成功绿描边区分 */
+  .卡片.分享{background:linear-gradient(180deg,rgba(62,207,142,.06),var(--卡片底));border-color:rgba(62,207,142,.3)}
   .卡片.分享:hover{border-color:var(--成功);box-shadow:0 8px 30px rgba(62,207,142,.18)}
-  .btn.绿{background:var(--成功);color:#05140d}
-  .btn.绿:hover{opacity:.88}
 
   /* 按钮 */
   .按钮组{display:flex;gap:10px;margin-top:4px}
@@ -106,11 +141,30 @@
   }
   .btn.主{background:var(--主色);color:#fff}
   .btn.主:hover{background:var(--主色亮)}
-  .btn.次{background:transparent;color:var(--文字次);border:1px solid var(--描边)}
-  .btn.次:hover{color:var(--文字);border-color:var(--主色)}
+  .btn.强调{background:var(--强调);color:#1a1205}
+  .btn.强调:hover{opacity:.88}
+  .btn.绿{background:var(--成功);color:#05140d}
+  .btn.绿:hover{opacity:.88}
 
   .提取码{font-size:12px;color:var(--文字次);margin-top:2px}
   .提取码 b{color:var(--强调);letter-spacing:1px}
+
+  /* 空状态 */
+  .空状态{
+    text-align:center;color:var(--文字次);padding:60px 20px;font-size:15px;
+    display:none;
+  }
+  .空状态 .大图{font-size:40px;margin-bottom:12px}
+
+  /* 回到顶部 */
+  .回顶{
+    position:fixed;right:24px;bottom:24px;z-index:30;
+    width:46px;height:46px;border-radius:50%;cursor:pointer;
+    background:var(--主色);color:#fff;border:none;
+    font-size:20px;display:none;align-items:center;justify-content:center;
+    box-shadow:0 6px 20px rgba(91,140,255,.5);transition:opacity .2s ease,transform .15s ease;
+  }
+  .回顶:hover{transform:translateY(-3px)}
 
   /* 页脚 */
   .页脚{
@@ -123,6 +177,7 @@
 
   @media(max-width:520px){
     .容器{padding:32px 16px 60px}
+    .工具条{margin:0 -16px 8px;padding:14px 16px 10px}
     .头部 h1{font-size:24px}
   }
 </style>
@@ -141,274 +196,201 @@
 
   <p class="标语">
     自研的一批小工具，覆盖 RPA、电商运营、个人财务与效率场景。
-    在线看板与工具点开即用，本地工具从 GitHub 下载后运行。技术服务业务，能跑出结果才是好工具。
+    在线看板与工具点开即用，本地软件百度网盘下载。技术服务业务，能跑出结果才是好工具。
   </p>
 
-  <!-- ===== 金融工具（在线 HTML） ===== -->
-  <div class="组标题">金融工具 · 点开即用</div>
-  <div class="网格" id="金融网格"></div>
+  <!-- 搜索 + 筛选 -->
+  <div class="工具条">
+    <div class="搜索框">
+      <span class="图">🔎</span>
+      <input id="搜索输入" type="text" placeholder="搜索工具名称或功能，比如「电商」「抓取」「记账」…" autocomplete="off">
+      <span class="清除" id="清除按钮">✕</span>
+    </div>
+    <div class="筛选条" id="筛选条"></div>
+  </div>
 
-  <!-- ===== 电商看板（在线 HTML） ===== -->
-  <div class="组标题">电商看板 · 点开即用</div>
-  <div class="网格" id="电商网格"></div>
+  <!-- 所有分组动态渲染到这里 -->
+  <div id="内容区"></div>
 
-  <!-- ===== 效率工具（在线 HTML） ===== -->
-  <div class="组标题">效率工具 · 点开即用</div>
-  <div class="网格" id="效率网格"></div>
-
-  <!-- ===== RPA 自动化（exe，需下载） ===== -->
-  <div class="组标题">RPA 自动化 · 下载运行</div>
-  <div class="网格" id="rpa网格"></div>
-
-  <!-- ===== WPS 办公（exe，需下载） ===== -->
-  <div class="组标题">WPS 办公 · 下载运行</div>
-  <div class="网格" id="wps网格"></div>
-
-  <!-- ===== 抓取 / 效率（exe / zip，需下载） ===== -->
-  <div class="组标题">抓取 / 效率 · 下载运行</div>
-  <div class="网格" id="抓取网格"></div>
-
-  <!-- ===== 知识库（外部链接） ===== -->
-  <div class="组标题">知识库 · 常用够用</div>
-  <div class="网格" id="知识库网格"></div>
-
-  <!-- ===== 分享清单（金山文档） ===== -->
-  <div class="组标题">分享清单 · 持续更新</div>
-  <div class="网格" id="分享网格"></div>
+  <!-- 搜索无结果 -->
+  <div class="空状态" id="空状态">
+    <div class="大图">🔍</div>
+    <div>没找到匹配的工具，换个关键词试试～</div>
+  </div>
 
   <div class="页脚">
     <div>作者 <b>13133870607</b> · 小可耐教你学RPA</div>
-    <div>
-      软件下载：<a href="https://pan.baidu.com/s/1_O4lsbTp13s7Be2adiYe5w?pwd=6666" target="_blank" rel="noopener">百度网盘 · 提取码 6666</a>
-    </div>
+    <div>软件下载：<a href="https://pan.baidu.com/s/1_O4lsbTp13s7Be2adiYe5w?pwd=6666" target="_blank" rel="noopener">百度网盘 · 提取码 6666</a></div>
     <div>抖音 · 小红书 · 公众号 · 视频号 同名搜索「小可耐教你学RPA」</div>
   </div>
 
 </div>
 
+<button class="回顶" id="回顶按钮" title="回到顶部">↑</button>
+
 <script>
 /* ===== 作者：13133870607 小可耐教你学RPA ===== */
-const 站点基址 = "https://pengzhiqiang1996-a11y.github.io/phone_13133870607/";
-const 仓库地址 = "https://github.com/pengzhiqiang1996-a11y/phone_13133870607";
+const 站点基址 = "https://all.13133870607.cn/";
 const 网盘地址 = "https://pan.baidu.com/s/1_O4lsbTp13s7Be2adiYe5w?pwd=6666";
 const 网盘提取码 = "6666";
 
-// 金融工具：在线 HTML（支持子目录路径）
-const 金融工具列表 = [
-  {
-    图标:"📉", 名称:"LOF 溢价套利榜",
-    描述:"实时盯盘 LOF 基金溢价/折价排行，套利机会一屏排序，抓价差不手忙。",
-    完整链接:"lof/index.html"
-  }
+/*
+  统一数据模型：每个工具一个对象
+  类型: "在线" | "下载" | "知识库" | "分享"
+  分类: 用于筛选标签的归组键（也是分组标题）
+  new : true 显示 NEW 角标
+  文件/完整链接: 在线工具用；链接: 知识库/分享用
+*/
+const 全部工具 = [
+  // —— 金融工具（在线）——
+  { 类型:"在线", 分类:"金融工具", 图标:"📉", 名称:"LOF 溢价套利榜", 描述:"实时盯盘 LOF 基金溢价/折价排行，套利机会一屏排序，抓价差不手忙。", 完整链接:"lof/index.html" },
+
+  // —— 电商看板（在线）——
+  { 类型:"在线", 分类:"电商看板", 图标:"🛒", 名称:"电商看数手册", 描述:"电商看板模板分享，核心指标拆解与数据看板范式，照着搭就能用。", 文件:"电商看板.html" },
+  { 类型:"在线", 分类:"电商看板", 图标:"⭐", 名称:"商品评价分析看板", 描述:"抓取并聚合商品评价，做情感与关键词分析，快速定位差评痛点。", 文件:"商品评价分析看板.html" },
+  { 类型:"在线", 分类:"电商看板", 图标:"📈", 名称:"全平台电商运营看板", 描述:"打通多平台电商数据，统一运营指标视图，一屏看清各店铺经营全貌。", 文件:"电商运营看板.html" },
+
+  // —— 效率工具（在线）——
+  { 类型:"在线", 分类:"效率工具", 图标:"✍️", 名称:"AI 写书工具", 描述:"AI 辅助长文/书稿创作，结构化生成、分章续写，给自媒体内容提效。", 文件:"AI写书工具_小可耐教你学RPA.html" },
+  { 类型:"在线", 分类:"效率工具", 图标:"💰", 名称:"生财记账", 描述:"轻量记账工具，收支分类与统计，适合个人财务与副业账目管理。", 文件:"生财记账.html" },
+  { 类型:"在线", 分类:"效率工具", 图标:"📊", 名称:"知识看板", 描述:"个人知识库可视化看板，分类聚合、检索与导出，盘活沉淀内容。", 文件:"知识看板.html" },
+  { 类型:"在线", 分类:"效率工具", 图标:"🌱", 名称:"人生看板", 描述:"在知识看板基础上整理升级，聚焦人生记录与规划，纵览人生全局。", 文件:"人生看板.html" },
+
+  // —— RPA 自动化（下载）——
+  { 类型:"下载", 分类:"RPA 自动化", 图标:"🔁", 名称:"影刀 RPA 元素库替换工具", 描述:"批量替换影刀 RPA 流程里的元素库，迁移改版一键搞定，省去手动改。", 文件:"影刀RPA元素库替换工具.exe" },
+  { 类型:"下载", 分类:"RPA 自动化", 图标:"🔍", 名称:"影刀 RPA 元素对比工具", 描述:"对比影刀 RPA 元素差异并高亮显示，改动一眼可见，排查问题更快。", 文件:"影刀RPA元素对比工具.exe" },
+
+  // —— WPS 办公（下载）——
+  { 类型:"下载", 分类:"WPS 办公", 图标:"🖌️", 名称:"WPS 图片嵌入工具", 描述:"批量把图片嵌入 WPS/Office 文档，告别浮动错位，排版稳定不跑偏。", 文件:"WPS图片嵌入工具.exe" },
+  { 类型:"下载", 分类:"WPS 办公", 图标:"🖼️", 名称:"WPS 图片导出工具", 描述:"批量从 WPS/Office 文档导出图片并自动重命名，告别一张张右键另存。", 文件:"WPS图片导出工具.exe" },
+
+  // —— 抓取 / 效率（下载）——
+  { 类型:"下载", 分类:"抓取 / 效率", 图标:"📦", 名称:"语雀知识库备份工具", 描述:"批量把语雀知识库文档导出到本地，整库备份留底，不怕内容丢失。", 文件:"语雀知识库备份工具V1.1.exe" },
+  { 类型:"下载", 分类:"抓取 / 效率", 图标:"📋", 名称:"剪切板助手", 描述:"常驻剪切板增强工具，历史记录与快速复用，提升日常操作效率。", 文件:"剪切板助手20260611.exe" },
+  { 类型:"下载", 分类:"抓取 / 效率", 图标:"📺", 名称:"哔哩哔哩评论获取插件", 描述:"批量抓取 B 站视频评论，导出结构化数据，做内容分析与选题参考。", 文件:"哔哩哔哩评论获取插件.zip" },
+  { 类型:"下载", 分类:"抓取 / 效率", 图标:"🔥", 名称:"哔哩哔哩热门视频抓取", 描述:"批量抓取 B 站热门视频数据，榜单选题与爆款拆解，蹭热点不迷路。", 文件:"哔哩哔哩热门视频抓取插件.zip", new:true },
+  { 类型:"下载", 分类:"抓取 / 效率", 图标:"🧵", 名称:"Threads 粉丝名称抓取", 描述:"批量抓取 Threads 平台粉丝名称，导出名单做运营分析与触达。", 文件:"Threads粉丝名称抓取插件.zip", new:true },
+  { 类型:"下载", 分类:"抓取 / 效率", 图标:"🏨", 名称:"携程抓取房型插件", 描述:"拦截携程酒店房型接口，导出房型/价格数据，自动标记售罄与差价。", 文件:"携程抓取房型插件 小可耐.zip" },
+
+  // —— 知识库（外链）——
+  { 类型:"知识库", 分类:"知识库", 图标:"📚", 名称:"语雀知识库", 描述:"小可耐的语雀知识库，RPA 教程、自媒体运营与实战笔记的体系化沉淀。", 链接:"https://www.yuque.com/pengzhiqiang999", 平台:"语雀" },
+  { 类型:"知识库", 分类:"知识库", 图标:"🧠", 名称:"ima 知识库 · 小可耐爱分享", 描述:"腾讯 ima 知识库「和小可耐学 RPA」，问答式检索，一般人够用、最常翻的一份。", 链接:"https://ima.qq.com/wiki/?shareId=1e69ccc009e4dacb05b68411481e87288b3d43d15254e75ead6b0e14d55bf393", 平台:"ima" },
+
+  // —— 分享清单（外链）——
+  { 类型:"分享", 分类:"分享清单", 图标:"💻", 名称:"软件分享", 描述:"日常自用的好软件清单，工具推荐与下载方式，持续更新不踩坑。", 链接:"https://www.kdocs.cn/wo/sl/v13wrOqk" },
+  { 类型:"分享", 分类:"分享清单", 图标:"🎁", 名称:"好物分享", 描述:"私藏好物清单，实用单品与提效装备推荐，闭眼入也不亏。", 链接:"https://www.kdocs.cn/wo/sl/v14dVQSP" },
+  { 类型:"分享", 分类:"分享清单", 图标:"📖", 名称:"好书分享", 描述:"值得一读的书单，认知、效率与个人成长方向，少走弯路。", 链接:"https://www.kdocs.cn/wo/sl/v11ahLTL" },
+  { 类型:"分享", 分类:"分享清单", 图标:"💡", 名称:"生活经验", 描述:"日常生活的实用经验与小窍门，亲测有效，照做省心省力。", 链接:"https://www.kdocs.cn/wo/sl/v12u0kga" }
 ];
 
-// 电商看板：直接拼接 GitHub Pages 地址访问
-const 电商看板列表 = [
-  {
-    图标:"🛒", 名称:"电商看数手册",
-    描述:"电商看板模板分享，核心指标拆解与数据看板范式，照着搭就能用。",
-    文件:"电商看板.html"
-  },
-  {
-    图标:"⭐", 名称:"商品评价分析看板",
-    描述:"抓取并聚合商品评价，做情感与关键词分析，快速定位差评痛点。",
-    文件:"商品评价分析看板.html"
-  },
-  {
-    图标:"📈", 名称:"全平台电商运营看板",
-    描述:"打通多平台电商数据，统一运营指标视图，一屏看清各店铺经营全貌。",
-    文件:"电商运营看板.html"
-  }
-];
+// 分组顺序（决定页面从上到下的排列）
+const 分组顺序 = ["金融工具","电商看板","效率工具","RPA 自动化","WPS 办公","抓取 / 效率","知识库","分享清单"];
 
-// 效率工具：直接拼接 GitHub Pages 地址访问
-const 效率工具列表 = [
-  {
-    图标:"✍️", 名称:"AI 写书工具",
-    描述:"AI 辅助长文/书稿创作，结构化生成、分章续写，给自媒体内容提效。",
-    文件:"AI写书工具_小可耐教你学RPA.html"
-  },
-  {
-    图标:"💰", 名称:"生财记账",
-    描述:"轻量记账工具，收支分类与统计，适合个人财务与副业账目管理。",
-    文件:"生财记账.html"
-  },
-  {
-    图标:"📊", 名称:"知识看板",
-    描述:"个人知识库可视化看板，分类聚合、检索与导出，盘活沉淀内容。",
-    文件:"知识看板.html"
-  },
-  {
-    图标:"🌱", 名称:"人生看板",
-    描述:"在知识看板基础上整理升级，聚焦人生记录与规划，纵览人生全局。",
-    文件:"人生看板.html"
-  }
-];
-
-// RPA 自动化：从 GitHub 仓库下载后运行
-const rpa工具列表 = [
-  {
-    图标:"🔁", 名称:"影刀 RPA 元素库替换工具",
-    描述:"批量替换影刀 RPA 流程里的元素库，迁移改版一键搞定，省去手动改。",
-    文件:"影刀RPA元素库替换工具.exe"
-  },
-  {
-    图标:"🔍", 名称:"影刀 RPA 元素对比工具",
-    描述:"对比影刀 RPA 元素差异并高亮显示，改动一眼可见，排查问题更快。",
-    文件:"影刀RPA元素对比工具.exe"
-  }
-];
-
-// WPS 办公：从 GitHub 仓库下载后运行
-const wps工具列表 = [
-  {
-    图标:"🖌️", 名称:"WPS 图片嵌入工具",
-    描述:"批量把图片嵌入 WPS/Office 文档，告别浮动错位，排版稳定不跑偏。",
-    文件:"WPS图片嵌入工具.exe"
-  },
-  {
-    图标:"🖼️", 名称:"WPS 图片导出工具",
-    描述:"批量从 WPS/Office 文档导出图片并自动重命名，告别一张张右键另存。",
-    文件:"WPS图片导出工具.exe"
-  }
-];
-
-// 抓取 / 效率：从 GitHub 仓库下载后运行
-const 抓取工具列表 = [
-  {
-    图标:"📦", 名称:"语雀知识库备份工具",
-    描述:"批量把语雀知识库文档导出到本地，整库备份留底，不怕内容丢失。",
-    文件:"语雀知识库备份工具V1.1.exe"
-  },
-  {
-    图标:"📋", 名称:"剪切板助手",
-    描述:"常驻剪切板增强工具，历史记录与快速复用，提升日常操作效率。",
-    文件:"剪切板助手20260611.exe"
-  },
-  {
-    图标:"📺", 名称:"哔哩哔哩评论获取插件",
-    描述:"批量抓取 B 站视频评论，导出结构化数据，做内容分析与选题参考。",
-    文件:"哔哩哔哩评论获取插件.zip"
-  },
-  {
-    图标:"🏨", 名称:"携程抓取房型插件",
-    描述:"拦截携程酒店房型接口，导出房型/价格数据，自动标记售罄与差价。",
-    文件:"携程抓取房型插件 小可耐.zip"
-  }
-];
-
-// 通用：渲染在线工具卡片到指定网格
-function 渲染在线(网格ID, 列表){
-  const 网格 = document.getElementById(网格ID);
-  列表.forEach(项 => {
+// —— 生成单张卡片的 HTML ——
+function 卡片HTML(项){
+  const 角标 = 项.new ? '<span class="new角标">NEW</span>' : '';
+  if(项.类型 === "在线"){
     const 访问链接 = 项.完整链接 ? (站点基址 + 项.完整链接) : (站点基址 + encodeURIComponent(项.文件));
-    const 卡片 = document.createElement("div");
-    卡片.className = "卡片";
-    卡片.innerHTML = `
+    return `<div class="卡片">${角标}
       <div class="图标">${项.图标}</div>
       <div class="名称">${项.名称} <span class="标签">在线</span></div>
       <div class="描述">${项.描述}</div>
-      <div class="按钮组">
-        <a class="btn 主" href="${访问链接}" target="_blank" rel="noopener">打开工具</a>
-        <a class="btn 次" href="${仓库地址}" target="_blank" rel="noopener">源码</a>
-      </div>`;
-    网格.appendChild(卡片);
-  });
-}
-渲染在线("金融网格", 金融工具列表);
-渲染在线("电商网格", 电商看板列表);
-渲染在线("效率网格", 效率工具列表);
-
-// 通用：渲染本地工具卡片到指定网格
-function 渲染本地(网格ID, 列表){
-  const 网格 = document.getElementById(网格ID);
-  列表.forEach(项 => {
-    const 卡片 = document.createElement("div");
-    卡片.className = "卡片";
-    卡片.innerHTML = `
+      <div class="按钮组"><a class="btn 主" href="${访问链接}" target="_blank" rel="noopener">打开工具</a></div>
+    </div>`;
+  }
+  if(项.类型 === "下载"){
+    return `<div class="卡片">${角标}
       <div class="图标">${项.图标}</div>
       <div class="名称">${项.名称} <span class="标签 离线">下载</span></div>
       <div class="描述">${项.描述}</div>
-      <div class="按钮组">
-        <a class="btn 主" href="${网盘地址}" target="_blank" rel="noopener">百度网盘下载</a>
-      </div>
-      <div class="提取码">百度网盘APP · 提取码 <b>${网盘提取码}</b></div>`;
-    网格.appendChild(卡片);
-  });
-}
-渲染本地("rpa网格", rpa工具列表);
-渲染本地("wps网格", wps工具列表);
-渲染本地("抓取网格", 抓取工具列表);
-
-// 知识库：外部链接，常用够用
-const 知识库列表 = [
-  {
-    图标:"📚", 名称:"语雀知识库",
-    描述:"小可耐的语雀知识库，RPA 教程、自媒体运营与实战笔记的体系化沉淀。",
-    链接:"https://www.yuque.com/pengzhiqiang999",
-    平台:"语雀"
-  },
-  {
-    图标:"🧠", 名称:"ima 知识库 · 小可耐爱分享",
-    描述:"腾讯 ima 知识库「和小可耐学 RPA」，问答式检索，一般人够用、最常翻的一份。",
-    链接:"https://ima.qq.com/wiki/?shareId=1e69ccc009e4dacb05b68411481e87288b3d43d15254e75ead6b0e14d55bf393",
-    平台:"ima"
-  }
-];
-
-// 渲染知识库卡片
-const 知识库网格 = document.getElementById("知识库网格");
-知识库列表.forEach(项 => {
-  const 卡片 = document.createElement("div");
-  卡片.className = "卡片 知识库";
-  卡片.innerHTML = `
-    <div class="图标">${项.图标}</div>
-    <div class="名称">${项.名称} <span class="标签 库">${项.平台}</span></div>
-    <div class="描述">${项.描述}</div>
-    <div class="按钮组">
-      <a class="btn 强调" href="${项.链接}" target="_blank" rel="noopener">进入知识库</a>
+      <div class="按钮组"><a class="btn 主" href="${网盘地址}" target="_blank" rel="noopener">百度网盘下载</a></div>
+      <div class="提取码">百度网盘APP · 提取码 <b>${网盘提取码}</b></div>
     </div>`;
-  知识库网格.appendChild(卡片);
-});
-
-// 分享清单：金山文档外链，持续更新
-const 分享清单列表 = [
-  {
-    图标:"💻", 名称:"软件分享",
-    描述:"日常自用的好软件清单，工具推荐与下载方式，持续更新不踩坑。",
-    链接:"https://www.kdocs.cn/wo/sl/v13wrOqk"
-  },
-  {
-    图标:"🎁", 名称:"好物分享",
-    描述:"私藏好物清单，实用单品与提效装备推荐，闭眼入也不亏。",
-    链接:"https://www.kdocs.cn/wo/sl/v14dVQSP"
-  },
-  {
-    图标:"📖", 名称:"好书分享",
-    描述:"值得一读的书单，认知、效率与个人成长方向，少走弯路。",
-    链接:"https://www.kdocs.cn/wo/sl/v11ahLTL"
-  },
-  {
-    图标:"💡", 名称:"生活经验",
-    描述:"日常生活的实用经验与小窍门，亲测有效，照做省心省力。",
-    链接:"https://www.kdocs.cn/wo/sl/v12u0kga"
   }
-];
-
-// 渲染分享清单卡片
-const 分享网格 = document.getElementById("分享网格");
-分享清单列表.forEach(项 => {
-  const 卡片 = document.createElement("div");
-  卡片.className = "卡片 分享";
-  卡片.innerHTML = `
+  if(项.类型 === "知识库"){
+    return `<div class="卡片 知识库">${角标}
+      <div class="图标">${项.图标}</div>
+      <div class="名称">${项.名称} <span class="标签 库">${项.平台}</span></div>
+      <div class="描述">${项.描述}</div>
+      <div class="按钮组"><a class="btn 强调" href="${项.链接}" target="_blank" rel="noopener">进入知识库</a></div>
+    </div>`;
+  }
+  // 分享
+  return `<div class="卡片 分享">${角标}
     <div class="图标">${项.图标}</div>
     <div class="名称">${项.名称} <span class="标签 单">清单</span></div>
     <div class="描述">${项.描述}</div>
-    <div class="按钮组">
-      <a class="btn 绿" href="${项.链接}" target="_blank" rel="noopener">查看清单</a>
+    <div class="按钮组"><a class="btn 绿" href="${项.链接}" target="_blank" rel="noopener">查看清单</a></div>
+  </div>`;
+}
+
+const 内容区 = document.getElementById("内容区");
+const 空状态 = document.getElementById("空状态");
+const 搜索输入 = document.getElementById("搜索输入");
+const 清除按钮 = document.getElementById("清除按钮");
+const 筛选条 = document.getElementById("筛选条");
+
+let 当前分类 = "全部";
+let 当前关键词 = "";
+
+// —— 渲染筛选标签 ——（全部 + 各分类，带数量）
+function 渲染筛选(){
+  const 标签 = [{键:"全部", 数:全部工具.length}];
+  分组顺序.forEach(分类 => {
+    const 数 = 全部工具.filter(x => x.分类 === 分类).length;
+    if(数 > 0) 标签.push({键:分类, 数});
+  });
+  筛选条.innerHTML = 标签.map(t =>
+    `<span class="筛选${t.键===当前分类?' 激活':''}" data-分类="${t.键}">${t.键}<span class="数">${t.数}</span></span>`
+  ).join("");
+  筛选条.querySelectorAll(".筛选").forEach(el => {
+    el.onclick = () => { 当前分类 = el.dataset.分类; 渲染筛选(); 渲染内容(); };
+  });
+}
+
+// —— 渲染内容区（按分组，应用搜索 + 分类过滤）——
+function 渲染内容(){
+  const 词 = 当前关键词.trim().toLowerCase();
+  let 命中总数 = 0;
+  let html = "";
+  分组顺序.forEach(分类 => {
+    if(当前分类 !== "全部" && 当前分类 !== 分类) return;
+    const 组项 = 全部工具.filter(x =>
+      x.分类 === 分类 &&
+      (词 === "" || (x.名称+x.描述).toLowerCase().includes(词))
+    );
+    if(组项.length === 0) return;
+    命中总数 += 组项.length;
+    html += `<div class="组">
+      <div class="组标题">${分类}</div>
+      <div class="网格">${组项.map(卡片HTML).join("")}</div>
     </div>`;
-  分享网格.appendChild(卡片);
+  });
+  内容区.innerHTML = html;
+  空状态.style.display = 命中总数 === 0 ? "block" : "none";
+}
+
+// —— 搜索交互 ——
+搜索输入.addEventListener("input", () => {
+  当前关键词 = 搜索输入.value;
+  清除按钮.style.display = 当前关键词 ? "flex" : "none";
+  渲染内容();
 });
+清除按钮.onclick = () => {
+  搜索输入.value = ""; 当前关键词 = ""; 清除按钮.style.display = "none";
+  渲染内容(); 搜索输入.focus();
+};
+
+// —— 回到顶部 ——
+const 回顶按钮 = document.getElementById("回顶按钮");
+window.addEventListener("scroll", () => {
+  回顶按钮.style.display = window.scrollY > 400 ? "flex" : "none";
+});
+回顶按钮.onclick = () => window.scrollTo({top:0, behavior:"smooth"});
+
+// —— 初始化 ——
+渲染筛选();
+渲染内容();
 </script>
 </body>
 </html>
