@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>到手可用的源码库 · 小可耐教你学RPA</title>
+<style>
+:root{
+  --bg:#fafbfc; --bg-soft:#f4f6f8; --card:#ffffff; --line:#eaedf0; --line2:#f0f2f5;
+  --text:#1f2733; --sub:#6b7682; --mut:#9aa4af;
+  --accent:#ff6b35; --accent-soft:#fff3ee; --accent-line:#ffd9c7;
+  --green:#22a06b; --green-soft:#eaf7f1; --pink:#d6457f; --pink-soft:#fdeef4; --blue:#3b82f6;
+  --shadow:0 1px 3px rgba(16,24,40,.04),0 1px 2px rgba(16,24,40,.03);
+  --shadow-h:0 8px 24px rgba(16,24,40,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none;}
+
+.hero{padding:46px 20px 30px;text-align:center;}
+.hero h1{font-size:30px;font-weight:800;letter-spacing:-.5px;color:var(--text);}
+.hero h1 .dot{color:var(--accent);}
+.hero .slogan{color:var(--sub);font-size:14px;margin-top:10px;font-weight:400;}
+.hero .vinfo{display:inline-flex;align-items:center;gap:7px;margin-top:18px;background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent);padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;}
+.hero .links{margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.hero .links a{font-size:12.5px;color:var(--sub);background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:8px;transition:.18s;}
+.hero .links a:hover{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft);}
+
+.srcbar{max-width:1080px;margin:0 auto;padding:0 20px;}
+.srcbar-inner{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mut);padding:4px 2px;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot.loading{background:var(--blue);animation:pulse 1s infinite;}
+.dot.ok{background:var(--green);}
+.dot.err{background:var(--accent);}
+@keyframes pulse{50%{opacity:.3;}}
+.srcbar .msg{flex:1;}
+.srcbar .msg b{color:var(--sub);font-weight:600;}
+.srcbar .act{cursor:pointer;color:var(--mut);transition:.15s;padding:2px 8px;border-radius:5px;}
+.srcbar .act:hover{color:var(--accent);background:var(--accent-soft);}
+
+.toolbar{position:sticky;top:0;z-index:50;background:rgba(250,251,252,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--line2);padding:14px 20px;margin-top:12px;}
+.toolbar-inner{max-width:1080px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.search-box{flex:1;min-width:220px;position:relative;}
+.search-box input{width:100%;padding:11px 16px 11px 42px;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--text);outline:none;transition:.18s;box-shadow:var(--shadow);}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.search-box input::placeholder{color:var(--mut);}
+.search-box svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--mut);}
+.stat{font-size:12.5px;color:var(--mut);white-space:nowrap;}
+.stat b{color:var(--accent);font-weight:700;}
+
+.chips{max-width:1080px;margin:14px auto 0;padding:0 20px;display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;}
+.chips::-webkit-scrollbar{height:0;}
+.chip{white-space:nowrap;font-size:12.5px;padding:6px 14px;border-radius:999px;cursor:pointer;background:var(--card);border:1px solid var(--line);color:var(--sub);transition:.16s;user-select:none;}
+.chip:hover{border-color:var(--accent-line);color:var(--accent);}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
+.chip .n{opacity:.65;margin-left:5px;font-size:11px;}
+
+.wrap{max-width:1080px;margin:0 auto;padding:26px 20px 70px;}
+.cat-block{margin-bottom:38px;scroll-margin-top:150px;}
+.cat-title{display:flex;align-items:center;gap:9px;margin-bottom:16px;font-size:16px;font-weight:700;color:var(--text);}
+.cat-title .bar{width:3px;height:16px;border-radius:2px;background:var(--accent);}
+.cat-title .cnt{font-size:12px;color:var(--mut);font-weight:400;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px;transition:.2s;display:flex;flex-direction:column;gap:9px;box-shadow:var(--shadow);}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-h);border-color:var(--accent-line);}
+.card h3{font-size:14.5px;font-weight:700;line-height:1.45;color:var(--text);}
+.card .desc{font-size:12.5px;color:var(--sub);line-height:1.55;}
+.tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tag2{font-size:11px;padding:3px 9px;border-radius:6px;background:var(--green-soft);color:var(--green);font-weight:500;}
+.btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:3px;}
+.btn{font-size:12px;padding:6px 13px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;font-weight:600;transition:.16s;cursor:pointer;border:1px solid transparent;}
+.btn-src{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line);}
+.btn-src:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-vid{background:var(--pink-soft);color:var(--pink);border-color:#f7d3e2;}
+.btn-vid:hover{background:var(--pink);color:#fff;border-color:var(--pink);}
+.btn .badge{background:rgba(0,0,0,.1);border-radius:5px;padding:0 5px;font-size:10px;}
+.btn-vid:hover .badge,.btn-src:hover .badge{background:rgba(255,255,255,.25);}
+.empty-link{font-size:11.5px;color:var(--mut);}
+
+.skeleton{background:var(--card);border:1px solid var(--line);border-radius:14px;height:110px;position:relative;overflow:hidden;}
+.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,0,0,.025),transparent);transform:translateX(-100%);animation:shimmer 1.4s infinite;}
+@keyframes shimmer{100%{transform:translateX(100%);}}
+
+.center-msg{text-align:center;padding:70px 20px;color:var(--mut);}
+.center-msg svg{color:var(--line);margin-bottom:14px;}
+.center-msg .big{font-size:15px;color:var(--text);font-weight:600;}
+.center-msg .small{margin-top:8px;font-size:13px;line-height:1.6;max-width:440px;margin-left:auto;margin-right:auto;}
+
+.modal-mask{position:fixed;inset:0;background:rgba(16,24,40,.4);backdrop-filter:blur(2px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-mask.show{display:flex;}
+.modal{background:var(--card);border-radius:16px;max-width:460px;width:100%;max-height:72vh;overflow:auto;box-shadow:var(--shadow-h);}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
+.modal-head h4{font-size:14.5px;font-weight:700;}
+.modal-head .x{cursor:pointer;color:var(--mut);font-size:22px;line-height:1;padding:0 4px;}
+.modal-head .x:hover{color:var(--text);}
+.modal-body{padding:10px 14px 16px;}
+.modal-body a{display:block;padding:11px 14px;border-radius:10px;font-size:13px;color:var(--text);border:1px solid var(--line);margin-top:8px;transition:.15s;line-height:1.45;}
+.modal-body a:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);}
+
+.footer{border-top:1px solid var(--line);margin-top:10px;padding:30px 20px 44px;text-align:center;background:var(--bg-soft);}
+.footer .brand{font-size:14px;font-weight:700;color:var(--accent);}
+.footer .wx{font-size:13px;margin-top:6px;color:var(--sub);}
+.footer .wx b{color:var(--accent);font-size:14.5px;}
+.footer .home{display:inline-block;margin-top:13px;font-size:12.5px;color:var(--sub);background:var(--card);border:1px solid var(--line);padding:8px 18px;border-radius:9px;transition:.18s;}
+.footer .home:hover{color:var(--accent);border-color:var(--accent-line);}
+.footer .tip{font-size:11.5px;color:var(--mut);margin-top:16px;}
+
+.toTop{position:fixed;right:24px;bottom:24px;width:42px;height:42px;border-radius:12px;background:var(--accent);color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-h);z-index:60;font-size:18px;}
+.toTop.show{display:flex;}
+.toTop:hover{background:#f05a25;}
+
+@media(max-width:600px){.hero{padding:34px 18px 24px;}.hero h1{font-size:25px;}.grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>到手可用的源码库<span class="dot">.</span></h1>
+  <div class="slogan">影刀 RPA 实战案例集 · 持续更新</div>
+  <div class="vinfo">📲 源码获取加微信 13133870607</div>
+  <div class="links">
+    <a href="https://www.yuque.com/pengzhiqiang999/xiaokenai" target="_blank">语雀知识库</a>
+    <a href="https://www.yingdao.com/community/application" target="_blank">影刀应用市场</a>
+  </div>
+</div>
+
+<div class="srcbar">
+  <div class="srcbar-inner">
+    <span class="dot loading" id="dot"></span>
+    <span class="msg" id="srcmsg">正在加载…</span>
+    <span class="act" onclick="loadData()" id="refreshBtn">刷新</span>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="搜索关键字：excel、微信、抓取、千牛…" autocomplete="off">
+    </div>
+    <div class="stat" id="stat"></div>
+  </div>
+  <div class="chips" id="chips"></div>
+</div>
+
+<div class="wrap" id="content"></div>
+
+<div class="modal-mask" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head"><h4 id="modalTitle"></h4><span class="x" onclick="closeModal()">&times;</span></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toTop" id="toTop" onclick="scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<div class="footer">
+  <div class="brand">小可耐教你学 RPA</div>
+  <div class="wx">微信：<b>13133870607</b> · 搜索源码直接搜关键字</div>
+  <a class="home" href="https://pengzhiqiang1996-a11y.github.io/phone_13133870607/index.html" target="_blank">🧰 工具箱主页</a>
+  <div class="tip">无需求，不影刀 · 学习知识点是为了解决需求，需求才是王道</div>
+</div>
+
+<script>
+/* ===================================================================
+   数据源配置（写死，访客无需任何设置）
+   如需更换表格 / 代理，改这里四个值即可
+   =================================================================== */
+const 接口地址 = 'https://www.kdocs.cn/api/v3/ide/file/529848514207/script/V2-1aL4ypBX4VfIyoR4B1aQWk/sync_task';
+const 访问密钥 = '32aZiZq00Z016KwrJpf5RP';
+const 表格名称 = '影刀源码库';
+const 代理地址 = 'https://yingdao-proxy.pengzhiqiang1996.workers.dev/';
+/* =================================================================== */
+
+let 全部数据=[];
+let 当前分类='all';
+let 关键字='';
+const $=id=>document.getElementById(id);
+
+function 解析链接(原文){
+  if(!原文) return [];
+  return String(原文).split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(行=>{
+    const i=行.indexOf('|||');
+    if(i>=0){const t=行.slice(0,i).trim(),u=行.slice(i+3).trim();return {文本:t||u,url:u};}
+    return {文本:行,url:行};
+  }).filter(x=>x.url);
+}
+function 转换记录(records){
+  const 结果=[];
+  records.forEach(r=>{
+    const f=r.fields||{};
+    const 名称=(f['案例名称']||'').trim();
+    if(!名称) return;
+    结果.push({
+      分类:(f['分类']||'未分类').trim(),名称:名称,
+      背景:(f['业务背景']||'').trim(),知识点:(f['知识点']||'').trim(),
+      源码:解析链接(f['源码链接']),视频:解析链接(f['视频教程链接']),
+    });
+  });
+  return 结果;
+}
+async function loadData(){
+  $('dot').className='dot loading';
+  $('srcmsg').textContent='正在加载…';
+  $('content').innerHTML='<div class="grid">'+Array(8).fill('<div class="skeleton"></div>').join('')+'</div>';
+  const 请求体=JSON.stringify({Context:{argv:{operateType:'query',sheetName:表格名称,pagefy:''}}});
+  let 目标=接口地址;
+  if(代理地址){目标=代理地址.replace(/\/$/,'')+'?url='+encodeURIComponent(接口地址);}
+  try{
+    const resp=await fetch(目标,{method:'POST',headers:{'Content-Type':'application/json','AirScript-Token':访问密钥},body:请求体});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const json=await resp.json();
+    let records=null;
+    const result=json?.data?.result ?? json?.result ?? json;
+    if(Array.isArray(result)){
+      if(result.length===2 && Array.isArray(result[1])) records=result[1];
+      else records=result;
+    }else if(result && Array.isArray(result.records)){records=result.records;}
+    if(!records) throw new Error('返回结构无法识别');
+    全部数据=转换记录(records);
+    $('dot').className='dot ok';
+    $('srcmsg').innerHTML='已加载 · 共 <b>'+全部数据.length+'</b> 个案例';
+    渲染chips();渲染();
+  }catch(e){
+    $('dot').className='dot err';
+    $('srcmsg').innerHTML='加载失败，请稍后刷新';
+    $('content').innerHTML='<div class="center-msg">'+
+      '<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>'+
+      '<div class="big">数据加载失败</div>'+
+      '<div class="small">请点上方「刷新」重试，或加微信 13133870607。</div></div>';
+  }
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function 渲染chips(){
+  const 列表=[];const 计数={};
+  全部数据.forEach(a=>{if(!(a.分类 in 计数)){计数[a.分类]=0;列表.push(a.分类);}计数[a.分类]++;});
+  let h=`<div class="chip active" data-cat="all" onclick="选分类('all',this)">全部<span class="n">${全部数据.length}</span></div>`;
+  列表.forEach(c=>{h+=`<div class="chip" data-cat="${esc(c)}" onclick="选分类('${esc(c)}',this)">${esc(c)}<span class="n">${计数[c]}</span></div>`;});
+  $('chips').innerHTML=h;
+}
+function 选分类(cat,el){
+  当前分类=cat;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');渲染();
+  if(cat!=='all'){setTimeout(()=>{const t=$('cat_'+cat);if(t)t.scrollIntoView({behavior:'smooth'});},50);}
+}
+function 匹配(a,kw){if(!kw)return true;const t=(a.名称+' '+a.背景+' '+a.知识点).toLowerCase();return kw.split(/\s+/).every(w=>t.includes(w));}
+function 链接按钮(标题,列表,类型){
+  if(!列表||!列表.length)return '';
+  const cls=类型==='src'?'btn-src':'btn-vid';const icon=类型==='src'?'📦':'▶';const label=类型==='src'?'源码':'视频';
+  if(列表.length===1)return `<a class="btn ${cls}" href="${esc(列表[0].url)}" target="_blank">${icon} ${label}</a>`;
+  const payload=encodeURIComponent(JSON.stringify(列表));
+  return `<span class="btn ${cls}" onclick="openModal('${esc(标题)}','${label}',decodeURIComponent('${payload}'))">${icon} ${label}<span class="badge">${列表.length}</span></span>`;
+}
+function 渲染(){
+  const kw=关键字.trim().toLowerCase();
+  const 序=[];全部数据.forEach(a=>{if(!序.includes(a.分类))序.push(a.分类);});
+  let html='';let 显示数=0;
+  序.forEach(cat=>{
+    if(当前分类!=='all'&&cat!==当前分类)return;
+    const 案例=全部数据.filter(a=>a.分类===cat&&匹配(a,kw));
+    if(!案例.length)return;显示数+=案例.length;
+    html+=`<div class="cat-block" id="cat_${esc(cat)}"><div class="cat-title"><span class="bar"></span>${esc(cat)}<span class="cnt">${案例.length}</span></div><div class="grid">`;
+    案例.forEach(a=>{
+      const 标签=a.知识点?`<div class="tags"><span class="tag2">💡 ${esc(a.知识点)}</span></div>`:'';
+      const desc=a.背景?`<div class="desc">${esc(a.背景)}</div>`:'';
+      let btns=链接按钮(a.名称,a.源码,'src')+链接按钮(a.名称,a.视频,'vid');
+      if(!btns)btns=`<span class="empty-link">📲 加微信 13133870607 获取</span>`;
+      html+=`<div class="card"><h3>${esc(a.名称)}</h3>${desc}${标签}<div class="btns">${btns}</div></div>`;
+    });
+    html+=`</div></div>`;
+  });
+  if(!显示数){html=`<div class="center-msg"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><div class="big">没找到「${esc(关键字)}」</div><div class="small">换个关键字，或加微信 13133870607 直接问。</div></div>`;}
+  $('content').innerHTML=html;
+  $('stat').innerHTML=`共 <b>${全部数据.length}</b> · 显示 <b>${显示数}</b>`;
+}
+$('search').addEventListener('input',e=>{关键字=e.target.value;if(关键字){当前分类='all';document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.cat==='all'));}渲染();});
+function openModal(标题,label,jsonStr){
+  const 列表=JSON.parse(jsonStr);
+  $('modalTitle').textContent=label+' · '+标题;
+  let h='';列表.forEach((l,i)=>{h+=`<a href="${esc(l.url)}" target="_blank">${i+1}. ${esc(l.文本)}</a>`;});
+  $('modalBody').innerHTML=h;$('modal').classList.add('show');
+}
+function closeModal(){$('modal').classList.remove('show');}
+window.addEventListener('scroll',()=>{$('toTop').classList.toggle('show',window.scrollY>500);});
+loadData();
+</script>
+</body>
+</html>
