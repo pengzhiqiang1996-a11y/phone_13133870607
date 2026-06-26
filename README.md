@@ -47,3 +47,6 @@ API接口逆向与封装、cURL批量转可复用Python代码、简易Chrome插�
 3. 自媒体运营：AI干货账号运营、提示词优化、公众号深度文案打磨
 4. 财务规划：低风险理财配置、个人收支与资产规划、外包职场生存经验
 5. 人生规划：理性婚恋思维、长期人生规划、全流程个人效率工具搭建思路
+
+打赏
+<img width="800" height="800" alt="118ec96998fb5fc4b3aba79a167741ad" src="https://github.com/user-attachments/assets/d1f53e3d-1acf-43f1-8cb7-bcca21458f77" />
