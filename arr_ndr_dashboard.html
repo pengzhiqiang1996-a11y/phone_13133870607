@@ -1,0 +1,2243 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SaaS年度ARR与NDR看板</title>
+  <!-- 作者：13133870607 小可耐教你学RPA -->
+  <script>
+    function loadVendorScript(urls, globalName) {
+      return new Promise((resolve, reject) => {
+        let index = 0;
+        const tryNext = () => {
+          if (window[globalName]) return resolve();
+          if (index >= urls.length) return reject(new Error(globalName + " 加载失败"));
+          const script = document.createElement("script");
+          script.src = urls[index++];
+          script.onload = () => window[globalName] ? resolve() : tryNext();
+          script.onerror = tryNext;
+          document.head.appendChild(script);
+        };
+        tryNext();
+      });
+    }
+    window.vendorReady = Promise.all([
+      loadVendorScript([
+        "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+        "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"
+      ], "XLSX"),
+      loadVendorScript([
+        "https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js",
+        "https://unpkg.com/echarts@5.5.1/dist/echarts.min.js"
+      ], "echarts")
+    ]);
+  </script>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #1e293b;
+      --muted: #64748b;
+      --line: #dbe3ee;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      padding-bottom: 72px;
+    }
+
+    header {
+      background: #0f172a;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .topbar {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .file-button, button {
+      border: 1px solid transparent;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 6px;
+      min-height: 38px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+
+    input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 24px 28px;
+    }
+
+    .notice {
+      display: none;
+      margin-bottom: 14px;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-height: 92px;
+    }
+
+    .kpi .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .kpi .value {
+      margin-top: 10px;
+      font-size: clamp(18px, 1.35vw, 24px);
+      line-height: 1.15;
+      font-weight: 850;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .kpi .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 4px;
+      padding: 3px;
+      background: #eef2f7;
+      border-radius: 7px;
+    }
+
+    .segmented button {
+      background: transparent;
+      color: #334155;
+      border: 0;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 5px;
+      font-weight: 700;
+    }
+
+    .segmented button.active {
+      background: #fff;
+      color: var(--blue);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+    }
+
+    select, input[type="search"], input[type="password"] {
+      height: 36px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0 10px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 14px;
+      min-width: 140px;
+    }
+
+    select[multiple] {
+      height: 72px;
+      padding: 6px 10px;
+      min-width: 180px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .panel-head span {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .chart {
+      width: 100%;
+      height: 360px;
+    }
+
+    .small-chart {
+      height: 300px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 520px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      min-width: 980px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #eef2f7;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    .detail-table th:first-child,
+    .detail-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      width: 300px;
+      min-width: 300px;
+      max-width: 300px;
+      background: #fff;
+      box-shadow: 1px 0 0 #e2e8f0;
+      white-space: normal;
+      line-height: 1.35;
+    }
+
+    .detail-table th:first-child {
+      z-index: 3;
+      background: #f8fafc;
+    }
+
+    td.num, th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .customer-name-button {
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      padding: 0;
+      min-height: 0;
+      font: inherit;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      white-space: normal;
+    }
+
+    .customer-name-button:hover {
+      text-decoration: underline;
+    }
+
+    .customer-contract-body {
+      padding: 14px;
+      overflow: auto;
+    }
+
+    .customer-contract-body .contract-list {
+      min-width: 0;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.new { background: #dcfce7; color: #166534; }
+    .badge.lost { background: #fee2e2; color: #991b1b; }
+    .badge.retained { background: #dbeafe; color: #1d4ed8; }
+    .badge.expand { background: #dcfce7; color: #166534; }
+    .badge.shrink { background: #ffedd5; color: #9a3412; }
+    .badge.flat { background: #dbeafe; color: #1d4ed8; }
+    .kpi {
+      min-height: 88px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .kpi .label,
+    .kpi .sub {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge.pending { background: #fef3c7; color: #92400e; }
+
+    .contract-list {
+      display: grid;
+      gap: 6px;
+      min-width: 360px;
+      white-space: normal;
+    }
+
+    .contract-item {
+      display: grid;
+      gap: 4px;
+      padding: 6px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+
+    .contract-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .contract-no {
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    .contract-amount {
+      color: #0f172a;
+      font-weight: 800;
+    }
+
+    details.raw-contract summary {
+      cursor: pointer;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .raw-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap: 4px 10px;
+      margin-top: 6px;
+      max-height: 180px;
+      overflow: auto;
+      color: #475569;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .raw-grid div {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .empty {
+      padding: 48px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+
+    .insight-panel {
+      margin-bottom: 14px;
+    }
+
+    .insight-body {
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .insight-lead {
+      margin: 0;
+      color: #0f172a;
+      font-size: 14px;
+      line-height: 1.6;
+      font-weight: 800;
+    }
+
+    .insight-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 18px;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .insight-list li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .insight-list strong {
+      color: #0f172a;
+      font-weight: 800;
+    }
+
+    .insight-evidence {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .insight-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      min-width: 0;
+    }
+
+    .insight-card h3 {
+      margin: 0 0 7px;
+      color: #0f172a;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .insight-card p {
+      margin: 0;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .insight-card .num {
+      color: #0f172a;
+      font-weight: 800;
+    }
+
+    .insight-names {
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+    .settings-panel {
+      margin-bottom: 14px;
+    }
+
+    .settings-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+
+    .rate-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 6px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f8fafc;
+      font-size: 12px;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .rate-field input {
+      width: 64px;
+      height: 28px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 0 7px;
+      text-align: right;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .trace-body {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .trace-body p {
+      margin: 0;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .trace-body button {
+      width: max-content;
+    }
+
+    .trace-preview {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: #334155;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .trace-preview li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+
+    .trace-preview strong {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #0f172a;
+    }
+
+    .trace-preview span {
+      flex: 0 0 auto;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+    }
+    .audit-panel {
+      margin-top: 14px;
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .audit-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .audit-box h3 {
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 13px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .audit-table {
+      min-width: 0;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .audit-table th,
+    .audit-table td {
+      white-space: normal;
+      line-height: 1.45;
+    }
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .modal-head p {
+      margin: 6px 0 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .modal {
+      width: min(440px, 100%);
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      padding: 18px;
+    }
+
+    .modal h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .modal p {
+      margin: 0 0 14px;
+      color: #475569;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .modal-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .detail-modal {
+      width: min(1280px, calc(100vw - 48px));
+      max-height: calc(100vh - 64px);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detail-modal-wrap {
+      max-height: calc(100vh - 180px);
+      overflow: auto;
+    }
+
+    .detail-modal .detail-table {
+      min-width: 1180px;
+    }
+    .modal-row input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding: 12px 18px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    footer a { color: #93c5fd; }
+
+    @media (max-width: 1180px) {
+      .kpis { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+      .grid { grid-template-columns: 1fr; }
+      .audit-grid { grid-template-columns: 1fr; }
+      .insight-list { grid-template-columns: 1fr; }
+      .insight-evidence { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .actions {
+        justify-content: flex-start;
+      }
+      main, .topbar { padding-left: 14px; padding-right: 14px; }
+      .kpis { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+      .chart { height: 320px; }
+      .small-chart { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <h1>SaaS年度ARR与NDR看板</h1>
+        <p>作者：13133870607 小可耐教你学RPA</p>
+      </div>
+      <div class="actions">
+        <label class="file-button" for="excelFile">导入Excel</label>
+        <input id="excelFile" type="file" accept=".xlsx,.xls">
+        <button class="secondary" id="unlockBtn" type="button">授权</button>
+        <button class="secondary" id="resetBtn" type="button">清空筛选</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice" id="notice"></div>
+
+    <section class="kpis" aria-label="年度指标">
+      <div class="kpi"><div class="label">年度</div><div class="value" id="kpiYear">-</div><div class="sub" id="kpiLicense">未导入</div></div>
+      <div class="kpi"><div class="label">ARR</div><div class="value" id="kpiArr">-</div><div class="sub" id="arrModeLabel">开始年口径</div></div>
+      <div class="kpi"><div class="label">NDR</div><div class="value" id="kpiNdr">-</div><div class="sub">到期存量</div></div>
+      <div class="kpi"><div class="label">活跃企业</div><div class="value" id="kpiCustomers">-</div><div class="sub">当年ARR&gt;0</div></div>
+      <div class="kpi" title="顺序：新增 / 已续存量 / 流失 / 待确认"><div class="label">新/续/失/待</div><div class="value" id="kpiMove">-</div><div class="sub">客户结构</div></div>
+      <div class="kpi"><div class="label">存量</div><div class="value" id="kpiRetained">-</div><div class="sub">NDR分子</div></div>
+      <div class="kpi"><div class="label">预期ARR</div><div class="value" id="kpiExpectedArr">-</div><div class="sub">目标金额</div></div>
+      <div class="kpi"><div class="label">目标NDR</div><div class="value" id="kpiExpectedNdr">-</div><div class="sub">可调</div></div>
+    </section>
+
+    <section class="panel insight-panel" aria-label="年度小白解读">
+      <div class="panel-head"><h2>年度解读</h2><span id="insightMode">导入后生成</span></div>
+      <div class="insight-body" id="yearInsight">
+        <p class="insight-lead">导入Excel后，切换年份会自动生成大白话解释。</p>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="筛选">
+      <div class="segmented" id="modeTabs">
+        <button type="button" class="active" data-mode="contractYear">合同金额</button>
+        <button type="button" data-mode="amortized">日期摊分</button>
+      </div>
+      <div class="segmented" id="yearTabs"></div>
+      <select id="starFilter"><option value="">全部星级</option></select>
+      <select id="quarterFilter"><option value="">全部季度</option></select>
+      <select id="ownerFilter" multiple title="按住 Ctrl 可多选归因人" aria-label="归因人多选"><option value="">全部归因人</option></select>
+      <select id="statusFilter"><option value="">全部状态</option><option value="去年客户">只看去年客户</option><option value="流失">只看流失</option><option value="待确认">只看待确认</option><option value="存量">只看全部存量</option><option value="存量增购">只看增购</option><option value="存量减购">只看减购</option><option value="存量平续">只看平续</option><option value="新增">只看今年新签客户</option></select>
+      <input id="searchInput" type="search" placeholder="搜索企业">
+    </section>
+
+
+    <section class="panel settings-panel">
+      <div class="panel-head"><h2>目标NDR设置</h2><span>按星级配置</span></div>
+      <div class="settings-row" id="targetSettings"><span>导入Excel后生成星级目标</span></div>
+    </section>
+    <section class="grid">
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-head"><h2>年度ARR与NDR</h2><span>点击图表下钻</span></div>
+          <div class="chart" id="annualChart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>企业明细</h2><span id="detailCount">0家</span></div>
+          <div class="table-wrap detail-wrap">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>企业</th>
+                  <th>状态</th>
+                  <th>流失原因</th>
+                  <th>星级</th>
+                  <th>合同季度</th>
+                  <th>客户成功</th>
+                  <th>技术支持</th>
+                  <th>归因</th>
+                  <th class="num">年度ARR</th>
+                  <th class="num">原始合同额</th>
+                  <th class="num">上一年ARR</th>
+                  <th class="num">变化</th>
+                </tr>
+              </thead>
+              <tbody id="detailBody"><tr><td colspan="12" class="empty">等待导入Excel</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-head"><h2>星级分布</h2><span>当年活跃企业</span></div>
+          <div class="chart small-chart" id="starChart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>合同季度</h2><span>按当前口径归属日期</span></div>
+          <div class="chart small-chart" id="quarterChart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>新签客户分布</h2><span id="newCustomerSummary">按季度/星级</span></div>
+          <div class="chart small-chart" id="newCustomerChart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>指标归因</h2><span>客户成功/技术支持分摊</span></div>
+          <div class="chart small-chart" id="ownerChart"></div>
+        </div>
+      </div>
+    </section>
+    <section class="panel audit-panel">
+      <div class="panel-head"><h2>财务复核</h2><span id="auditSummary">导入后生成</span></div>
+      <div class="audit-grid">
+        <div class="audit-box">
+          <h3>计算记录</h3>
+          <table class="audit-table">
+            <thead><tr><th>项目</th><th>口径/公式</th><th class="num">当前值</th></tr></thead>
+            <tbody id="auditRows"><tr><td colspan="3" class="empty">等待导入Excel</td></tr></tbody>
+          </table>
+        </div>
+        <div class="audit-box">
+          <h3>名词解释</h3>
+          <table class="audit-table">
+            <tbody id="glossaryRows"><tr><td class="empty">等待导入Excel</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-mask" id="customerContractModal">
+    <div class="modal detail-modal">
+      <div class="modal-head">
+        <div>
+          <h3 id="customerContractTitle">客户合同</h3>
+          <p id="customerContractSummary">点击企业后展示该客户合同。</p>
+        </div>
+        <button class="secondary" id="closeCustomerContractModal" type="button">关闭</button>
+      </div>
+      <div class="customer-contract-body" id="customerContractBody">
+        <div class="empty">请先点击企业名称</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-mask" id="licenseModal">
+    <div class="modal">
+      <h3>添加微信 13133870607 获取密码</h3>
+      <p id="modalText">免费次数已用尽，输入密码后可解锁30天。作者：13133870607 小可耐教你学RPA</p>
+      <div class="modal-row">
+        <input id="licenseInput" type="password" placeholder="输入密码">
+        <button id="licenseSubmit" type="button">解锁</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    作者：小可耐教你学 RPA | 微信：13133870607 | 工具箱：
+    <a href="https://all.13133870607.cn/" target="_blank" rel="noreferrer">https://all.13133870607.cn/</a>
+  </footer>
+
+  <script>
+    const AUTHOR = "作者：13133870607 小可耐教你学RPA";
+    const SECRET = "13133870607";
+    const STORE_KEY = btoa("saas_arr_ndr_dashboard_license_" + SECRET);
+    const TARGET_RATE_KEY = btoa("saas_arr_ndr_target_rates_" + SECRET);
+    const RUN_LIMIT = 3;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const charts = {};
+    const state = {
+      workbookName: "",
+      customers: new Map(),
+      contracts: [],
+      years: [],
+      selectedYear: "",
+      filters: { star: "", quarter: "", owners: [], status: "", search: "" },
+      revenueMode: "contractYear",
+      expectedNdrRates: {},
+      metrics: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const money = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY", maximumFractionDigits: 0 });
+    const number = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
+    const percent = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 1 });
+
+    function encodeStore(payload) {
+      const raw = JSON.stringify(payload);
+      return btoa(unescape(encodeURIComponent(raw))) + "." + btoa(unescape(encodeURIComponent(raw + SECRET)));
+    }
+
+    function decodeStore() {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return { runs: 0, unlockedUntil: 0 };
+      try {
+        const parts = raw.split(".");
+        const json = decodeURIComponent(escape(atob(parts[0])));
+        const sign = decodeURIComponent(escape(atob(parts[1] || "")));
+        if (sign !== json + SECRET) return { runs: RUN_LIMIT, unlockedUntil: 0 };
+        const parsed = JSON.parse(json);
+        return { runs: Number(parsed.runs || 0), unlockedUntil: Number(parsed.unlockedUntil || 0) };
+      } catch (err) {
+        return { runs: RUN_LIMIT, unlockedUntil: 0 };
+      }
+    }
+
+    function saveStore(payload) {
+      localStorage.setItem(STORE_KEY, encodeStore(payload));
+      updateLicenseStatus();
+    }
+
+    function isUnlocked() {
+      return decodeStore().unlockedUntil > Date.now();
+    }
+
+    function canRun() {
+      const s = decodeStore();
+      return s.unlockedUntil > Date.now() || s.runs < RUN_LIMIT;
+    }
+
+    function markSuccessfulRun() {
+      const s = decodeStore();
+      if (s.unlockedUntil > Date.now()) {
+        console.log("授权有效期内运行，不耗试用次数。" + AUTHOR);
+        updateLicenseStatus();
+        return;
+      }
+      s.runs += 1;
+      saveStore(s);
+    }
+
+    function unlockWithPassword() {
+      const value = $("licenseInput").value.trim();
+      if (value !== SECRET) {
+        $("modalText").textContent = "密码错误。添加微信 13133870607 获取密码。";
+        return;
+      }
+      saveStore({ runs: decodeStore().runs, unlockedUntil: Date.now() + 30 * DAY_MS });
+      $("licenseModal").style.display = "none";
+      $("licenseInput").value = "";
+      showNotice("已解锁30天。有效期内日志提示，不耗试用次数。", "ok");
+    }
+
+    function updateLicenseStatus() {
+      const s = decodeStore();
+      if (s.unlockedUntil > Date.now()) {
+        const d = new Date(s.unlockedUntil);
+        $("kpiLicense").textContent = "已授权至 " + d.toLocaleDateString("zh-CN");
+      } else {
+        $("kpiLicense").textContent = "免费次数 " + Math.max(0, RUN_LIMIT - s.runs) + "/" + RUN_LIMIT;
+      }
+    }
+
+    function showLicenseModal() {
+      $("licenseModal").style.display = "flex";
+      $("modalText").textContent = "免费次数已用尽，输入密码后可解锁30天。作者：13133870607 小可耐教你学RPA";
+      $("licenseInput").focus();
+    }
+
+    function showNotice(text, type) {
+      const el = $("notice");
+      el.style.display = text ? "block" : "none";
+      el.style.background = type === "ok" ? "#ecfdf5" : "#fff7ed";
+      el.style.color = type === "ok" ? "#166534" : "#9a3412";
+      el.style.borderColor = type === "ok" ? "#bbf7d0" : "#fed7aa";
+      el.textContent = text || "";
+    }
+
+    function normalizeKey(value) {
+      return String(value || "").replace(/\s+/g, "").trim();
+    }
+
+    function normalizeCustomerKey(value) {
+      return String(value || "").replace(/[\s\u00a0\u1680\u180e\u2000-\u200d\u2028\u2029\u202f\u205f\u2060\u3000\ufeff]+/g, "").trim();
+    }
+
+    function pick(row, names) {
+      for (const name of names) {
+        if (Object.prototype.hasOwnProperty.call(row, name)) return row[name];
+      }
+      const target = names.map(normalizeKey);
+      for (const key of Object.keys(row)) {
+        if (target.includes(normalizeKey(key))) return row[key];
+      }
+      return "";
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+      }
+      if (typeof value === "number") {
+        const parsed = XLSX.SSF.parse_date_code(value);
+        if (!parsed) return null;
+        return new Date(parsed.y, parsed.m - 1, parsed.d);
+      }
+      const text = String(value).trim().replace(/\//g, "-");
+      const m = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!m) return null;
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function parseAmount(value) {
+      if (typeof value === "number") return value;
+      const text = String(value || "").replace(/[^\d.-]/g, "");
+      if (!text) return 0;
+      const amount = Number(text);
+      return Number.isFinite(amount) ? amount : NaN;
+    }
+
+    function daysBetweenInclusive(start, end) {
+      return Math.max(0, Math.floor((stripTime(end) - stripTime(start)) / DAY_MS) + 1);
+    }
+
+    function stripTime(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function overlapDays(aStart, aEnd, bStart, bEnd) {
+      const start = new Date(Math.max(stripTime(aStart), stripTime(bStart)));
+      const end = new Date(Math.min(stripTime(aEnd), stripTime(bEnd)));
+      return end >= start ? daysBetweenInclusive(start, end) : 0;
+    }
+
+    function quarterOf(date) {
+      return "Q" + (Math.floor(date.getMonth() / 3) + 1);
+    }
+
+    function parseContractIssueDate(contractNo) {
+      const text = String(contractNo || "");
+      const match = text.match(/(?:HT|XFHT|XSHT)?-?(20\d{2})-(\d{1,2})-(\d{1,2})/i);
+      if (!match) return null;
+      const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function revenueDateOf(contract) {
+      return contract.start;
+    }
+
+    function statusOf(current, previous, dueForRenewal = true, hadRevenueBefore = false) {
+      const diff = current - previous;
+      if (current > 0 && previous > 0) {
+        if (Math.abs(diff) < 1) return "存量平续";
+        return diff > 0 ? "存量增购" : "存量减购";
+      }
+      if (current > 0 && previous <= 0) return hadRevenueBefore ? "存量续回" : "新增";
+      if (current <= 0 && previous > 0) return dueForRenewal ? "流失" : "待确认";
+      return "无收入";
+    }
+
+    function statusClassOf(status) {
+      if (status === "新增") return "new";
+      if (status === "流失") return "lost";
+      if (status === "待确认") return "pending";
+      if (status === "存量增购") return "expand";
+      if (status === "存量减购") return "shrink";
+      if (status === "存量平续") return "flat";
+      if (status === "存量续回") return "retained";
+      return "retained";
+    }
+
+    function statusReasonOf(status) {
+      if (status === "流失") return "已到续费窗口仍无合同金额";
+      if (status === "待确认") return "未到今年对应续费窗口";
+      if (status === "存量增购") return "本年ARR高于上一年";
+      if (status === "存量减购") return "本年ARR低于上一年";
+      if (status === "存量平续") return "本年ARR与上一年基本一致";
+      if (status === "存量续回") return "历史老客户本年重新产生合同金额";
+      if (status === "新增") return "当前年份新签：上一年无ARR，本年有合同金额";
+      return "-";
+    }
+
+    function renewalCutoffDate(year) {
+      const today = new Date();
+      if (year < today.getFullYear()) return new Date(year - 1, 11, 31);
+      return new Date(year - 1, today.getMonth(), today.getDate());
+    }
+
+    function latestRevenueDateBeforeYear(customerName, year, contractByCustomerYear) {
+      const contracts = contractByCustomerYear[customerName]?.[year - 1] || [];
+      return contracts.reduce((latest, contract) => {
+        const date = revenueDateOf(contract);
+        return !latest || date > latest ? date : latest;
+      }, null);
+    }
+
+    function hadRevenueBeforeYear(customerName, year, customerYearArr) {
+      const yearly = customerYearArr[customerName] || {};
+      return Object.keys(yearly).some((value) => Number(value) < year && Number(yearly[value]) > 0);
+    }
+
+    function getWeights(customer) {
+      const cs = String(customer.cs || "").trim();
+      const ts = String(customer.ts || "").trim();
+      if (cs && ts && cs !== ts) return [{ name: cs, role: "客户成功", weight: 0.5 }, { name: ts, role: "技术支持", weight: 0.5 }];
+      if (cs || ts) return [{ name: cs || ts, role: cs ? "客户成功" : "技术支持", weight: 1 }];
+      return [{ name: "未分配", role: "未分配", weight: 1 }];
+    }
+
+    function findSheet(workbook, keywords, fallbackIndex) {
+      const names = workbook.SheetNames || [];
+      return names.find((name) => keywords.some((kw) => name.includes(kw))) || names[fallbackIndex] || names[0];
+    }
+
+    function sheetRows(workbook, sheetName) {
+      return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", raw: true });
+    }
+
+    function buildData(workbook) {
+      const customerSheet = findSheet(workbook, ["基本", "客户", "企业信息"], 0);
+      const contractSheet = findSheet(workbook, ["合同"], 1);
+      const customerRows = sheetRows(workbook, customerSheet);
+      const contractRows = sheetRows(workbook, contractSheet);
+      const customers = new Map();
+      const warnings = [];
+
+      customerRows.forEach((row) => {
+        const name = String(pick(row, ["组织名称", "企业名称", "企业名字", "客户名称"])).trim();
+        const customerKey = normalizeCustomerKey(name);
+        if (!name) return;
+        customers.set(customerKey, {
+          name,
+          link: String(pick(row, ["企业链接", "链接", "URL"])).trim(),
+          cs: String(pick(row, ["客户成功", "CSM"])).trim(),
+          ts: String(pick(row, ["技术支持", "技术"])).trim(),
+          star: String(pick(row, ["星级", "客户星级"])).trim() || "未标星",
+          code: String(pick(row, ["客户编号", "编号"])).trim(),
+          firstStart: null,
+          firstQuarter: ""
+        });
+      });
+
+      const contracts = [];
+      contractRows.forEach((row, index) => {
+        const displayName = String(pick(row, ["企业名字", "组织名称", "企业名称", "客户名称"])).trim();
+        const customerName = normalizeCustomerKey(displayName);
+        const start = parseDate(pick(row, ["订单最小开始日期", "开始日期", "合同开始日期"]));
+        const end = parseDate(pick(row, ["订单最大截止日期", "截止日期", "结束日期", "合同结束日期"]));
+        const amount = parseAmount(pick(row, ["总金额", "合同金额", "金额"]));
+        const approval = String(pick(row, ["审批状态"])).trim();
+        const refund = String(pick(row, ["退款状态"])).trim();
+        const pay = String(pick(row, ["回款状态"])).trim();
+        const contractNo = String(pick(row, ["合同编号", "合同号"])).trim();
+        const issueDate = parseContractIssueDate(contractNo) || start;
+        if (!displayName || !customerName || !start || !end || !Number.isFinite(amount)) return;
+        const valid = (!approval || approval === "已通过") && (!refund || refund === "未退款");
+        const durationDays = daysBetweenInclusive(start, end);
+        if (durationDays > 3660) warnings.push("发现超长合同：" + displayName + "，" + contractNo + "，截止 " + end.toLocaleDateString("zh-CN"));
+        if (durationDays <= 0) warnings.push("发现起止日期异常合同：第" + (index + 2) + "行");
+        if (!customers.has(customerName)) {
+          customers.set(customerName, { name: displayName, link: "", cs: "", ts: "", star: "未建档", code: "", firstStart: null, firstQuarter: "" });
+        }
+        const customer = customers.get(customerName);
+        const revenueDate = revenueDateOf({ start, issueDate });
+        if (valid && revenueDate && (!customer.firstStart || revenueDate < customer.firstStart)) {
+          customer.firstStart = revenueDate;
+          customer.firstQuarter = revenueDate.getFullYear() + quarterOf(revenueDate);
+        }
+        contracts.push({ customerName, displayName, start, end, issueDate, amount, approval, refund, pay, contractNo, valid, durationDays, raw: row, rowNumber: index + 2 });
+      });
+
+      return { customers, contracts, warnings, customerSheet, contractSheet };
+    }
+
+    function computeMetrics(customers, contracts, mode = "contractYear", expectedRates = state.expectedNdrRates) {
+      const validContracts = contracts.filter((c) => c.valid && c.durationDays > 0 && c.amount > 0);
+      const years = new Set();
+      validContracts.forEach((c) => {
+        if (mode === "contractYear") {
+          const y = revenueDateOf(c).getFullYear();
+          if (y >= 2000 && y <= 2100) years.add(y);
+          return;
+        }
+        for (let y = c.start.getFullYear(); y <= c.end.getFullYear(); y += 1) {
+          if (y >= 2000 && y <= 2100) years.add(y);
+        }
+      });
+      const maxDisplayYear = new Date().getFullYear() + 1;
+      const sortedYears = Array.from(years).filter((year) => year <= maxDisplayYear).sort((a, b) => a - b);
+      const byYear = {};
+      const customerYearArr = {};
+      const contractByCustomerYear = {};
+
+      sortedYears.forEach((year) => {
+        byYear[year] = {
+          year,
+          arr: 0,
+          retainedArr: 0,
+          previousCohortArr: 0,
+          ndr: null,
+          activeCustomers: 0,
+          newCustomers: 0,
+          lostCustomers: 0,
+          retainedCustomers: 0,
+          expectedArr: 0,
+          expansionCustomers: 0,
+          contractionCustomers: 0,
+          flatRenewalCustomers: 0,
+          expectedNdr: null,
+          pendingCustomers: 0,
+          byStar: {},
+          byQuarter: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 },
+          byOwner: {}
+        };
+      });
+
+      validContracts.forEach((c) => {
+        if (mode === "contractYear") {
+          const year = revenueDateOf(c).getFullYear();
+          if (!byYear[year]) return;
+          customerYearArr[c.customerName] ||= {};
+          customerYearArr[c.customerName][year] = (customerYearArr[c.customerName][year] || 0) + c.amount;
+          contractByCustomerYear[c.customerName] ||= {};
+          contractByCustomerYear[c.customerName][year] ||= [];
+          contractByCustomerYear[c.customerName][year].push(c);
+          return;
+        }
+        sortedYears.forEach((year) => {
+          const yStart = new Date(year, 0, 1);
+          const yEnd = new Date(year, 11, 31);
+          const od = overlapDays(c.start, c.end, yStart, yEnd);
+          if (!od) return;
+          const arr = c.amount * od / c.durationDays;
+          customerYearArr[c.customerName] ||= {};
+          customerYearArr[c.customerName][year] = (customerYearArr[c.customerName][year] || 0) + arr;
+          contractByCustomerYear[c.customerName] ||= {};
+          contractByCustomerYear[c.customerName][year] ||= [];
+          contractByCustomerYear[c.customerName][year].push(c);
+        });
+      });
+
+      sortedYears.forEach((year) => {
+        const summary = byYear[year];
+        customers.forEach((customer, name) => {
+          const current = customerYearArr[name]?.[year] || 0;
+          const previous = customerYearArr[name]?.[year - 1] || 0;
+          const hadRevenueBefore = hadRevenueBeforeYear(name, year, customerYearArr);
+          if (current > 0) {
+            summary.arr += current;
+            summary.activeCustomers += 1;
+            summary.byStar[customer.star] = (summary.byStar[customer.star] || 0) + 1;
+            getWeights(customer).forEach((owner) => {
+              summary.byOwner[owner.name] ||= { arr: 0, customers: 0 };
+              summary.byOwner[owner.name].arr += current * owner.weight;
+              summary.byOwner[owner.name].customers += owner.weight;
+            });
+          }
+          const previousRevenueDate = latestRevenueDateBeforeYear(name, year, contractByCustomerYear);
+          const dueForRenewal = !previousRevenueDate || previousRevenueDate <= renewalCutoffDate(year);
+          const targetRate = getExpectedNdrRate(customer.star, expectedRates);
+          if (previous > 0 && dueForRenewal) {
+            summary.previousCohortArr += previous;
+            summary.expectedArr += previous * targetRate;
+          }
+          if (current > 0 && previous <= 0 && !hadRevenueBefore) summary.newCustomers += 1;
+          if (current > 0 && previous <= 0 && hadRevenueBefore) summary.retainedCustomers += 1;
+          if (current <= 0 && previous > 0) {
+            if (dueForRenewal) summary.lostCustomers += 1;
+            else summary.pendingCustomers += 1;
+          }
+          if (current > 0 && previous > 0) {
+            summary.retainedCustomers += 1;
+            if (current - previous > 1) summary.expansionCustomers += 1;
+            else if (previous - current > 1) summary.contractionCustomers += 1;
+            else summary.flatRenewalCustomers += 1;
+            if (dueForRenewal) summary.retainedArr += current;
+          }
+          const yearContracts = contractByCustomerYear[name]?.[year] || [];
+          yearContracts.forEach((contract) => {
+            const qDate = mode === "contractYear" ? revenueDateOf(contract) : contract.start;
+            summary.byQuarter[quarterOf(qDate)] += 1;
+          });
+        });
+        summary.ndr = summary.previousCohortArr > 0 ? summary.retainedArr / summary.previousCohortArr : null;
+        summary.expectedNdr = summary.previousCohortArr > 0 ? summary.expectedArr / summary.previousCohortArr : null;
+      });
+
+      return { years: sortedYears, byYear, customerYearArr, contractByCustomerYear, mode };
+    }
+    function setSelectedYear(year) {
+      state.selectedYear = String(year || state.years[state.years.length - 1] || "");
+      renderAll();
+    }
+
+    function renderYearTabs() {
+      const box = $("yearTabs");
+      box.innerHTML = "";
+      state.years.forEach((year) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = year;
+        btn.className = String(year) === state.selectedYear ? "active" : "";
+        btn.addEventListener("click", () => setSelectedYear(year));
+        box.appendChild(btn);
+      });
+    }
+
+
+
+    function loadExpectedNdrRates() {
+      try {
+        const raw = localStorage.getItem(TARGET_RATE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(decodeURIComponent(escape(atob(raw))));
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (err) {
+        return {};
+      }
+    }
+
+    function saveExpectedNdrRates() {
+      const raw = JSON.stringify(state.expectedNdrRates || {});
+      localStorage.setItem(TARGET_RATE_KEY, btoa(unescape(encodeURIComponent(raw))));
+    }
+    function getExpectedNdrRate(star, expectedRates = state.expectedNdrRates) {
+      const key = star || "未标星";
+      const value = Number(expectedRates[key]);
+      return Number.isFinite(value) && value >= 0 ? value : 1;
+    }
+
+    function ensureExpectedNdrRatesFromCustomers(customers) {
+      customers.forEach((customer) => {
+        const star = customer.star || "未标星";
+        if (!Object.prototype.hasOwnProperty.call(state.expectedNdrRates, star)) {
+          state.expectedNdrRates[star] = 1;
+        }
+      });
+    }
+
+    function recomputeWithTargets() {
+      if (!state.customers.size || !state.contracts.length) return;
+      state.metrics = computeMetrics(state.customers, state.contracts, state.revenueMode, state.expectedNdrRates);
+      state.years = state.metrics.years;
+      if (!state.years.map(String).includes(state.selectedYear)) state.selectedYear = String(state.years[state.years.length - 1] || "");
+      renderAll();
+    }
+
+    function renderTargetSettings() {
+      const box = $("targetSettings");
+      if (!box) return;
+      const stars = Object.keys(state.expectedNdrRates).sort();
+      if (!stars.length) {
+        box.innerHTML = "<span>导入Excel后生成星级目标</span>";
+        return;
+      }
+      box.innerHTML = stars.map((star) => {
+        const pct = Math.round(getExpectedNdrRate(star) * 1000) / 10;
+        return '<label class="rate-field"><span>' + escapeHtml(star) + '</span><input type="number" min="0" step="1" value="' + pct + '" data-star="' + escapeHtml(star) + '"><span>%</span></label>';
+      }).join("");
+    }
+
+    function renderAuditPanel(item) {
+      if (!state.metrics) return;
+      const year = Number(state.selectedYear);
+      item ||= state.metrics.byYear[year] || {};
+      const cutoff = renewalCutoffDate(year).toLocaleDateString("zh-CN");
+      const modeText = state.revenueMode === "contractYear" ? "合同开始年金额" : "服务期按天摊分";
+      const rateText = Object.entries(state.expectedNdrRates)
+        .sort((a, b) => a[0].localeCompare(b[0], "zh-CN"))
+        .map(([star, rate]) => star + "=" + percent.format(rate))
+        .join("；") || "默认100%";
+      $("auditSummary").textContent = year ? year + " | " + modeText : "导入后生成";
+      const rows = [
+        ["数据过滤", "仅统计审批通过、未退款、金额大于0的合同", "有效合同"],
+        ["实际ARR", modeText + "汇总到当前年度", money.format(item.arr || 0)],
+        ["到期底盘", "上一年有ARR，且上一年合同开始日 <= " + cutoff, money.format(item.previousCohortArr || 0)],
+        ["目标NDR", "按星级配置加权：" + rateText, item.expectedNdr == null ? "-" : percent.format(item.expectedNdr)],
+        ["预期ARR", "到期底盘 × 对应星级目标NDR", money.format(item.expectedArr || 0)],
+        ["实际NDR", "已到期存量实际续回ARR / 到期底盘", item.ndr == null ? "-" : percent.format(item.ndr)],
+        ["活跃企业", "当年ARR>0；等于新增企业+已续存量企业", number.format(item.activeCustomers || 0)],
+        ["新签/已续存量", "今年新签=上一年无ARR且今年有ARR；已续存量=上一年和今年都有ARR", (item.newCustomers || 0) + "/" + (item.retainedCustomers || 0)],
+        ["流失企业", "到续费窗口后仍无本年合同金额，不计入活跃企业", number.format(item.lostCustomers || 0)],
+        ["待确认", year < new Date().getFullYear() ? "历史年份已结算，不保留待确认；上一年有ARR且今年无ARR算流失" : "上一年合同开始日在 " + cutoff + " 之后，未到今年对应窗口", number.format(item.pendingCustomers || 0)],
+        ["归因", "客户成功与技术支持同时存在各背50%；只有一人则背100%", "见指标归因"],
+        ["存量拆分", "本年ARR-上一年ARR：>1为增购，<-1为减购，其余平续", (item.expansionCustomers || 0) + "/" + (item.contractionCustomers || 0) + "/" + (item.flatRenewalCustomers || 0)],
+      ];
+      $("auditRows").innerHTML = rows.map((row) => '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td><td class="num">' + escapeHtml(row[2]) + '</td></tr>').join("");
+      const glossary = [
+        ["ARR", "按当前口径归属到某年的合同金额。默认看合同开始年金额。"],
+        ["NDR", "到期存量客户本年实际续回ARR / 到期续费底盘。新增客户不进分子。"],
+        ["预期ARR", "每个到期客户的上一年ARR乘以该客户星级目标NDR后求和。"],
+        ["目标NDR", "财务/管理层可按星级设置的预期续费率或扩张率。"],
+        ["流失", "已到续费窗口，但本年没有合同金额。"],
+        ["待确认", "只用于当前年或未来年：还没到对应续费窗口，暂不算流失；历史年份不保留待确认。"],
+        ["合同金额", "按服务开始日期把整张合同金额归属到开始年度，适合续费/NDR复盘。"],
+        ["存量拆分", "上一年和本年都有ARR时，按本年ARR与上一年ARR对比，分为增购、减购、平续。"],
+        ["原始合同额", "当前年度相关合同的原始金额合计，用于和年度ARR口径对比。"],
+        ["日期摊分", "按服务期天数把金额摊到每年，适合财务审计对照。"]
+      ];
+      $("glossaryRows").innerHTML = glossary.map((row) => '<tr><th>' + escapeHtml(row[0]) + '</th><td>' + escapeHtml(row[1]) + '</td></tr>').join("");
+    }
+    function fillFilters() {
+      const stars = new Set();
+      const owners = new Set();
+      state.customers.forEach((c) => {
+        stars.add(c.star || "未标星");
+        getWeights(c).forEach((o) => owners.add(o.name));
+      });
+      const ownerValues = ["", ...Array.from(owners).sort()];
+      state.filters.owners = (state.filters.owners || []).filter((owner) => ownerValues.includes(owner));
+      fillSelect("starFilter", ["", ...Array.from(stars).sort()], "全部星级");
+      fillSelect("quarterFilter", ["", "Q1", "Q2", "Q3", "Q4"], "全部季度");
+      fillSelect("ownerFilter", ownerValues, "全部归因人");
+      syncOwnerFilterControl();
+      ensureExpectedNdrRatesFromCustomers(state.customers);
+      renderTargetSettings();
+    }
+
+    function selectedValues(select) {
+      return Array.from(select.selectedOptions).map((opt) => opt.value).filter(Boolean);
+    }
+
+    function syncOwnerFilterControl() {
+      const select = $("ownerFilter");
+      const owners = Array.from(new Set(state.filters.owners || []));
+      state.filters.owners = owners;
+      Array.from(select.options).forEach((opt) => {
+        opt.selected = opt.value === "" ? owners.length === 0 : owners.includes(opt.value);
+      });
+      select.title = owners.length ? "已选归因人：" + owners.join("、") : "全部归因人";
+    }
+
+    function toggleOwnerFilter(ownerName) {
+      const selected = new Set(state.filters.owners || []);
+      if (selected.has(ownerName)) selected.delete(ownerName);
+      else selected.add(ownerName);
+      state.filters.owners = Array.from(selected);
+      syncOwnerFilterControl();
+      renderFilteredViews();
+    }
+
+    function fillSelect(id, values, firstLabel) {
+      const select = $(id);
+      const isMultiple = select.multiple;
+      const currentValues = isMultiple ? selectedValues(select) : [select.value];
+      const current = new Set(currentValues);
+      select.innerHTML = "";
+      values.forEach((value, idx) => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = idx === 0 ? firstLabel : value;
+        select.appendChild(opt);
+      });
+      if (isMultiple) {
+        Array.from(select.options).forEach((opt) => {
+          opt.selected = opt.value === "" ? current.size === 0 : current.has(opt.value);
+        });
+        return;
+      }
+      select.value = values.includes(currentValues[0]) ? currentValues[0] : "";
+    }
+
+    function initCharts() {
+      ["annualChart", "starChart", "quarterChart", "newCustomerChart", "ownerChart"].forEach((id) => {
+        charts[id] ||= echarts.init($(id), null, { renderer: "canvas" });
+      });
+      window.addEventListener("resize", () => Object.values(charts).forEach((chart) => chart.resize()));
+    }
+
+    function renderAll() {
+      if (!state.metrics) return;
+      renderYearTabs();
+      renderFilteredViews();
+    }
+
+    function blankYearSummary(year) {
+      return {
+        year,
+        arr: 0,
+        retainedArr: 0,
+        previousCohortArr: 0,
+        ndr: null,
+        activeCustomers: 0,
+        newCustomers: 0,
+        lostCustomers: 0,
+        retainedCustomers: 0,
+        expectedArr: 0,
+        expansionCustomers: 0,
+        contractionCustomers: 0,
+        flatRenewalCustomers: 0,
+        expectedNdr: null,
+        pendingCustomers: 0,
+        byStar: {},
+        byQuarter: { Q1: 0, Q2: 0, Q3: 0, Q4: 0 },
+        byOwner: {}
+      };
+    }
+
+    function customerRowsForYear(year = Number(state.selectedYear)) {
+      const search = String(state.filters.search || "").trim().toLowerCase();
+      const selectedOwners = new Set(state.filters.owners || []);
+      const rows = [];
+      state.customers.forEach((customer, key) => {
+        const current = state.metrics.customerYearArr[key]?.[year] || 0;
+        const previous = state.metrics.customerYearArr[key]?.[year - 1] || 0;
+        const yearContracts = state.metrics.contractByCustomerYear[key]?.[year] || [];
+        if (current <= 0 && previous <= 0) return;
+        if (state.filters.star && customer.star !== state.filters.star) return;
+        if (state.filters.quarter) {
+          const hasQuarter = yearContracts.some((contract) => quarterOf(state.revenueMode === "contractYear" ? revenueDateOf(contract) : contract.start) === state.filters.quarter);
+          if (!hasQuarter) return;
+        }
+        const weights = getWeights(customer);
+        if (selectedOwners.size && !weights.some((o) => selectedOwners.has(o.name))) return;
+        const previousRevenueDate = latestRevenueDateBeforeYear(key, year, state.metrics.contractByCustomerYear);
+        const dueForRenewal = !previousRevenueDate || previousRevenueDate <= renewalCutoffDate(year);
+        const hadRevenueBefore = hadRevenueBeforeYear(key, year, state.metrics.customerYearArr);
+        const status = statusOf(current, previous, dueForRenewal, hadRevenueBefore);
+        if (state.filters.status) {
+          if (state.filters.status === "存量") {
+            if (!status.startsWith("存量")) return;
+          } else if (state.filters.status === "去年客户") {
+            if (previous <= 0) return;
+          } else if (status !== state.filters.status) return;
+        }
+        if (search && !customer.name.toLowerCase().includes(search)) return;
+        const originalAmount = yearContracts.reduce((sum, contract) => sum + (Number(contract.amount) || 0), 0);
+        rows.push({ customer, key, name: customer.name, current, previous, delta: current - previous, originalAmount, status, dueForRenewal, yearContracts });
+      });
+      return rows.sort((a, b) => b.current - a.current || b.delta - a.delta);
+    }
+
+    function summarizeYearRows(year, rows) {
+      const summary = blankYearSummary(year);
+      rows.forEach((row) => {
+        if (row.current > 0) {
+          summary.arr += row.current;
+          summary.activeCustomers += 1;
+          summary.byStar[row.customer.star] = (summary.byStar[row.customer.star] || 0) + 1;
+          getWeights(row.customer).forEach((owner) => {
+            summary.byOwner[owner.name] ||= { arr: 0, customers: 0 };
+            summary.byOwner[owner.name].arr += row.current * owner.weight;
+            summary.byOwner[owner.name].customers += owner.weight;
+          });
+        }
+        const targetRate = getExpectedNdrRate(row.customer.star);
+        if (row.previous > 0 && row.dueForRenewal) {
+          summary.previousCohortArr += row.previous;
+          summary.expectedArr += row.previous * targetRate;
+        }
+        const hadRevenueBefore = hadRevenueBeforeYear(row.name, year, state.metrics.customerYearArr);
+        if (row.current > 0 && row.previous <= 0 && !hadRevenueBefore) summary.newCustomers += 1;
+        if (row.current > 0 && row.previous <= 0 && hadRevenueBefore) summary.retainedCustomers += 1;
+        if (row.current <= 0 && row.previous > 0) {
+          if (row.dueForRenewal) summary.lostCustomers += 1;
+          else summary.pendingCustomers += 1;
+        }
+        if (row.current > 0 && row.previous > 0) {
+          summary.retainedCustomers += 1;
+          if (row.current - row.previous > 1) summary.expansionCustomers += 1;
+          else if (row.previous - row.current > 1) summary.contractionCustomers += 1;
+          else summary.flatRenewalCustomers += 1;
+          if (row.dueForRenewal) summary.retainedArr += row.current;
+        }
+        row.yearContracts.forEach((contract) => {
+          const qDate = state.revenueMode === "contractYear" ? revenueDateOf(contract) : contract.start;
+          summary.byQuarter[quarterOf(qDate)] += 1;
+        });
+      });
+      summary.ndr = summary.previousCohortArr > 0 ? summary.retainedArr / summary.previousCohortArr : null;
+      summary.expectedNdr = summary.previousCohortArr > 0 ? summary.expectedArr / summary.previousCohortArr : null;
+      return summary;
+    }
+
+    function filteredMetricsByYear() {
+      const byYear = {};
+      state.years.forEach((year) => {
+        byYear[year] = summarizeYearRows(year, customerRowsForYear(year));
+      });
+      return { years: state.years, byYear };
+    }
+
+    function compactMoney(value) {
+      const n = Number(value) || 0;
+      const abs = Math.abs(n);
+      if (abs >= 100000000) return (n / 100000000).toLocaleString("zh-CN", { maximumFractionDigits: 1 }) + "亿";
+      if (abs >= 10000) return (n / 10000).toLocaleString("zh-CN", { maximumFractionDigits: 1 }) + "万";
+      return money.format(n);
+    }
+
+    function yearStage(year) {
+      const currentYear = new Date().getFullYear();
+      if (year < currentYear) return { label: "历史结论", lead: "已经结束，应该看最终结果，不该再留待确认。" };
+      if (year === currentYear) return { label: "今年预测", lead: "还在进行，数字会继续变化，待确认客户要继续跟。" };
+      return { label: "未来预测", lead: "还没发生，只能当预算和续费目标参考。" };
+    }
+
+    function compareNdrText(item) {
+      if (item.ndr == null) return "老客户续费还没有可比底盘，NDR暂时看不了。";
+      if (item.expectedNdr == null) return "当前NDR是" + percent.format(item.ndr) + "，但还没有目标可比。";
+      const gap = item.ndr - item.expectedNdr;
+      if (Math.abs(gap) < 0.001) return "老客户续费基本踩在目标线上。";
+      return gap > 0 ? "老客户续费高于目标，续回金额比预期更好。" : "老客户续费低于目标，需要看哪些老客户没续够。";
+    }
+
+    function sumRows(rows, field) {
+      return rows.reduce((sum, row) => sum + (Number(row[field]) || 0), 0);
+    }
+
+    function distributionText(map, emptyText = "暂无") {
+      const parts = Object.entries(map || {})
+        .filter(([, value]) => Number(value) > 0)
+        .sort((a, b) => String(a[0]).localeCompare(String(b[0]), "zh-CN"))
+        .map(([key, value]) => key + " " + number.format(value));
+      return parts.length ? parts.join("，") : emptyText;
+    }
+
+    function rowQuarter(row) {
+      const contracts = row.yearContracts || [];
+      if (!contracts.length) return "未归属季度";
+      const first = contracts.slice().sort((a, b) => {
+        const ad = state.revenueMode === "contractYear" ? revenueDateOf(a) : a.start;
+        const bd = state.revenueMode === "contractYear" ? revenueDateOf(b) : b.start;
+        return ad - bd;
+      })[0];
+      const date = state.revenueMode === "contractYear" ? revenueDateOf(first) : first.start;
+      return quarterOf(date);
+    }
+
+    function topCustomerNames(rows, sortField = "current", limit = 6) {
+      if (!rows.length) return "无";
+      const sorted = rows.slice().sort((a, b) => Math.abs(Number(b[sortField]) || 0) - Math.abs(Number(a[sortField]) || 0));
+      const names = sorted.slice(0, limit).map((row) => row.name);
+      const more = sorted.length > limit ? "等" + number.format(sorted.length) + "家" : "";
+      return names.join("、") + more;
+    }
+
+    function buildYearEvidence(year, item) {
+      const rows = customerRowsForYear(year);
+      const previousRows = rows.filter((row) => row.previous > 0);
+      const newRows = rows.filter((row) => row.status === "新增");
+      const retainedRows = rows.filter((row) => row.status.startsWith("存量"));
+      const lostRows = rows.filter((row) => row.status === "流失");
+      const pendingRows = rows.filter((row) => row.status === "待确认");
+      const contractionRows = rows.filter((row) => row.status === "存量减购");
+      const expansionRows = rows.filter((row) => row.status === "存量增购");
+      const newByStar = {};
+      const newByQuarter = {};
+      newRows.forEach((row) => {
+        const star = row.customer.star || "未标星";
+        const quarter = rowQuarter(row);
+        newByStar[star] = (newByStar[star] || 0) + 1;
+        newByQuarter[quarter] = (newByQuarter[quarter] || 0) + 1;
+      });
+      const previousArr = sumRows(previousRows, "previous");
+      const currentArr = item.arr || 0;
+      const oldCustomerArr = sumRows(retainedRows, "current");
+      const oldCustomerGap = oldCustomerArr - previousArr;
+      const targetGap = currentArr - (item.expectedArr || 0);
+      const ndrGap = item.ndr != null && item.expectedNdr != null ? item.ndr - item.expectedNdr : null;
+      return {
+        rows,
+        previousRows,
+        newRows,
+        retainedRows,
+        lostRows,
+        pendingRows,
+        contractionRows,
+        expansionRows,
+        newByStar,
+        newByQuarter,
+        newArr: sumRows(newRows, "current"),
+        retainedArr: oldCustomerArr,
+        lostArr: sumRows(lostRows, "previous"),
+        pendingArr: sumRows(pendingRows, "previous"),
+        contractionAmount: Math.abs(sumRows(contractionRows, "delta")),
+        expansionAmount: sumRows(expansionRows, "delta"),
+        previousActiveCustomers: previousRows.length,
+        previousArr,
+        arrDelta: currentArr - previousArr,
+        oldCustomerArr,
+        oldCustomerGap,
+        targetGap,
+        ndrGap
+      };
+    }
+
+    function metricSentence(label, value, suffix = "") {
+      return '<span class="num">' + escapeHtml(value) + '</span>' + escapeHtml(suffix ? suffix : "") + escapeHtml(label ? " " + label : "");
+    }
+
+    function insightCard(title, body, names) {
+      return '<div class="insight-card"><h3>' + escapeHtml(title) + '</h3><p>' + body + '</p>' + (names ? '<div class="insight-names">' + escapeHtml(names) + '</div>' : '') + '</div>';
+    }
+
+    function renderYearInsight(item = blankYearSummary(Number(state.selectedYear))) {
+      const year = Number(state.selectedYear);
+      const box = $("yearInsight");
+      if (!box) return;
+      if (!year) {
+        $("insightMode").textContent = "导入后生成";
+        box.innerHTML = '<p class="insight-lead">导入Excel后，切换年份会自动生成大白话解释。</p>';
+        return;
+      }
+      const stage = yearStage(year);
+      const evidence = buildYearEvidence(year, item);
+      const currentYear = new Date().getFullYear();
+      const oldCustomerFormula = "去年老客 " + evidence.previousActiveCustomers + " 家，今年续回 " + (item.retainedCustomers || 0) + " 家，流失 " + (item.lostCustomers || 0) + " 家" + (item.pendingCustomers ? "，待确认 " + item.pendingCustomers + " 家" : "");
+      const pendingText = year < currentYear
+        ? "历史年份不留待确认；没续回来就算流失。"
+        : "待确认 " + (item.pendingCustomers || 0) + " 家、上一年金额 " + compactMoney(evidence.pendingArr) + "，还没到该判流失的时间。";
+      const lead = year + "年" + stage.label + "：绩效主线看去年老客基盘 " + evidence.previousActiveCustomers + " 家、上一年合同金额 " + compactMoney(evidence.previousArr) + "；今年老客续回 " + compactMoney(evidence.oldCustomerArr) + "，老客口径" + (evidence.oldCustomerGap >= 0 ? "增加 " : "减少 ") + compactMoney(Math.abs(evidence.oldCustomerGap)) + "。新增客户单独看，主要防止后年绩效断档。" + stage.lead;
+      const rows = [
+        ["去年老客绩效", oldCustomerFormula + "；老客去年金额 " + compactMoney(evidence.previousArr) + "，今年老客金额 " + compactMoney(evidence.oldCustomerArr) + "。"],
+        ["今年新签客户", "今年新签不进今年老客绩效，只作为后年需要续费的风险池。新签 " + evidence.newRows.length + " 家，合同金额 " + compactMoney(evidence.newArr) + "；星级分布：" + distributionText(evidence.newByStar) + "；季度分布：" + distributionText(evidence.newByQuarter) + "。"],
+        ["流失/待确认", "流失 " + evidence.lostRows.length + " 家、上一年金额 " + compactMoney(evidence.lostArr) + "。" + pendingText],
+        ["老客预算偏移", "目标/预算ARR " + compactMoney(item.expectedArr || 0) + "；老客今年续回 " + compactMoney(evidence.oldCustomerArr) + "，比目标" + (evidence.oldCustomerArr - (item.expectedArr || 0) >= 0 ? "多 " : "少 ") + compactMoney(Math.abs(evidence.oldCustomerArr - (item.expectedArr || 0))) + "。"],
+        ["NDR", "只看到期老客户，不看新增。当前 " + (item.ndr == null ? "-" : percent.format(item.ndr)) + "；目标 " + (item.expectedNdr == null ? "-" : percent.format(item.expectedNdr)) + (evidence.ndrGap == null ? "。" : "；偏移 " + (evidence.ndrGap >= 0 ? "+" : "-") + percent.format(Math.abs(evidence.ndrGap)) + "。") + compareNdrText(item)],
+        ["存量变化", "增购 " + evidence.expansionRows.length + " 家、增加 " + compactMoney(evidence.expansionAmount) + "；减购 " + evidence.contractionRows.length + " 家、减少 " + compactMoney(evidence.contractionAmount) + "。"]
+      ];
+      const cards = [
+        insightCard("后年风险池：新签客户", metricSentence("家", evidence.newRows.length) + "，今年新签总额 " + metricSentence("", compactMoney(evidence.newArr)) + "；" + escapeHtml(distributionText(evidence.newByQuarter)) + "。", "这些客户今年不算老客KPI，后年要提前盯续费：" + topCustomerNames(evidence.newRows, "current")),
+        insightCard("流失企业清单", metricSentence("家", evidence.lostRows.length) + "，流失口径金额 " + metricSentence("", compactMoney(evidence.lostArr)) + "。", "企业：" + topCustomerNames(evidence.lostRows, "previous")),
+        insightCard("老客KPI基盘", "去年老客 " + metricSentence("家", evidence.previousActiveCustomers) + "，去年老客金额 " + metricSentence("", compactMoney(evidence.previousArr)) + "；今年老客续回 " + metricSentence("", compactMoney(evidence.oldCustomerArr)) + "。", "老客口径变化：" + (evidence.oldCustomerGap >= 0 ? "增加 " : "减少 ") + compactMoney(Math.abs(evidence.oldCustomerGap))),
+        insightCard("老客目标缺口", "预算/目标ARR " + metricSentence("", compactMoney(item.expectedArr || 0)) + "，老客续回 " + metricSentence("", compactMoney(evidence.oldCustomerArr)) + "，偏移 " + metricSentence("", (evidence.oldCustomerArr - (item.expectedArr || 0) >= 0 ? "+" : "-") + compactMoney(Math.abs(evidence.oldCustomerArr - (item.expectedArr || 0)))) + "。", "优先追问：流失、减购、待确认是否可追回。")
+      ];
+      $("insightMode").textContent = stage.label;
+      box.innerHTML = '<p class="insight-lead">' + escapeHtml(lead) + '</p><ul class="insight-list">' + rows.map((row) => '<li><strong>' + escapeHtml(row[0]) + '：</strong>' + escapeHtml(row[1]) + '</li>').join("") + '</ul><div class="insight-evidence">' + cards.join("") + '</div>';
+    }
+    function renderKpis(item = blankYearSummary(Number(state.selectedYear))) {
+      const year = Number(state.selectedYear);
+      $("kpiYear").textContent = year || "-";
+      $("kpiArr").textContent = money.format(item.arr || 0);
+      $("kpiNdr").textContent = item.ndr == null ? "-" : percent.format(item.ndr);
+      $("kpiCustomers").textContent = number.format(item.activeCustomers || 0);
+      $("kpiMove").textContent = (item.newCustomers || 0) + "/" + (item.retainedCustomers || 0) + "/" + (item.lostCustomers || 0) + "/" + (item.pendingCustomers || 0);
+      $("kpiRetained").textContent = money.format(item.retainedArr || 0);
+      $("kpiExpectedArr").textContent = money.format(item.expectedArr || 0);
+      $("kpiExpectedNdr").textContent = item.expectedNdr == null ? "-" : percent.format(item.expectedNdr);
+      $("arrModeLabel").textContent = state.revenueMode === "contractYear" ? "开始年口径" : "摊分口径";
+      updateLicenseStatus();
+    }
+    function renderAnnualChart(filteredMetrics = filteredMetricsByYear()) {
+      const years = state.years;
+      const itemOf = (year) => filteredMetrics.byYear[year] || blankYearSummary(year);
+      charts.annualChart.setOption({
+        color: ["#2563eb", "#94a3b8", "#16a34a", "#0f766e", "#dc2626", "#f97316"],
+        tooltip: { trigger: "axis" },
+        legend: { top: 8, data: ["ARR", "预期ARR", "NDR", "预期NDR", "企业数", "流失企业", "待确认"] },
+        grid: { left: 70, right: 70, top: 58, bottom: 42 },
+        xAxis: { type: "category", data: years },
+        yAxis: [
+          { type: "value", name: "ARR", axisLabel: { formatter: (v) => "¥" + Math.round(v / 10000) + "万" } },
+          { type: "value", name: "NDR/企业", axisLabel: { formatter: (v) => v <= 3 ? Math.round(v * 100) + "%" : v } }
+        ],
+        series: [
+          { name: "ARR", type: "bar", data: years.map((y) => Math.round(itemOf(y).arr || 0)), barMaxWidth: 26 },
+          { name: "预期ARR", type: "bar", data: years.map((y) => Math.round(itemOf(y).expectedArr || 0)), barMaxWidth: 26 },
+          { name: "NDR", type: "line", yAxisIndex: 1, data: years.map((y) => itemOf(y).ndr == null ? null : Number(itemOf(y).ndr.toFixed(4))), smooth: true },
+          { name: "预期NDR", type: "line", yAxisIndex: 1, data: years.map((y) => itemOf(y).expectedNdr == null ? null : Number(itemOf(y).expectedNdr.toFixed(4))), smooth: true, lineStyle: { type: "dashed" } },
+          { name: "企业数", type: "line", yAxisIndex: 1, data: years.map((y) => itemOf(y).activeCustomers || 0), smooth: true },
+          { name: "流失企业", type: "bar", yAxisIndex: 1, data: years.map((y) => itemOf(y).lostCustomers || 0), barMaxWidth: 18 },
+          { name: "待确认", type: "bar", yAxisIndex: 1, data: years.map((y) => itemOf(y).pendingCustomers || 0), barMaxWidth: 18 }
+        ]
+      });
+      charts.annualChart.off("click");
+      charts.annualChart.on("click", (p) => setSelectedYear(p.name));
+    }
+    function renderStarChart(item = blankYearSummary(Number(state.selectedYear))) {
+      const data = Object.entries(item.byStar || {}).sort((a, b) => b[1] - a[1]);
+      charts.starChart.setOption({
+        color: ["#2563eb"],
+        tooltip: { trigger: "axis" },
+        grid: { left: 44, right: 16, top: 26, bottom: 38 },
+        xAxis: { type: "category", data: data.map((d) => d[0]) },
+        yAxis: { type: "value", minInterval: 1 },
+        series: [{ name: "企业数", type: "bar", data: data.map((d) => d[1]), barMaxWidth: 32 }]
+      });
+      charts.starChart.off("click");
+      charts.starChart.on("click", (p) => {
+        state.filters.star = p.name;
+        $("starFilter").value = p.name;
+        renderFilteredViews();
+      });
+    }
+
+    function renderQuarterChart(filteredMetrics = filteredMetricsByYear()) {
+      const years = state.years;
+      const quarters = ["Q1", "Q2", "Q3", "Q4"];
+      const itemOf = (year) => filteredMetrics.byYear[year] || blankYearSummary(year);
+      charts.quarterChart.setOption({
+        color: ["#2563eb", "#0f766e", "#d97706", "#7c3aed"],
+        tooltip: { trigger: "axis" },
+        legend: { top: 2, data: quarters },
+        grid: { left: 44, right: 16, top: 56, bottom: 38 },
+        xAxis: { type: "category", data: years },
+        yAxis: { type: "value", minInterval: 1 },
+        series: quarters.map((q) => ({ name: q, type: "bar", stack: "new", data: years.map((y) => itemOf(y).byQuarter[q] || 0), barMaxWidth: 30 }))
+      });
+      charts.quarterChart.off("click");
+      charts.quarterChart.on("click", (p) => {
+        state.filters.quarter = p.seriesName;
+        $("quarterFilter").value = p.seriesName;
+        setSelectedYear(p.name);
+      });
+    }
+
+    function newCustomerQuarter(row) {
+      const contracts = (row.yearContracts || []).slice().sort((a, b) => {
+        const ad = state.revenueMode === "contractYear" ? revenueDateOf(a) : a.start;
+        const bd = state.revenueMode === "contractYear" ? revenueDateOf(b) : b.start;
+        return ad - bd;
+      });
+      const first = contracts[0];
+      if (!first) return "未定";
+      const date = state.revenueMode === "contractYear" ? revenueDateOf(first) : first.start;
+      return quarterOf(date);
+    }
+
+    function renderNewCustomerChart(rows = customerRowsForYear()) {
+      const quarters = ["Q1", "Q2", "Q3", "Q4"];
+      const newRows = rows.filter((row) => row.status === "新增");
+      const stars = Array.from(new Set(newRows.map((row) => row.customer.star || "未标星"))).sort((a, b) => a.localeCompare(b, "zh-CN"));
+      const matrix = {};
+      stars.forEach((star) => {
+        matrix[star] = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+      });
+      newRows.forEach((row) => {
+        const star = row.customer.star || "未标星";
+        const quarter = newCustomerQuarter(row);
+        if (!matrix[star] || !quarters.includes(quarter)) return;
+        matrix[star][quarter] += 1;
+      });
+      const total = newRows.length;
+      const year = Number(state.selectedYear) || "-";
+      $("newCustomerSummary").textContent = year + "年新签 " + total + " 家";
+      charts.newCustomerChart.setOption({
+        color: ["#2563eb", "#16a34a", "#d97706", "#7c3aed", "#dc2626", "#0f766e", "#64748b"],
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+        legend: { top: 2, type: "scroll", data: stars },
+        grid: { left: 44, right: 16, top: 58, bottom: 38 },
+        xAxis: { type: "category", data: quarters },
+        yAxis: { type: "value", minInterval: 1 },
+        series: stars.length ? stars.map((star) => ({
+          name: star,
+          type: "bar",
+          stack: "newCustomers",
+          data: quarters.map((q) => matrix[star][q] || 0),
+          barMaxWidth: 34
+        })) : [{ name: "新签客户", type: "bar", data: quarters.map(() => 0), barMaxWidth: 34 }]
+      });
+      charts.newCustomerChart.off("click");
+      charts.newCustomerChart.on("click", (p) => {
+        if (!p.seriesName || p.value <= 0) return;
+        state.filters.quarter = p.name;
+        state.filters.star = p.seriesName;
+        $("quarterFilter").value = p.name;
+        $("starFilter").value = p.seriesName;
+        renderFilteredViews();
+      });
+    }
+    function renderOwnerChart(rows = customerRowsForYear()) {
+      const ownerMap = {};
+      rows.forEach((row) => {
+        getWeights(row.customer).forEach((owner) => {
+          ownerMap[owner.name] ||= { arr: 0, customers: 0 };
+          ownerMap[owner.name].arr += row.current * owner.weight;
+          ownerMap[owner.name].customers += owner.weight;
+        });
+      });
+      const data = Object.entries(ownerMap)
+        .map(([name, v]) => ({ name, arr: v.arr, customers: v.customers }))
+        .sort((a, b) => b.arr - a.arr)
+        .slice(0, 12);
+      charts.ownerChart.setOption({
+        color: ["#0f766e"],
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: (v) => money.format(v) },
+        grid: { left: 80, right: 18, top: 24, bottom: 28 },
+        xAxis: { type: "value", axisLabel: { formatter: (v) => Math.round(v / 10000) + "万" } },
+        yAxis: { type: "category", data: data.map((d) => d.name).reverse() },
+        series: [{ name: "归因ARR", type: "bar", data: data.map((d) => Math.round(d.arr)).reverse(), barMaxWidth: 18 }]
+      });
+      charts.ownerChart.off("click");
+      charts.ownerChart.on("click", (p) => toggleOwnerFilter(p.name));
+    }
+
+    function filteredCustomerRows() {
+      return customerRowsForYear();
+    }
+    function renderFilteredViews() {
+      const filteredMetrics = filteredMetricsByYear();
+      const year = Number(state.selectedYear);
+      const rows = customerRowsForYear(year);
+      const summary = filteredMetrics.byYear[year] || blankYearSummary(year);
+      renderKpis(summary);
+      renderYearInsight(summary);
+      renderAnnualChart(filteredMetrics);
+      renderStarChart(summary);
+      renderQuarterChart(filteredMetrics);
+      renderNewCustomerChart(rows);
+      renderOwnerChart(rows);
+      renderDetails(rows);
+      renderAuditPanel(summary);
+    }
+    function renderRawContract(contract) {
+      const raw = contract.raw || {};
+      const entries = Object.entries(raw).filter(([, value]) => value !== "" && value != null);
+      if (!entries.length) return "";
+      return '<details class="raw-contract"><summary>原始行数据 第' + escapeHtml(contract.rowNumber || "-") + '行</summary><div class="raw-grid">' +
+        entries.map(([key, value]) => '<div><strong>' + escapeHtml(key) + '：</strong>' + escapeHtml(value instanceof Date ? value.toLocaleDateString("zh-CN") : value) + '</div>').join("") +
+        '</div></details>';
+    }
+
+    function renderDebugContract(contract) {
+      if (!new URLSearchParams(window.location.search).has("debug")) return "";
+      const revenueDate = revenueDateOf(contract);
+      const debug = {
+        row: contract.rowNumber || "-",
+        year: revenueDate ? revenueDate.getFullYear() : "-",
+        start: contract.start ? contract.start.toLocaleDateString("zh-CN") : "-",
+        amount: contract.amount,
+        valid: contract.valid,
+        durationDays: contract.durationDays,
+        approval: contract.approval || "-",
+        refund: contract.refund || "-",
+        contractNo: contract.contractNo || "-"
+      };
+      return '<details class="raw-contract"><summary>解析调试</summary><div class="raw-grid">' +
+        Object.entries(debug).map(([key, value]) => '<div><strong>' + escapeHtml(key) + '：</strong>' + escapeHtml(value) + '</div>').join("") +
+        '</div></details>';
+    }
+
+    function renderContractList(contracts) {
+      if (!contracts.length) return escapeHtml("-");
+      return '<div class="contract-list">' + contracts.map((contract) => {
+        const dateText = contract.start.toLocaleDateString("zh-CN") + " - " + contract.end.toLocaleDateString("zh-CN");
+        const statusText = [contract.approval || "无审批", contract.pay || "无回款", contract.refund || "无退款"].join(" / ");
+        return '<div class="contract-item"><div class="contract-line"><span class="contract-no">' + escapeHtml(contract.contractNo || "无编号") + '</span><span class="contract-amount">' + money.format(contract.amount || 0) + '</span></div>' +
+          '<div class="contract-meta">' + escapeHtml(dateText + " | " + statusText) + '</div>' +
+          renderDebugContract(contract) +
+          renderRawContract(contract) + '</div>';
+      }).join("") + '</div>';
+    }
+
+    function renderDetails(rows = filteredCustomerRows()) {
+      const body = $("detailBody");
+      $("detailCount").textContent = rows.length + "家";
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="12" class="empty">无匹配企业</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(renderDetailRow).join("");
+    }
+
+    function contractQuarterText(row) {
+      const quarters = Array.from(new Set((row.yearContracts || []).map((contract) => {
+        const date = state.revenueMode === "contractYear" ? revenueDateOf(contract) : contract.start;
+        return date ? date.getFullYear() + quarterOf(date) : "";
+      }).filter(Boolean))).sort();
+      return quarters.length ? quarters.join(" / ") : "-";
+    }
+    function renderDetailRow(row) {
+      const c = row.customer;
+      const statusClass = statusClassOf(row.status);
+      const owners = getWeights(c).map((o) => o.name + " " + Math.round(o.weight * 100) + "%").join(" / ");
+      const nameCell = '<button type="button" class="customer-name-button" data-customer="' + escapeHtml(row.key) + '">' + escapeHtml(row.name) + '</button>';
+      return '<tr>' +
+        '<td>' + nameCell + '</td>' +
+        '<td><span class="badge ' + statusClass + '">' + row.status + '</span></td>' +
+        '<td>' + escapeHtml(statusReasonOf(row.status)) + '</td>' +
+        '<td>' + escapeHtml(c.star || "-") + '</td>' +
+        '<td>' + escapeHtml(contractQuarterText(row)) + '</td>' +
+        '<td>' + escapeHtml(c.cs || "-") + '</td>' +
+        '<td>' + escapeHtml(c.ts || "-") + '</td>' +
+        '<td>' + escapeHtml(owners) + '</td>' +
+        '<td class="num">' + money.format(row.current) + '</td>' +
+        '<td class="num">' + money.format(row.originalAmount || 0) + '</td>' +
+        '<td class="num">' + money.format(row.previous) + '</td>' +
+        '<td class="num">' + money.format(row.delta) + '</td>' +
+        '</tr>';
+    }
+
+    function showCustomerContractModal(customerKey) {
+      const year = Number(state.selectedYear);
+      const rows = filteredCustomerRows();
+      const row = rows.find((item) => item.key === customerKey);
+      const customer = row?.customer || state.customers.get(customerKey) || { name: customerKey };
+      const yearContracts = state.metrics?.contractByCustomerYear?.[customerKey]?.[year] || [];
+      const allContracts = state.contracts.filter((contract) => contract.customerName === customerKey && contract.valid).sort((a, b) => revenueDateOf(a) - revenueDateOf(b));
+      $("customerContractTitle").textContent = customer.name;
+      $("customerContractSummary").textContent = (state.selectedYear || "-") + "年相关合同 " + yearContracts.length + " 份；全部有效合同 " + allContracts.length + " 份。";
+      const linkHtml = customer.link ? '<p><a href="' + escapeHtml(customer.link) + '" target="_blank" rel="noreferrer">打开企业链接</a></p>' : "";
+      $("customerContractBody").innerHTML = linkHtml +
+        '<h3>当前年份相关合同</h3>' + renderContractList(yearContracts) +
+        '<h3>全部有效合同</h3>' + renderContractList(allContracts);
+      $("customerContractModal").style.display = "flex";
+    }
+
+    function hideCustomerContractModal() {
+      $("customerContractModal").style.display = "none";
+    }
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, (s) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
+    }
+
+    async function handleFile(file) {
+      try {
+        await window.vendorReady;
+      } catch (err) {
+        showNotice("图表/Excel开源库未加载。请确认当前电脑可以访问 CDN 网络后重新打开。", "warn");
+        return;
+      }
+      if (!canRun()) {
+        showLicenseModal();
+        return;
+      }
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: false });
+      const built = buildData(workbook);
+      state.workbookName = file.name;
+      state.customers = built.customers;
+      state.contracts = built.contracts;
+      state.expectedNdrRates = { ...state.expectedNdrRates, ...loadExpectedNdrRates() };
+      ensureExpectedNdrRatesFromCustomers(built.customers);
+      state.metrics = computeMetrics(built.customers, built.contracts, state.revenueMode, state.expectedNdrRates);
+      state.years = state.metrics.years;
+      state.selectedYear = String(state.years[state.years.length - 1] || "");
+      state.filters = { star: "", quarter: "", owners: [], status: "", search: "" };
+      $("searchInput").value = "";
+      fillFilters();
+      initCharts();
+      renderAll();
+      markSuccessfulRun();
+      const invalidCount = built.contracts.filter((c) => !c.valid).length;
+      const warningText = [
+        "已导入：" + file.name + "；企业表：" + built.customerSheet + "；合同表：" + built.contractSheet + "；有效合同：" + (built.contracts.length - invalidCount) + "；剔除合同：" + invalidCount + "。",
+        built.warnings.slice(0, 3).join("；")
+      ].filter(Boolean).join(" ");
+      showNotice(warningText, built.warnings.length ? "warn" : "ok");
+    }
+
+    $("targetSettings").addEventListener("input", (event) => {
+      const input = event.target.closest("input[data-star]");
+      if (!input) return;
+      const pct = Math.max(0, Number(input.value || 0));
+      input.value = pct;
+      state.expectedNdrRates[input.dataset.star] = pct / 100;
+      saveExpectedNdrRates();
+      recomputeWithTargets();
+    });
+    $("excelFile").addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (file) handleFile(file).catch((err) => showNotice("导入失败：" + err.message, "warn"));
+      event.target.value = "";
+    });
+    $("modeTabs").addEventListener("click", (event) => {
+      const btn = event.target.closest("button[data-mode]");
+      if (!btn || btn.dataset.mode === state.revenueMode) return;
+      state.revenueMode = btn.dataset.mode;
+      Array.from($("modeTabs").querySelectorAll("button")).forEach((item) => item.classList.toggle("active", item === btn));
+      if (state.customers.size && state.contracts.length) {
+        state.metrics = computeMetrics(state.customers, state.contracts, state.revenueMode, state.expectedNdrRates);
+        state.years = state.metrics.years;
+        if (!state.years.map(String).includes(state.selectedYear)) state.selectedYear = String(state.years[state.years.length - 1] || "");
+        renderAll();
+      }
+    });
+    $("starFilter").addEventListener("change", (e) => { state.filters.star = e.target.value; renderFilteredViews(); });
+    $("quarterFilter").addEventListener("change", (e) => { state.filters.quarter = e.target.value; renderFilteredViews(); });
+    $("ownerFilter").addEventListener("change", (e) => { state.filters.owners = selectedValues(e.target); syncOwnerFilterControl(); renderFilteredViews(); });
+    $("statusFilter").addEventListener("change", (e) => { state.filters.status = e.target.value; renderFilteredViews(); });
+    $("searchInput").addEventListener("input", (e) => { state.filters.search = e.target.value; renderFilteredViews(); });
+    $("resetBtn").addEventListener("click", () => {
+      state.filters = { star: "", quarter: "", owners: [], status: "", search: "" };
+      $("starFilter").value = "";
+      $("quarterFilter").value = "";
+      state.filters.owners = [];
+      syncOwnerFilterControl();
+      $("statusFilter").value = "";
+      $("searchInput").value = "";
+      renderAll();
+    });
+    $("detailBody").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-customer]");
+      if (btn) showCustomerContractModal(btn.dataset.customer);
+    });
+    $("closeCustomerContractModal").addEventListener("click", hideCustomerContractModal);
+    $("customerContractModal").addEventListener("click", (e) => { if (e.target.id === "customerContractModal") hideCustomerContractModal(); });
+    $("unlockBtn").addEventListener("click", showLicenseModal);
+    $("licenseSubmit").addEventListener("click", unlockWithPassword);
+    $("licenseInput").addEventListener("keydown", (e) => { if (e.key === "Enter") unlockWithPassword(); });
+    $("licenseModal").addEventListener("click", (e) => { if (e.target.id === "licenseModal" && canRun()) $("licenseModal").style.display = "none"; });
+    updateLicenseStatus();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
