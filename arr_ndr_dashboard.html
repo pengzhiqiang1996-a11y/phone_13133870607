@@ -219,7 +219,7 @@
       box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
     }
 
-    select, input[type="search"], input[type="password"] {
+    select, input[type="search"], input[type="password"], input[type="number"] {
       height: 36px;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
@@ -581,13 +581,19 @@
 
     .rate-field input {
       width: 64px;
-      height: 28px;
-      border: 1px solid #cbd5e1;
-      border-radius: 5px;
-      padding: 0 7px;
       text-align: right;
-      font-size: 13px;
-      background: #fff;
+      min-width: 64px;
+    }
+
+    .weight-field {
+      min-width: 320px;
+      max-width: 100%;
+    }
+
+    .weight-field input {
+      width: 76px;
+      text-align: right;
+      min-width: 76px;
     }
 
     .trace-body {
@@ -845,6 +851,8 @@
       <select id="starFilter"><option value="">全部星级</option></select>
       <select id="quarterFilter"><option value="">全部季度</option></select>
       <select id="ownerFilter" multiple title="按住 Ctrl 可多选归因人" aria-label="归因人多选"><option value="">全部归因人</option></select>
+      <select id="csFilter"><option value="">全部客户成功</option></select>
+      <select id="tsFilter"><option value="">全部技术支持</option></select>
       <select id="statusFilter"><option value="">全部状态</option><option value="去年客户">只看去年客户</option><option value="流失">只看流失</option><option value="待确认">只看待确认</option><option value="存量">只看全部存量</option><option value="存量增购">只看增购</option><option value="存量减购">只看减购</option><option value="存量平续">只看平续</option><option value="新增">只看今年新签客户</option></select>
       <input id="searchInput" type="search" placeholder="搜索企业">
     </section>
@@ -853,6 +861,13 @@
     <section class="panel settings-panel">
       <div class="panel-head"><h2>目标NDR设置</h2><span>按星级配置</span></div>
       <div class="settings-row" id="targetSettings"><span>导入Excel后生成星级目标</span></div>
+    </section>
+    <section class="panel settings-panel">
+      <div class="panel-head"><h2>归因权重设置</h2><span id="ownerWeightSummary">客户成功50% / 技术支持50%</span></div>
+      <div class="settings-row" id="ownerWeightSettings">
+        <label class="rate-field weight-field"><span>客户成功占比</span><input id="csWeightInput" type="number" min="0" max="100" step="1" value="50"><span>%</span></label>
+        <label class="rate-field weight-field"><span>技术支持占比</span><input id="tsWeightInput" type="number" min="0" max="100" step="1" value="50" disabled><span>%</span></label>
+      </div>
     </section>
     <section class="grid">
       <div class="stack">
@@ -960,6 +975,7 @@
     const SECRET = "13133870607";
     const STORE_KEY = btoa("saas_arr_ndr_dashboard_license_" + SECRET);
     const TARGET_RATE_KEY = btoa("saas_arr_ndr_target_rates_" + SECRET);
+    const OWNER_WEIGHT_KEY = btoa("saas_arr_ndr_owner_weights_" + SECRET);
     const RUN_LIMIT = 3;
     const DAY_MS = 24 * 60 * 60 * 1000;
     const charts = {};
@@ -969,9 +985,10 @@
       contracts: [],
       years: [],
       selectedYear: "",
-      filters: { star: "", quarter: "", owners: [], status: "", search: "" },
+      filters: { star: "", quarter: "", owners: [], cs: "", ts: "", status: "", search: "" },
       revenueMode: "contractYear",
       expectedNdrRates: {},
+      ownerWeights: { cs: 0.5, ts: 0.5 },
       metrics: null
     };
 
@@ -1191,9 +1208,17 @@
     function getWeights(customer) {
       const cs = String(customer.cs || "").trim();
       const ts = String(customer.ts || "").trim();
-      if (cs && ts && cs !== ts) return [{ name: cs, role: "客户成功", weight: 0.5 }, { name: ts, role: "技术支持", weight: 0.5 }];
+      const csWeight = clampOwnerWeight(state.ownerWeights.cs);
+      const tsWeight = 1 - csWeight;
+      if (cs && ts && cs !== ts) return [{ name: cs, role: "客户成功", weight: csWeight }, { name: ts, role: "技术支持", weight: tsWeight }];
       if (cs || ts) return [{ name: cs || ts, role: cs ? "客户成功" : "技术支持", weight: 1 }];
       return [{ name: "未分配", role: "未分配", weight: 1 }];
+    }
+
+    function clampOwnerWeight(value) {
+      const numberValue = Number(value);
+      if (!Number.isFinite(numberValue)) return 0.5;
+      return Math.min(1, Math.max(0, numberValue));
     }
 
     function findSheet(workbook, keywords, fallbackIndex) {
@@ -1339,6 +1364,7 @@
             summary.activeCustomers += 1;
             summary.byStar[customer.star] = (summary.byStar[customer.star] || 0) + 1;
             getWeights(customer).forEach((owner) => {
+              if (owner.weight <= 0) return;
               summary.byOwner[owner.name] ||= { arr: 0, customers: 0 };
               summary.byOwner[owner.name].arr += current * owner.weight;
               summary.byOwner[owner.name].customers += owner.weight;
@@ -1411,6 +1437,35 @@
       const raw = JSON.stringify(state.expectedNdrRates || {});
       localStorage.setItem(TARGET_RATE_KEY, btoa(unescape(encodeURIComponent(raw))));
     }
+
+    function loadOwnerWeights() {
+      try {
+        const raw = localStorage.getItem(OWNER_WEIGHT_KEY);
+        if (!raw) return { cs: 0.5, ts: 0.5 };
+        const parsed = JSON.parse(decodeURIComponent(escape(atob(raw))));
+        const cs = clampOwnerWeight(parsed?.cs);
+        return { cs, ts: 1 - cs };
+      } catch (err) {
+        return { cs: 0.5, ts: 0.5 };
+      }
+    }
+
+    function saveOwnerWeights() {
+      const cs = clampOwnerWeight(state.ownerWeights.cs);
+      const raw = JSON.stringify({ cs, ts: 1 - cs });
+      localStorage.setItem(OWNER_WEIGHT_KEY, btoa(unescape(encodeURIComponent(raw))));
+    }
+
+    function syncOwnerWeightControls() {
+      const cs = clampOwnerWeight(state.ownerWeights.cs);
+      state.ownerWeights = { cs, ts: 1 - cs };
+      const csPct = Math.round(cs * 100);
+      const tsPct = 100 - csPct;
+      $("csWeightInput").value = csPct;
+      $("tsWeightInput").value = tsPct;
+      $("ownerWeightSummary").textContent = "客户成功" + csPct + "% / 技术支持" + tsPct + "%";
+    }
+
     function getExpectedNdrRate(star, expectedRates = state.expectedNdrRates) {
       const key = star || "未标星";
       const value = Number(expectedRates[key]);
@@ -1470,7 +1525,7 @@
         ["新签/已续存量", "今年新签=上一年无ARR且今年有ARR；已续存量=上一年和今年都有ARR", (item.newCustomers || 0) + "/" + (item.retainedCustomers || 0)],
         ["流失企业", "到续费窗口后仍无本年合同金额，不计入活跃企业", number.format(item.lostCustomers || 0)],
         ["待确认", year < new Date().getFullYear() ? "历史年份已结算，不保留待确认；上一年有ARR且今年无ARR算流失" : "上一年合同开始日在 " + cutoff + " 之后，未到今年对应窗口", number.format(item.pendingCustomers || 0)],
-        ["归因", "客户成功与技术支持同时存在各背50%；只有一人则背100%", "见指标归因"],
+        ["归因", "客户成功与技术支持同时存在时按当前权重分摊；只有一人则背100%", "见指标归因"],
         ["存量拆分", "本年ARR-上一年ARR：>1为增购，<-1为减购，其余平续", (item.expansionCustomers || 0) + "/" + (item.contractionCustomers || 0) + "/" + (item.flatRenewalCustomers || 0)],
       ];
       $("auditRows").innerHTML = rows.map((row) => '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td><td class="num">' + escapeHtml(row[2]) + '</td></tr>').join("");
@@ -1491,15 +1546,25 @@
     function fillFilters() {
       const stars = new Set();
       const owners = new Set();
+      const csOwners = new Set();
+      const tsOwners = new Set();
       state.customers.forEach((c) => {
         stars.add(c.star || "未标星");
-        getWeights(c).forEach((o) => owners.add(o.name));
+        getWeights(c).filter((o) => o.weight > 0).forEach((o) => owners.add(o.name));
+        if (c.cs) csOwners.add(c.cs);
+        if (c.ts) tsOwners.add(c.ts);
       });
       const ownerValues = ["", ...Array.from(owners).sort()];
       state.filters.owners = (state.filters.owners || []).filter((owner) => ownerValues.includes(owner));
       fillSelect("starFilter", ["", ...Array.from(stars).sort()], "全部星级");
       fillSelect("quarterFilter", ["", "Q1", "Q2", "Q3", "Q4"], "全部季度");
       fillSelect("ownerFilter", ownerValues, "全部归因人");
+      fillSelect("csFilter", ["", ...Array.from(csOwners).sort()], "全部客户成功");
+      fillSelect("tsFilter", ["", ...Array.from(tsOwners).sort()], "全部技术支持");
+      state.filters.cs = Array.from(csOwners).includes(state.filters.cs) ? state.filters.cs : "";
+      state.filters.ts = Array.from(tsOwners).includes(state.filters.ts) ? state.filters.ts : "";
+      $("csFilter").value = state.filters.cs;
+      $("tsFilter").value = state.filters.ts;
       syncOwnerFilterControl();
       ensureExpectedNdrRatesFromCustomers(state.customers);
       renderTargetSettings();
@@ -1525,6 +1590,20 @@
       else selected.add(ownerName);
       state.filters.owners = Array.from(selected);
       syncOwnerFilterControl();
+      renderFilteredViews();
+    }
+
+    function setRoleFilter(role, ownerName) {
+      if (role === "客户成功") {
+        state.filters.cs = state.filters.cs === ownerName ? "" : ownerName;
+        $("csFilter").value = state.filters.cs;
+      } else if (role === "技术支持") {
+        state.filters.ts = state.filters.ts === ownerName ? "" : ownerName;
+        $("tsFilter").value = state.filters.ts;
+      } else {
+        toggleOwnerFilter(ownerName);
+        return;
+      }
       renderFilteredViews();
     }
 
@@ -1588,6 +1667,8 @@
     function customerRowsForYear(year = Number(state.selectedYear)) {
       const search = String(state.filters.search || "").trim().toLowerCase();
       const selectedOwners = new Set(state.filters.owners || []);
+      const selectedCs = String(state.filters.cs || "").trim();
+      const selectedTs = String(state.filters.ts || "").trim();
       const rows = [];
       state.customers.forEach((customer, key) => {
         const current = state.metrics.customerYearArr[key]?.[year] || 0;
@@ -1601,6 +1682,8 @@
         }
         const weights = getWeights(customer);
         if (selectedOwners.size && !weights.some((o) => selectedOwners.has(o.name))) return;
+        if (selectedCs && customer.cs !== selectedCs) return;
+        if (selectedTs && customer.ts !== selectedTs) return;
         const previousRevenueDate = latestRevenueDateBeforeYear(key, year, state.metrics.contractByCustomerYear);
         const dueForRenewal = !previousRevenueDate || previousRevenueDate <= renewalCutoffDate(year);
         const hadRevenueBefore = hadRevenueBeforeYear(key, year, state.metrics.customerYearArr);
@@ -1627,6 +1710,7 @@
           summary.activeCustomers += 1;
           summary.byStar[row.customer.star] = (summary.byStar[row.customer.star] || 0) + 1;
           getWeights(row.customer).forEach((owner) => {
+            if (owner.weight <= 0) return;
             summary.byOwner[owner.name] ||= { arr: 0, customers: 0 };
             summary.byOwner[owner.name].arr += row.current * owner.weight;
             summary.byOwner[owner.name].customers += owner.weight;
@@ -1952,25 +2036,27 @@
       const ownerMap = {};
       rows.forEach((row) => {
         getWeights(row.customer).forEach((owner) => {
-          ownerMap[owner.name] ||= { arr: 0, customers: 0 };
-          ownerMap[owner.name].arr += row.current * owner.weight;
-          ownerMap[owner.name].customers += owner.weight;
+          if (owner.weight <= 0) return;
+          const key = owner.name + "|" + owner.role;
+          ownerMap[key] ||= { name: owner.name, role: owner.role, arr: 0, customers: 0 };
+          ownerMap[key].arr += row.current * owner.weight;
+          ownerMap[key].customers += owner.weight;
         });
       });
       const data = Object.entries(ownerMap)
-        .map(([name, v]) => ({ name, arr: v.arr, customers: v.customers }))
+        .map(([, v]) => ({ name: v.name, role: v.role, label: v.role === "未分配" ? v.name : v.name + "（" + v.role + "）", arr: v.arr, customers: v.customers }))
         .sort((a, b) => b.arr - a.arr)
         .slice(0, 12);
       charts.ownerChart.setOption({
         color: ["#0f766e"],
         tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: (v) => money.format(v) },
-        grid: { left: 80, right: 18, top: 24, bottom: 28 },
+        grid: { left: 118, right: 18, top: 24, bottom: 28 },
         xAxis: { type: "value", axisLabel: { formatter: (v) => Math.round(v / 10000) + "万" } },
-        yAxis: { type: "category", data: data.map((d) => d.name).reverse() },
-        series: [{ name: "归因ARR", type: "bar", data: data.map((d) => Math.round(d.arr)).reverse(), barMaxWidth: 18 }]
+        yAxis: { type: "category", data: data.map((d) => d.label).reverse() },
+        series: [{ name: "归因ARR", type: "bar", data: data.map((d) => ({ value: Math.round(d.arr), ownerName: d.name, role: d.role })).reverse(), barMaxWidth: 18 }]
       });
       charts.ownerChart.off("click");
-      charts.ownerChart.on("click", (p) => toggleOwnerFilter(p.name));
+      charts.ownerChart.on("click", (p) => setRoleFilter(p.data?.role, p.data?.ownerName || p.name));
     }
 
     function filteredCustomerRows() {
@@ -2051,7 +2137,7 @@
     function renderDetailRow(row) {
       const c = row.customer;
       const statusClass = statusClassOf(row.status);
-      const owners = getWeights(c).map((o) => o.name + " " + Math.round(o.weight * 100) + "%").join(" / ");
+      const owners = getWeights(c).filter((o) => o.weight > 0).map((o) => o.name + " " + Math.round(o.weight * 100) + "%").join(" / ");
       const nameCell = '<button type="button" class="customer-name-button" data-customer="' + escapeHtml(row.key) + '">' + escapeHtml(row.name) + '</button>';
       return '<tr>' +
         '<td>' + nameCell + '</td>' +
@@ -2110,11 +2196,13 @@
       state.customers = built.customers;
       state.contracts = built.contracts;
       state.expectedNdrRates = { ...state.expectedNdrRates, ...loadExpectedNdrRates() };
+      state.ownerWeights = loadOwnerWeights();
+      syncOwnerWeightControls();
       ensureExpectedNdrRatesFromCustomers(built.customers);
       state.metrics = computeMetrics(built.customers, built.contracts, state.revenueMode, state.expectedNdrRates);
       state.years = state.metrics.years;
       state.selectedYear = String(state.years[state.years.length - 1] || "");
-      state.filters = { star: "", quarter: "", owners: [], status: "", search: "" };
+      state.filters = { star: "", quarter: "", owners: [], cs: "", ts: "", status: "", search: "" };
       $("searchInput").value = "";
       fillFilters();
       initCharts();
@@ -2157,14 +2245,25 @@
     $("starFilter").addEventListener("change", (e) => { state.filters.star = e.target.value; renderFilteredViews(); });
     $("quarterFilter").addEventListener("change", (e) => { state.filters.quarter = e.target.value; renderFilteredViews(); });
     $("ownerFilter").addEventListener("change", (e) => { state.filters.owners = selectedValues(e.target); syncOwnerFilterControl(); renderFilteredViews(); });
+    $("csFilter").addEventListener("change", (e) => { state.filters.cs = e.target.value; renderFilteredViews(); });
+    $("tsFilter").addEventListener("change", (e) => { state.filters.ts = e.target.value; renderFilteredViews(); });
     $("statusFilter").addEventListener("change", (e) => { state.filters.status = e.target.value; renderFilteredViews(); });
     $("searchInput").addEventListener("input", (e) => { state.filters.search = e.target.value; renderFilteredViews(); });
+    $("csWeightInput").addEventListener("input", (event) => {
+      const pct = Math.min(100, Math.max(0, Number(event.target.value || 0)));
+      state.ownerWeights = { cs: pct / 100, ts: 1 - pct / 100 };
+      saveOwnerWeights();
+      syncOwnerWeightControls();
+      if (state.metrics) renderFilteredViews();
+    });
     $("resetBtn").addEventListener("click", () => {
-      state.filters = { star: "", quarter: "", owners: [], status: "", search: "" };
+      state.filters = { star: "", quarter: "", owners: [], cs: "", ts: "", status: "", search: "" };
       $("starFilter").value = "";
       $("quarterFilter").value = "";
       state.filters.owners = [];
       syncOwnerFilterControl();
+      $("csFilter").value = "";
+      $("tsFilter").value = "";
       $("statusFilter").value = "";
       $("searchInput").value = "";
       renderAll();
@@ -2179,6 +2278,8 @@
     $("licenseSubmit").addEventListener("click", unlockWithPassword);
     $("licenseInput").addEventListener("keydown", (e) => { if (e.key === "Enter") unlockWithPassword(); });
     $("licenseModal").addEventListener("click", (e) => { if (e.target.id === "licenseModal" && canRun()) $("licenseModal").style.display = "none"; });
+    state.ownerWeights = loadOwnerWeights();
+    syncOwnerWeightControls();
     updateLicenseStatus();
   </script>
 </body>
