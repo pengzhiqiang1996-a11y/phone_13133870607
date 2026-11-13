@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>网格回测器 · 画个走势看收益</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23232b36'/%3E%3Cpath d='M4 24 L11 14 L18 20 L28 6' stroke='%23e2c275' stroke-width='3' fill='none'/%3E%3C/svg%3E">
+<style>
+  :root{--bg:#eff1f4;--panel:#fff;--ink:#202a35;--ink2:#5b6675;--line:#d6dce3;
+    --buy:#b3382c;--sell:#1f7a53;--warn:#a86212}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 "Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+  header{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
+  h1{font-size:22px;line-height:1.3;margin:0 0 6px}
+  h1 span{font-size:13px;font-weight:400;color:var(--ink2);margin-left:8px}
+  .lede{color:var(--ink2);font-size:14px;margin:0;max-width:860px}
+  .grid-main{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  .grid-main>*{min-width:0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;min-width:0}
+  .panel-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2)}
+  .panel-hd b{color:var(--ink);font-weight:600;font-size:14px}
+  .canvas-box{position:relative;padding:6px 6px 0}
+  canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+  #priceCanvas{height:340px}
+  #eqCanvas{height:140px}
+  .hint{position:absolute;left:12px;top:12px;padding:5px 10px;border-radius:3px;
+    background:rgba(255,255,255,.93);border:1px dashed #b9c4cf;color:#5b6675;
+    font-size:12.5px;pointer-events:none;line-height:1.6;max-width:72%}
+  .hint.hide{display:none}
+  .big{padding:12px 14px 6px;border-bottom:1px solid var(--line)}
+  .big .lab{font-size:12px;color:var(--ink2)}
+  .big .val{font-size:32px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.12}
+  .big .sub{font-size:12.5px;color:var(--ink2);margin-top:3px}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:7px 14px;
+    border-bottom:1px dashed var(--line);font-size:13px}
+  .row:last-child{border-bottom:0}
+  .row span{color:var(--ink2);flex:1 1 auto;min-width:0}
+  .row strong{flex:0 1 auto;text-align:right;font-variant-numeric:tabular-nums}
+  .ctrl{padding:12px 14px;display:grid;grid-template-columns:repeat(2,1fr);gap:11px 14px}
+  .fld{display:grid;gap:4px;min-width:0}
+  .fld.wide{grid-column:1/-1}
+  .fld-note{font-size:11.5px;color:#7d8896;line-height:1.5}
+  .fld input.ro{background:#f1f4f7;color:#5b6675;border-color:#e2e7ec;cursor:default}
+  .fld label{font-size:12px;color:var(--ink2)}
+  .fld input{width:100%;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:3px;
+    font:inherit;font-size:15px;background:#fbfcfd;color:var(--ink)}
+  .fld input:focus{outline:2px solid #cfe0ea;border-color:#9db9c8}
+  .btns{display:flex;flex-wrap:wrap;gap:8px;padding:10px 10px 12px}
+  .warn{margin:0 14px 12px;padding:9px 11px;border:1px solid #e9cf9b;border-radius:3px;
+    background:#fdf5e5;color:#7a5510;font-size:12.5px;line-height:1.65}
+  .warn[hidden]{display:none}
+  .utilnote{padding:9px 14px 11px;font-size:12px;line-height:1.7;color:#6b7684;
+    border-top:1px dashed var(--line);background:#fafbfc}
+  .more{border-top:1px solid var(--line)}
+  .more summary{cursor:pointer;padding:9px 14px;font-size:12.5px;color:var(--ink2);
+    list-style:none;outline:none}
+  .more summary::-webkit-details-marker{display:none}
+  .more summary::before{content:'＋';margin-right:6px;color:#8b97a4}
+  .more[open] summary::before{content:'－'}
+  button{font:inherit;font-size:13px;padding:7px 12px;min-height:36px;border:1px solid var(--line);
+    background:#f7f9fb;color:var(--ink);border-radius:3px;cursor:pointer}
+  button:hover{background:#eef2f6}
+  button.pri{border-color:#9db9c8;background:#eaf2f6}
+  .note{margin-top:16px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--warn);
+    background:#fdfaf4;border-radius:3px;font-size:13px;color:#4a4234;line-height:1.75}
+  .note b{color:var(--warn)}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--ink2);flex-wrap:wrap}
+  .legend i{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:1px;vertical-align:1px}
+  .up{color:var(--buy)} .down{color:var(--sell)}
+  @media (min-width:900px){
+    .grid-main{grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr);align-items:start}
+  }
+  @media (max-width:899px){
+    h1{font-size:19px} h1 span{display:block;margin:4px 0 0}
+    .big .val{font-size:27px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>网格回测器</h1>
+    <p class="lede">在框里随手拖一条线，当作这只票以后的走势；右边只说两件事：跌到多少买、每次买多少钱。要准备多少本金、能赚多少、最惨亏多少，全部自动算。三步，画完就有数。</p>
+  </header>
+
+  <div class="grid-main">
+    <div>
+      <div class="panel">
+        <div class="panel-hd">
+          <b>第一步 · 画走势</b>
+          <div class="legend">
+            <span><i style="background:var(--buy)"></i>买</span>
+            <span><i style="background:var(--sell)"></i>卖</span>
+            <span><i style="background:#c3ccd6"></i>格线</span>
+          </div>
+        </div>
+        <div class="canvas-box">
+          <canvas id="priceCanvas" height="340"></canvas>
+          <div class="hint" id="hint">按住鼠标，从左往右随手拖一条线，松手就出结果（想重画就再拖一次）</div>
+        </div>
+        <div class="btns">
+          <button id="btnV" class="pri">跌了又涨回来</button>
+          <button id="btnBox">来回震荡</button>
+          <button id="btnBull">一路慢慢涨</button>
+          <button id="btnCrash">一路跌到底</button>
+          <button id="btnRand">随机来一条</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-hd"><b>钱的变化</b><span id="eqNote">虚线 = 你投的本金</span></div>
+        <div class="canvas-box"><canvas id="eqCanvas" height="140"></canvas></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="panel">
+        <div class="panel-hd"><b>第二步 · 看结果</b><span id="stamp">—</span></div>
+        <div class="big">
+          <div class="lab" id="mLab">这套网格赚了</div>
+          <div class="val" id="mRet">—</div>
+          <div class="sub" id="mSub">先画一条走势</div>
+        </div>
+        <div id="warn" class="warn" hidden></div>
+        <div class="rows" id="rows"></div>
+        <div class="utilnote" id="utilNote"></div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-hd"><b>第三步 · 调参数</b><span>改完立刻重算</span></div>
+        <div class="ctrl">
+          <div class="fld"><label for="low">跌到多少就不再买</label><input id="low" type="number" value="70" step="0.5" min="1"></div>
+          <div class="fld"><label for="high">涨到多少就不再卖</label><input id="high" type="number" value="105" step="0.5" min="1"></div>
+          <div class="fld"><label for="perGrid">每次买多少钱</label>
+            <input id="perGrid" type="number" value="10000" step="1000" min="100">
+            <div class="fld-note" id="pgNote">—</div>
+          </div>
+          <div class="fld"><label for="capital">要准备多少钱（自动算）</label>
+            <input id="capital" class="ro" type="text" readonly tabindex="-1">
+            <div class="fld-note" id="capNote">铺满整个区间需要的本金</div>
+          </div>
+        </div>
+        <details class="more">
+          <summary>更多设置（不想动就别动）</summary>
+          <div class="ctrl">
+            <div class="fld"><label for="step">每跌百分之几买一次</label><input id="step" type="number" value="5" step="0.5" min="1" max="30"></div>
+            <div class="fld"><label for="baseCash">开盘先买多少</label><input id="baseCash" type="number" value="0" step="1000" min="0"></div>
+            <div class="fld wide"><label for="feeBp">手续费 万分之</label><input id="feeBp" type="number" value="2.5" step="0.5" min="0"></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>说人话：</b>价格往下穿过一条格线就买一份，涨回上一条格线就卖掉一份，一份赚的差价 = 每次买多少钱 × 每跌百分之几。所以来回震荡越多次越赚；一路涨或一路跌，网格都吃不到多少，甚至会亏。成交按你画的每个点直算，跳空、挂单没成交这些现实误差这里没有模拟。
+  </div>
+</div>
+<script>
+var N=240, FEE_MIN=5;
+var PAD={l:10,r:52,t:12,b:18};
+var S={prices:new Array(N).fill(100),low:70,high:105,stepPct:5,capital:100000,basePct:0,feeBp:2.5};
+var lastRun=null;
+
+function id(x){return document.getElementById(x)}
+function money(v){return (v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString('zh-CN')}
+function pct(v){var s=(v*100).toFixed(2);if(s==='-0.00')s='0.00';return s+'%'}
+function pct1(v){var s=(v*100).toFixed(0);if(s==='-0')s='0';return s+'%'}
+function levelsOf(low,high,step){
+  var r=1+step, n=Math.floor(Math.log(high/low)/Math.log(r)+1e-9), a=[];
+  for(var k=0;k<=n;k++) a.push(low*Math.pow(r,k));
+  return a;
+}
+function clamp(v,a,b){return v<a?a:(v>b?b:v)}
+function simulate(prices,cfg){
+  var levels=levelsOf(cfg.low,cfg.high,cfg.step), nL=levels.length;
+  if(nL<3) return null;
+  var slots=Math.max(1,nL-1);
+  var perGrid=cfg.perGrid>0?cfg.perGrid:Math.max(0,cfg.capital-cfg.baseCash)/slots;
+  var topBuy=nL-2, feeRate=cfg.feeRate;
+  var cash=cfg.capital, lots=new Map(), trades=[], equity=[];
+  var maxDeployed=0, sumDeployed=0, skipped=0, feeTotal=0;
+  function buy(idx,px,t){
+    var qty=Math.min(perGrid,cash/(1+feeRate))/px, gross=qty*px;
+    if(qty<=0||gross<perGrid*0.5){skipped++;return;}
+    var fee=Math.max(gross*feeRate,FEE_MIN);
+    if(gross+fee>cash){qty=Math.max(0,cash-FEE_MIN)/(px*1.000001);gross=qty*px;fee=Math.max(gross*feeRate,FEE_MIN);}
+    if(qty<=0||gross+fee>cash){skipped++;return;}
+    cash-=gross+fee; feeTotal+=fee;
+    lots.set(idx,{idx:idx,px:px,qty:qty,cost:gross+fee});
+    trades.push({side:'buy',t:t,px:px,qty:qty});
+  }
+  function sell(idx,px,t){
+    var lot=lots.get(idx); lots.delete(idx);
+    var proceeds=lot.qty*px, fee=Math.max(proceeds*feeRate,FEE_MIN);
+    cash+=proceeds-fee; feeTotal+=fee;
+    trades.push({side:'sell',t:t,px:px,qty:lot.qty,pnl:proceeds-fee-lot.cost});
+  }
+  if(cfg.baseCash>0){
+    var p0=prices[0], k0=0, k;
+    for(k=0;k<nL;k++) if(levels[k]<=p0) k0=k;
+    k0=Math.min(k0,Math.max(0,topBuy));
+    var f0=Math.max(cfg.baseCash*feeRate,FEE_MIN);
+    if(cfg.baseCash+f0<=cash){
+      cash-=cfg.baseCash+f0; feeTotal+=f0;
+      lots.set(k0,{idx:k0,px:p0,qty:cfg.baseCash/p0,cost:cfg.baseCash+f0});
+      trades.push({side:'buy',t:0,px:p0,qty:cfg.baseCash/p0});
+    }
+  }
+  var prev=prices[0], peak=0, maxDD=0;
+  for(var t=0;t<prices.length;t++){
+    var p=prices[t];
+    if(t>0){
+      if(p<prev){
+        for(var i=nL-1;i>=0;i--)
+          if(levels[i]<=prev&&levels[i]>=p&&i<=topBuy&&!lots.has(i)) buy(i,levels[i],t);
+      }else if(p>prev){
+        for(var j=1;j<nL;j++)
+          if(levels[j]>prev&&levels[j]<=p&&lots.has(j-1)) sell(j-1,levels[j],t);
+      }
+      prev=p;
+    }
+    var v=0, dep=0;
+    lots.forEach(function(l){v+=l.qty*p; dep+=l.cost;});
+    equity.push(cash+v);
+    if(dep>maxDeployed) maxDeployed=dep;
+    sumDeployed+=dep;
+    if(equity[t]>peak) peak=equity[t];
+    if(peak>0) maxDD=Math.max(maxDD,(peak-equity[t])/peak);
+  }
+  var lastP=prices[prices.length-1], leftVal=0, leftCost=0;
+  lots.forEach(function(l){leftVal+=l.qty*lastP; leftCost+=l.cost;});
+  var finalEq=cash+leftVal, buys=0, sells=0, realized=0;
+  trades.forEach(function(tr){
+    if(tr.side==='buy') buys++; else {sells++; realized+=tr.pnl;}
+  });
+  return {levels:levels, trades:trades, equity:equity,
+    m:{nG:nL, perGrid:perGrid, buys:buys, sells:sells, skipped:skipped, fee:feeTotal,
+      realized:realized, float:leftVal-leftCost, leftVal:leftVal, leftQty:lots.size,
+      finalEq:finalEq, ret:finalEq/cfg.capital-1, maxDep:maxDeployed,
+      avgDep:sumDeployed/prices.length,
+      util:maxDeployed/cfg.capital, avgUtil:(sumDeployed/prices.length)/cfg.capital,
+      depRet:maxDeployed?(finalEq-cfg.capital)/maxDeployed:0,
+      maxDD:maxDD, bh:lastP/prices[0]-1,
+      excess:finalEq/cfg.capital-1-(lastP/prices[0]-1)}};
+}
+var pcv=id('priceCanvas'), ecv=id('eqCanvas');
+function fit(cv){
+  var dpr=Math.min(2,window.devicePixelRatio||1);
+  var w=cv.clientWidth||(cv.parentNode&&cv.parentNode.clientWidth)||600;
+  // 设计高度只读一次并缓存：写 cv.height 会改到 height 属性，反复读会越乘越大
+  if(!cv.__h) cv.__h=parseInt(cv.getAttribute('height'),10)||200;
+  var h=cv.__h;
+  var W=Math.round(w*dpr), H=Math.round(h*dpr);
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}
+  var ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx:ctx,w:w,h:h};
+}
+function pRange(){return [S.low*0.75, S.high*1.25]}
+function xOf(i,w){return PAD.l+(i/(N-1))*(w-PAD.l-PAD.r)}
+function yOf(p,h,rg){return PAD.t+(1-(p-rg[0])/(rg[1]-rg[0]))*(h-PAD.t-PAD.b)}
+
+function drawPrice(run){
+  var f=fit(pcv), ctx=f.ctx, w=f.w, h=f.h, rg=pRange();
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  run.levels.forEach(function(lv){
+    if(lv<rg[0]||lv>rg[1]) return;
+    var y=yOf(lv,h,rg);
+    ctx.strokeStyle='#ccd4dd'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(w-PAD.r,y); ctx.stroke();
+    ctx.fillStyle='#8592a0'; ctx.font='10px "Segoe UI",sans-serif';
+    ctx.textAlign='left'; ctx.fillText(lv.toFixed(1), w-PAD.r+6, y+3.5);
+  });
+  ctx.beginPath();
+  for(var i=0;i<N;i++){
+    var x=xOf(i,w), y=yOf(S.prices[i],h,rg);
+    if(i) ctx.lineTo(x,y); else ctx.moveTo(x,y);
+  }
+  ctx.strokeStyle='#232b36'; ctx.lineWidth=1.7; ctx.stroke();
+  run.trades.forEach(function(tr){
+    var x=xOf(tr.t,w), y=yOf(tr.px,h,rg);
+    ctx.beginPath();
+    if(tr.side==='buy'){ctx.moveTo(x,y-6);ctx.lineTo(x-5,y+3);ctx.lineTo(x+5,y+3);ctx.fillStyle='#b3382c';}
+    else{ctx.moveTo(x,y+6);ctx.lineTo(x-5,y-3);ctx.lineTo(x+5,y-3);ctx.fillStyle='#1f7a53';}
+    ctx.closePath(); ctx.fill();
+  });
+}
+function drawEq(run,cfg){
+  var f=fit(ecv), ctx=f.ctx, w=f.w, h=f.h, eq=run.equity;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  var lo=Math.min(Math.min.apply(null,eq),cfg.capital);
+  var hi=Math.max(Math.max.apply(null,eq),cfg.capital);
+  var d=(hi-lo)*0.14||1; lo-=d; hi+=d;
+  var cap=cfg.capital;
+  function y(v){return PAD.t+(1-(v-lo)/(hi-lo))*(h-PAD.t-PAD.b)}
+  var yc=y(cap);
+  ctx.setLineDash([4,4]); ctx.strokeStyle='#aab4c0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD.l,yc); ctx.lineTo(w-PAD.r,yc); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  for(var i=0;i<eq.length;i++){var x=xOf(i,w); if(i) ctx.lineTo(x,y(eq[i])); else ctx.moveTo(x,y(eq[i]));}
+  ctx.strokeStyle=(eq[eq.length-1]>=cap)?'#b3382c':'#1f7a53'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.lineTo(xOf(eq.length-1,w),yc); ctx.lineTo(PAD.l,yc); ctx.closePath();
+  ctx.fillStyle=(eq[eq.length-1]>=cap)?'rgba(179,56,44,.07)':'rgba(31,122,83,.07)';
+  ctx.fill();
+  ctx.fillStyle='#8592a0'; ctx.font='10px "Segoe UI",sans-serif'; ctx.textAlign='left';
+  ctx.fillText(money(hi), w-PAD.r+6, PAD.t+8);
+  ctx.fillText(money(lo), w-PAD.r+6, h-PAD.b-2);
+  ctx.fillText(money(cap), w-PAD.r+6, yc+3);
+}
+function collect(){
+  var low=parseFloat(id('low').value), high=parseFloat(id('high').value);
+  var st=parseFloat(id('step').value), pg=parseFloat(id('perGrid').value);
+  var bc=parseFloat(id('baseCash').value), fb=parseFloat(id('feeBp').value);
+  if(!(low>0)||!(high>low)||!(st>0)) return null;
+  st=clamp(st,1,30)/100; fb=Math.max(0,fb||0);
+  pg=Math.max(0,pg||0); bc=Math.max(0,bc||0);
+  if(!(pg>0)) return null;
+  var slots=Math.max(1,levelsOf(low,high,st).length-1);
+  var feeEach=Math.max(pg*fb/10000,FEE_MIN);
+  // 本金 = 底仓 + 每个买入格（买入金额 + 那份的手续费），保证跌到底也买得进
+  var cap=bc+slots*(pg+feeEach);
+  return {low:low, high:high, step:st, capital:cap, slots:slots,
+    baseCash:bc, perGrid:pg, feeRate:fb/10000, feeBp:fb};
+}
+
+function render(){
+  var cfg=collect();
+  var big=id('mRet'), sub=id('mSub'), lab=id('mLab'), warn=id('warn');
+  if(!cfg){big.textContent='—'; big.className='val'; sub.textContent='数字没填对：上限要大于下限，每次买多少钱要大于 0'; return;}
+  var run=simulate(S.prices,cfg);
+  if(!run){big.textContent='—'; big.className='val'; sub.textContent='区间太窄或者格宽太大，至少得有 3 条格线'; return;}
+  lastRun=run;
+  drawPrice(run); drawEq(run,cfg);
+  var m=run.m, profit=m.finalEq-cfg.capital;
+  lab.textContent=profit>=0?'这套网格赚了':'这套网格亏了';
+  big.textContent=(profit>=0?'+':'−')+money(Math.abs(profit))+' 元';
+  big.className='val '+(profit>=0?'up':'down');
+  sub.innerHTML='本金 '+money(cfg.capital)+' 元，收益率 '+(profit>=0?'+':'')+pct(m.ret)+
+    '<br>但钱不会一直全压着：最多同时用 '+money(m.maxDep)+' 元（占本金 '+pct1(m.util)+'），'+
+    '按这个算收益率是 '+(m.depRet>=0?'+':'')+pct(m.depRet)+
+    '<br>同样这段直接买入拿着是 '+(m.bh>=0?'+':'')+pct(m.bh);
+  var tips=[];
+  if(m.sells===0){
+    tips.push('这条走势一次都没来回穿过格线，网格什么都没干。网格只在震荡里赚钱，碰上单边就是这个下场。');
+  }
+  if(!tips.length && m.maxDD>0.1){
+    tips.push('最惨的时候账户浮亏已经超过 10%，跌下去那一段是网格最难受的时候，确认你这笔钱扛得住。');
+  }
+  warn.hidden=!tips.length;
+  if(tips.length) warn.innerHTML=tips.join('<br>');
+  var rows=[
+    ['买到 / 卖掉几次', m.buys+' 次 / '+m.sells+' 次'],
+    ['最多同时压着多少钱', money(m.maxDep)+' 元 · 本金 '+pct1(m.util)],
+    ['平均压着多少钱', money(m.avgDep)+' 元 · 本金 '+pct1(m.avgUtil)],
+    ['最惨时账户浮亏', pct(m.maxDD)],
+    ['还剩几份没卖掉', m.leftQty+' 份'],
+    ['手续费一共付了', money(m.fee)+' 元'],
+    ['区间里一共几条格线', m.nG+' 条']
+  ];
+  var html='';
+  rows.forEach(function(r){html+='<div class="row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>'});
+  id('rows').innerHTML=html;
+  id('utilNote').innerHTML='这套参数平时只用掉本金的 '+pct1(m.avgUtil)+'，平均有 '+money(cfg.capital-m.avgDep)+
+    ' 元躺着不动；要真把这 '+money(cfg.capital)+' 元吃满，得一路阴跌、把 '+cfg.slots+' 个格子全买一遍才行，'+
+    '涨回去卖掉的钱又会退回账上。';
+  id('stamp').textContent=cfg.low+'~'+cfg.high+' 元 · 每跌 '+Math.round(cfg.step*100)+'% 买一次';
+  id('capital').value=money(cfg.capital);
+  id('pgNote').textContent='每次 '+money(m.perGrid)+' 元 × '+cfg.slots+' 个买入格';
+  id('capNote').textContent='不用你填，自动跟着变';
+}
+function pickPoint(e){
+  var r=pcv.getBoundingClientRect(), rg=pRange();
+  var cx=e.clientX, cy=e.clientY;
+  if(e.touches&&e.touches.length){cx=e.touches[0].clientX;cy=e.touches[0].clientY;}
+  var x=cx-r.left, y=cy-r.top;
+  var i=clamp(Math.round((x-PAD.l)/(r.width-PAD.l-PAD.r)*(N-1)),0,N-1);
+  var p=rg[1]-(y-PAD.t)/(r.height-PAD.t-PAD.b)*(rg[1]-rg[0]);
+  return {i:i,p:clamp(p,rg[0]*1.001,rg[1]*0.999)};
+}
+var drawing=false, lastI=0, lastP=0;
+function begin(e){
+  if(drawing) return;
+  var q=pickPoint(e);
+  drawing=true; lastI=q.i; lastP=q.p;
+  for(var k=0;k<N;k++) S.prices[k]=q.p;
+  pcv.style.cursor='crosshair';
+  id('hint').classList.add('hide');
+  render();
+}
+function extend(e){
+  if(!drawing) return;
+  var q=pickPoint(e), a=Math.min(lastI,q.i), b=Math.max(lastI,q.i);
+  for(var k=a;k<=b;k++){
+    var w=(b===a)?0:(k-a)/(b-a);
+    if(q.i<lastI) w=1-w;
+    S.prices[k]=lastP+(q.p-lastP)*w;
+  }
+  lastI=q.i; lastP=q.p;
+  render();
+}
+function endDraw(){drawing=false}
+pcv.addEventListener('pointerdown',function(e){e.preventDefault();begin(e);});
+pcv.addEventListener('mousedown',function(e){e.preventDefault();begin(e);});
+pcv.addEventListener('touchstart',function(e){e.preventDefault();begin(e);},{passive:false});
+window.addEventListener('pointermove',function(e){if(drawing) extend(e);});
+window.addEventListener('mousemove',function(e){if(drawing) extend(e);});
+window.addEventListener('touchmove',function(e){if(drawing){e.preventDefault();extend(e);}},{passive:false});
+window.addEventListener('pointerup',endDraw);
+window.addEventListener('mouseup',endDraw);
+window.addEventListener('touchend',endDraw);
+window.addEventListener('pointercancel',endDraw);
+window.addEventListener('blur',endDraw);
+function setPath(cps){
+  var rg=pRange();
+  for(var k=0;k<N;k++){
+    var u=k/(N-1), a=cps[0], b=cps[cps.length-1], j;
+    for(j=0;j<cps.length-1;j++){
+      if(u>=cps[j][0]&&u<=cps[j+1][0]){a=cps[j]; b=cps[j+1]; break;}
+    }
+    var w=(b[0]===a[0])?0:(u-a[0])/(b[0]-a[0]);
+    var v=Math.exp(Math.log(a[1])+(Math.log(b[1])-Math.log(a[1]))*w);
+    S.prices[k]=clamp(v,rg[0]*1.001,rg[1]*0.999);
+  }
+  render();
+}
+var PRESETS={
+  btnV:[[0,100],[0.38,78],[1,100]],
+  btnBox:[[0,100],[0.17,108],[0.34,92],[0.51,108],[0.68,92],[0.85,106],[1,94]],
+  btnBull:[[0,100],[0.25,95],[1,115]],
+  btnCrash:[[0,100],[0.42,80],[1,62]]
+};
+Object.keys(PRESETS).forEach(function(k){
+  id(k).addEventListener('click',function(){setPath(PRESETS[k])});
+});
+id('btnRand').addEventListener('click',function(){
+  var rg=pRange(), v=100;
+  S.prices=S.prices.map(function(){
+    v=clamp(v*Math.exp((Math.random()-0.5)*0.035),rg[0]*1.02,rg[1]*0.98);
+    return v;
+  });
+  render();
+});
+['low','high','step','baseCash','perGrid','feeBp'].forEach(function(k){
+  id(k).addEventListener('input',render);
+  id(k).addEventListener('change',render);
+});
+var rt=null;
+window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(render,150)});
+setPath(PRESETS.btnV);
+</script>
+</body>
+</html>
