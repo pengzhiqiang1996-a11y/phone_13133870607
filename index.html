@@ -138,6 +138,15 @@
     if (bundle.assets[result.path]) return download(result.path);
     result.path=aliases[result.path]||result.path;
     if (!bundle.pages[result.path]) return;
+      // Keep the complete booking exercise inside index.html, including its URL.
+      if (result.path === '海运订舱教学/海运订舱实训.html') {
+        if (history.state?.dojoEmbedded !== result.path || location.hash) {
+          history.pushState({dojoEmbedded: result.path}, '', location.href.split('#')[0]);
+        }
+        pending = false;
+        render(result.path, result.hash);
+        return;
+      }
     const route = '#page=' + encodeURIComponent(result.path);
     if (location.hash === route) render(result.path, result.hash);
     else { pending = result.hash; location.hash = route; }
@@ -145,6 +154,7 @@
   function route() {
     let path = bundle.home;
     try {
+      if (!location.hash && history.state?.dojoEmbedded) path = history.state.dojoEmbedded;
       if (location.hash.startsWith('#page=')) path = decodeURIComponent(location.hash.slice(6));
     } catch {}
     render(path, pending || ''); pending = false;
@@ -186,6 +196,7 @@
   document.getElementById('back').onclick = () => history.back();
   select.onchange = () => navigate(select.value, bundle.home);
   window.addEventListener('hashchange', route);
+    window.addEventListener('popstate', () => { if (!location.hash) route(); });
   route();
 })();
 </script>
