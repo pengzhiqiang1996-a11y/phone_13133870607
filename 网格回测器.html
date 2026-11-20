@@ -26,6 +26,11 @@
   canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
   #priceCanvas{height:340px}
   #eqCanvas{height:140px}
+  #macdCanvas{height:104px}
+  .macdhd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    padding:6px 14px 6px;font-size:11.5px;color:#7d8896;border-top:1px solid var(--line)}
+  .macdhd .lg{display:flex;gap:10px;align-items:center}
+  .macdhd em{display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:1px;vertical-align:1px}
   .hint{position:absolute;left:12px;top:12px;padding:5px 10px;border-radius:3px;
     background:rgba(255,255,255,.93);border:1px dashed #b9c4cf;color:#5b6675;
     font-size:12.5px;pointer-events:none;line-height:1.6;max-width:72%}
@@ -34,11 +39,15 @@
   .big .lab{font-size:12px;color:var(--ink2)}
   .big .val{font-size:32px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.12}
   .big .sub{font-size:12.5px;color:var(--ink2);margin-top:3px}
-  .row{display:flex;justify-content:space-between;gap:12px;padding:7px 14px;
-    border-bottom:1px dashed var(--line);font-size:13px}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:7px 14px;    border-bottom:1px dashed var(--line);font-size:13px}
   .row:last-child{border-bottom:0}
   .row span{color:var(--ink2);flex:1 1 auto;min-width:0}
   .row strong{flex:0 1 auto;text-align:right;font-variant-numeric:tabular-nums}
+  .cmp-hd{padding:9px 14px 6px;font-size:11.5px;color:#7d8896;background:#fafbfc;
+    border-top:1px solid var(--line);margin-top:2px}
+  .row.cmp{background:#fafbfc}
+  .row.cmp.on{background:#eef2f6;font-weight:600}
+  .row.cmp.on span{color:var(--ink)}
   .ctrl{padding:12px 14px;display:grid;grid-template-columns:repeat(2,1fr);gap:11px 14px}
   .fld{display:grid;gap:4px;min-width:0}
   .fld.wide{grid-column:1/-1}
@@ -55,6 +64,16 @@
   .utilnote{padding:9px 14px 11px;font-size:12px;line-height:1.7;color:#6b7684;
     border-top:1px dashed var(--line);background:#fafbfc}
   .more{border-top:1px solid var(--line)}
+  .sw{display:flex;gap:9px;align-items:flex-start;padding:11px 14px;font-size:12.5px;
+    line-height:1.6;color:#3f4a57;border-bottom:1px solid var(--line);background:#fafbfc;cursor:pointer}
+  .sw input{width:15px;height:15px;margin-top:2px;flex:0 0 auto;accent-color:#3a4653}
+  .sw b{color:var(--ink)}
+  .modes{display:flex;gap:6px;padding:10px 14px 0}
+  .modes button{flex:1;padding:8px 6px;font-size:12.5px;border:1px solid #d3dae1;background:#fbfcfd;
+    color:#4d5865;border-radius:3px;cursor:pointer}
+  .modes button:hover{background:#f0f4f7}
+  .modes button.on{border-color:#3a4653;background:#3a4653;color:#fff}
+  .modenote{padding:7px 14px 9px;font-size:11.5px;line-height:1.6;color:#7d8896}
   .more summary{cursor:pointer;padding:9px 14px;font-size:12.5px;color:var(--ink2);
     list-style:none;outline:none}
   .more summary::-webkit-details-marker{display:none}
@@ -101,6 +120,11 @@
           <canvas id="priceCanvas" height="340"></canvas>
           <div class="hint" id="hint">按住鼠标，从左往右随手拖一条线，松手就出结果（想重画就再拖一次）</div>
         </div>
+        <div class="macdhd">
+          <span><b>MACD</b> 12 / 26 / 9</span>
+          <span class="lg"><em style="background:#3a4653"></em>快线 DIF <em style="background:#c9992f"></em>慢线 DEA <em style="background:#b3382c"></em>金叉 <em style="background:#1f7a53"></em>死叉</span>
+        </div>
+        <div class="canvas-box macdbox"><canvas id="macdCanvas" height="104"></canvas></div>
         <div class="btns">
           <button id="btnV" class="pri">跌了又涨回来</button>
           <button id="btnBox">来回震荡</button>
@@ -128,13 +152,23 @@
         <div class="utilnote" id="utilNote"></div>
       </div>
       <div class="panel" style="margin-top:14px">
-        <div class="panel-hd"><b>第三步 · 调参数</b><span>改完立刻重算</span></div>
+        <div class="panel-hd"><b>第三步 · 选打法、调参数</b><span>改完立刻重算</span></div>
+        <div class="modes" id="modes">
+          <button class="mode on" data-mode="0">只做网格</button>
+          <button class="mode" data-mode="1">网格 + MACD</button>
+          <button class="mode" data-mode="2">只做 MACD</button>
+        </div>
+        <div class="modenote" id="modeNote">价格往下穿过格线买一份，涨回上一条格线卖掉一份。</div>
         <div class="ctrl">
           <div class="fld"><label for="low">跌到多少就不再买</label><input id="low" type="number" value="70" step="0.5" min="1"></div>
           <div class="fld"><label for="high">涨到多少就不再卖</label><input id="high" type="number" value="105" step="0.5" min="1"></div>
           <div class="fld"><label for="perGrid">每次买多少钱</label>
             <input id="perGrid" type="number" value="10000" step="1000" min="100">
             <div class="fld-note" id="pgNote">—</div>
+          </div>
+          <div class="fld"><label for="plan">计划投多少钱（0 = 不管）</label>
+            <input id="plan" type="number" value="0" step="10000" min="0">
+            <div class="fld-note" id="planNote">想上限就填，填 0 按需要的自动算</div>
           </div>
           <div class="fld"><label for="capital">要准备多少钱（自动算）</label>
             <input id="capital" class="ro" type="text" readonly tabindex="-1">
@@ -154,7 +188,9 @@
   </div>
 
   <div class="note">
-    <b>说人话：</b>价格往下穿过一条格线就买一份，涨回上一条格线就卖掉一份，一份赚的差价 = 每次买多少钱 × 每跌百分之几。所以来回震荡越多次越赚；一路涨或一路跌，网格都吃不到多少，甚至会亏。成交按你画的每个点直算，跳空、挂单没成交这些现实误差这里没有模拟。
+    <b>说人话：</b>价格往下穿过一条格线就买一份，涨回上一条格线就卖掉一份，一份赚的差价 = 每次买多少钱 × 每跌百分之几。所以来回震荡越多次越赚；一路涨或一路跌，网格都吃不到多少，甚至会亏。<br>
+    <b>MACD 那两档：</b>「网格 + MACD」是网格照跑，外加一条规矩——区间下半部金叉时多买一份、上半部死叉时把手里的份全卖掉；「只做 MACD」则完全不看格线，金叉买一份、死叉清仓。死叉清仓会把网格攒的份一起卖掉，好处是躲跌，代价是震荡里被反复洗，所以三种打法的结果在右边直接对着看。前 30 根是预热期，那段的 MACD 不算数。<br>
+    <b>钱那栏：</b>「计划投多少钱」填 0 就按铺满区间需要的自动算；填了数就按这个封顶，钱不够的格子会买不进，右边会告诉你只够买到哪一格。成交按你画的每个点直算，跳空、挂单没成交这些现实误差这里没有模拟。
   </div>
 </div>
 <script>
@@ -162,6 +198,11 @@ var N=240, FEE_MIN=5;
 var PAD={l:10,r:52,t:12,b:18};
 var S={prices:new Array(N).fill(100),low:70,high:105,stepPct:5,capital:100000,basePct:0,feeBp:2.5};
 var lastRun=null;
+S.mode=0;
+var MODE_NAME=['只做网格','网格 + MACD','只做 MACD'];
+var MODE_TIP=['价格往下穿过格线买一份，涨回上一条格线卖掉一份。不看任何指标。',
+  '网格照跑，另外一条规矩：区间下半部金叉时多买一份，上半部死叉时把手里的份全卖掉。',
+  '不看格线，只跟信号：金叉买一份，死叉清仓。'];
 
 function id(x){return document.getElementById(x)}
 function money(v){return (v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString('zh-CN')}
@@ -173,7 +214,21 @@ function levelsOf(low,high,step){
   return a;
 }
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
-function simulate(prices,cfg){
+function emaOf(a,n){
+  var k=2/(n+1), out=[], prev=a[0];
+  for(var i=0;i<a.length;i++){prev=i? a[i]*k+prev*(1-k) : a[i]; out.push(prev);}
+  return out;
+}
+function macdOf(p){
+  var e12=emaOf(p,12), e26=emaOf(p,26), dif=[], i;
+  for(i=0;i<p.length;i++) dif.push(e12[i]-e26[i]);
+  var dea=emaOf(dif,9), hist=[];
+  for(i=0;i<dif.length;i++) hist.push(2*(dif[i]-dea[i]));
+  return {dif:dif,dea:dea,hist:hist};
+}
+function simulate(prices,cfg,mode){
+  mode=mode||0;
+  var doGrid=(mode!==2), doMacd=(mode!==0);
   var levels=levelsOf(cfg.low,cfg.high,cfg.step), nL=levels.length;
   if(nL<3) return null;
   var slots=Math.max(1,nL-1);
@@ -181,6 +236,27 @@ function simulate(prices,cfg){
   var topBuy=nL-2, feeRate=cfg.feeRate;
   var cash=cfg.capital, lots=new Map(), trades=[], equity=[];
   var maxDeployed=0, sumDeployed=0, skipped=0, feeTotal=0;
+  var macd=doMacd?macdOf(prices):null, midLine=(cfg.low+cfg.high)/2;
+  var extra=[], macdBuys=0, macdSells=0;
+  function buyMore(px,t){
+    var qty=Math.min(perGrid,cash/(1+feeRate))/px, gross=qty*px;
+    if(!(qty>0)) return;
+    var fee=Math.max(gross*feeRate,FEE_MIN);
+    if(gross+fee>cash){skipped++;return;}
+    cash-=gross+fee; feeTotal+=fee; macdBuys++;
+    extra.push({px:px,qty:qty,cost:gross+fee});
+    trades.push({side:'buy',t:t,px:px,qty:qty,why:'macd'});
+  }
+  function sellAll(px,t){
+    var all=[];
+    lots.forEach(function(l){all.push(l)}); lots.clear();
+    extra.forEach(function(l){all.push(l)}); extra.length=0;
+    all.forEach(function(l){
+      var proceeds=l.qty*px, fee=Math.max(proceeds*feeRate,FEE_MIN);
+      cash+=proceeds-fee; feeTotal+=fee; macdSells++;
+      trades.push({side:'sell',t:t,px:px,qty:l.qty,pnl:proceeds-fee-l.cost,why:'macd'});
+    });
+  }
   function buy(idx,px,t){
     var qty=Math.min(perGrid,cash/(1+feeRate))/px, gross=qty*px;
     if(qty<=0||gross<perGrid*0.5){skipped++;return;}
@@ -212,17 +288,25 @@ function simulate(prices,cfg){
   for(var t=0;t<prices.length;t++){
     var p=prices[t];
     if(t>0){
-      if(p<prev){
+      if(doGrid&&p<prev){
         for(var i=nL-1;i>=0;i--)
           if(levels[i]<=prev&&levels[i]>=p&&i<=topBuy&&!lots.has(i)) buy(i,levels[i],t);
-      }else if(p>prev){
+      }else if(doGrid&&p>prev){
         for(var j=1;j<nL;j++)
           if(levels[j]>prev&&levels[j]<=p&&lots.has(j-1)) sell(j-1,levels[j],t);
       }
       prev=p;
     }
+    // MACD：低位金叉加一份仓，高位死叉全部清掉
+    if(macd && t>0){
+      var upC=macd.dif[t]>macd.dea[t]&&macd.dif[t-1]<=macd.dea[t-1];
+      var dnC=macd.dif[t]<macd.dea[t]&&macd.dif[t-1]>=macd.dea[t-1];
+      if(upC && (mode===2 || p<=midLine)) buyMore(p,t);
+      if(dnC && (mode===2 || p>=midLine) && (lots.size||extra.length)) sellAll(p,t);
+    }
     var v=0, dep=0;
     lots.forEach(function(l){v+=l.qty*p; dep+=l.cost;});
+    extra.forEach(function(l){v+=l.qty*p; dep+=l.cost;});
     equity.push(cash+v);
     if(dep>maxDeployed) maxDeployed=dep;
     sumDeployed+=dep;
@@ -231,13 +315,15 @@ function simulate(prices,cfg){
   }
   var lastP=prices[prices.length-1], leftVal=0, leftCost=0;
   lots.forEach(function(l){leftVal+=l.qty*lastP; leftCost+=l.cost;});
+  extra.forEach(function(l){leftVal+=l.qty*lastP; leftCost+=l.cost;});
   var finalEq=cash+leftVal, buys=0, sells=0, realized=0;
   trades.forEach(function(tr){
     if(tr.side==='buy') buys++; else {sells++; realized+=tr.pnl;}
   });
   return {levels:levels, trades:trades, equity:equity,
     m:{nG:nL, perGrid:perGrid, buys:buys, sells:sells, skipped:skipped, fee:feeTotal,
-      realized:realized, float:leftVal-leftCost, leftVal:leftVal, leftQty:lots.size,
+      realized:realized, float:leftVal-leftCost, leftVal:leftVal, leftQty:lots.size+extra.length,
+      macdBuys:macdBuys, macdSells:macdSells, macd:macd,
       finalEq:finalEq, ret:finalEq/cfg.capital-1, maxDep:maxDeployed,
       avgDep:sumDeployed/prices.length,
       util:maxDeployed/cfg.capital, avgUtil:(sumDeployed/prices.length)/cfg.capital,
@@ -245,7 +331,7 @@ function simulate(prices,cfg){
       maxDD:maxDD, bh:lastP/prices[0]-1,
       excess:finalEq/cfg.capital-1-(lastP/prices[0]-1)}};
 }
-var pcv=id('priceCanvas'), ecv=id('eqCanvas');
+var pcv=id('priceCanvas'), ecv=id('eqCanvas'), mcv=id('macdCanvas');
 function fit(cv){
   var dpr=Math.min(2,window.devicePixelRatio||1);
   var w=cv.clientWidth||(cv.parentNode&&cv.parentNode.clientWidth)||600;
@@ -310,10 +396,44 @@ function drawEq(run,cfg){
   ctx.fillText(money(lo), w-PAD.r+6, h-PAD.b-2);
   ctx.fillText(money(cap), w-PAD.r+6, yc+3);
 }
+function drawMacd(macd){
+  var f=fit(mcv), ctx=f.ctx, w=f.w, h=f.h;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  var top=PAD.t, bot=h-PAD.b, mx=0, i;
+  for(i=0;i<N;i++) mx=Math.max(mx,Math.abs(macd.dif[i]),Math.abs(macd.dea[i]),Math.abs(macd.hist[i]));
+  mx=mx||1;
+  function y(v){return (top+bot)/2-(v/mx)*((bot-top)/2)}
+  ctx.strokeStyle='#dfe5ec'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD.l,y(0)); ctx.lineTo(w-PAD.r,y(0)); ctx.stroke();
+  var bw=Math.max(1,(w-PAD.l-PAD.r)/N-0.6);
+  for(i=0;i<N;i++){
+    var hv=macd.hist[i], x0=xOf(i,w), y0=y(0), y1=y(hv);
+    ctx.fillStyle=hv>=0?'rgba(179,56,44,.5)':'rgba(31,122,83,.5)';
+    ctx.fillRect(x0-bw/2, Math.min(y0,y1), bw, Math.max(0.7,Math.abs(y1-y0)));
+  }
+  [[macd.dif,'#3a4653'],[macd.dea,'#c9992f']].forEach(function(pr){
+    ctx.beginPath();
+    for(var j=0;j<N;j++){var xx=xOf(j,w), yy=y(pr[0][j]); if(j)ctx.lineTo(xx,yy); else ctx.moveTo(xx,yy);}
+    ctx.strokeStyle=pr[1]; ctx.lineWidth=1.3; ctx.stroke();
+  });
+  for(i=1;i<N;i++){
+    var up=macd.dif[i]>macd.dea[i]&&macd.dif[i-1]<=macd.dea[i-1];
+    var dn=macd.dif[i]<macd.dea[i]&&macd.dif[i-1]>=macd.dea[i-1];
+    if(!up&&!dn) continue;
+    var x=xOf(i,w), yy=y((macd.dif[i]+macd.dea[i])/2);
+    ctx.beginPath();
+    if(up){ctx.moveTo(x,yy-7);ctx.lineTo(x-3.4,yy-1);ctx.lineTo(x+3.4,yy-1);ctx.fillStyle='#b3382c';}
+    else{ctx.moveTo(x,yy+7);ctx.lineTo(x-3.4,yy+1);ctx.lineTo(x+3.4,yy+1);ctx.fillStyle='#1f7a53';}
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle='#8592a0'; ctx.font='10px "Segoe UI",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('0', w-PAD.r+6, y(0)+3.5);
+}
 function collect(){
   var low=parseFloat(id('low').value), high=parseFloat(id('high').value);
   var st=parseFloat(id('step').value), pg=parseFloat(id('perGrid').value);
   var bc=parseFloat(id('baseCash').value), fb=parseFloat(id('feeBp').value);
+  var plan=parseFloat(id('plan').value);
   if(!(low>0)||!(high>low)||!(st>0)) return null;
   st=clamp(st,1,30)/100; fb=Math.max(0,fb||0);
   pg=Math.max(0,pg||0); bc=Math.max(0,bc||0);
@@ -321,8 +441,13 @@ function collect(){
   var slots=Math.max(1,levelsOf(low,high,st).length-1);
   var feeEach=Math.max(pg*fb/10000,FEE_MIN);
   // 本金 = 底仓 + 每个买入格（买入金额 + 那份的手续费），保证跌到底也买得进
-  var cap=bc+slots*(pg+feeEach);
-  return {low:low, high:high, step:st, capital:cap, slots:slots,
+  var need=bc+slots*(pg+feeEach);
+  var cap=need;
+  if(plan>0){                       // 你计划投多少就按多少封顶
+    cap=Math.min(plan,need);
+    bc=Math.min(bc,cap);
+  }
+  return {low:low, high:high, step:st, capital:cap, slots:slots, need:need, plan:plan||0,
     baseCash:bc, perGrid:pg, feeRate:fb/10000, feeBp:fb};
 }
 
@@ -330,21 +455,36 @@ function render(){
   var cfg=collect();
   var big=id('mRet'), sub=id('mSub'), lab=id('mLab'), warn=id('warn');
   if(!cfg){big.textContent='—'; big.className='val'; sub.textContent='数字没填对：上限要大于下限，每次买多少钱要大于 0'; return;}
-  var run=simulate(S.prices,cfg);
+  var mode=S.mode||0;
+  var r0=simulate(S.prices,cfg,0), r1=simulate(S.prices,cfg,1), r2=simulate(S.prices,cfg,2);
+  var run=[r0,r1,r2][mode]||r0;
   if(!run){big.textContent='—'; big.className='val'; sub.textContent='区间太窄或者格宽太大，至少得有 3 条格线'; return;}
   lastRun=run;
-  drawPrice(run); drawEq(run,cfg);
+  var macdData=r1?r1.m.macd:macdOf(S.prices);
+  drawPrice(run); drawEq(run,cfg); drawMacd(macdData);
   var m=run.m, profit=m.finalEq-cfg.capital;
-  lab.textContent=profit>=0?'这套网格赚了':'这套网格亏了';
-  big.textContent=(profit>=0?'+':'−')+money(Math.abs(profit))+' 元';
+  lab.textContent=MODE_NAME[mode]+'的结果';
+  big.textContent=(profit>=0?'赚了 ':'亏了 ')+money(Math.abs(profit))+' 元';
   big.className='val '+(profit>=0?'up':'down');
   sub.innerHTML='本金 '+money(cfg.capital)+' 元，收益率 '+(profit>=0?'+':'')+pct(m.ret)+
     '<br>但钱不会一直全压着：最多同时用 '+money(m.maxDep)+' 元（占本金 '+pct1(m.util)+'），'+
     '按这个算收益率是 '+(m.depRet>=0?'+':'')+pct(m.depRet)+
     '<br>同样这段直接买入拿着是 '+(m.bh>=0?'+':'')+pct(m.bh);
+  var baseProfit=r0?r0.m.finalEq-cfg.capital:0;
   var tips=[];
-  if(m.sells===0){
+  if(mode!==2 && m.sells===0 && m.macdSells===0){
     tips.push('这条走势一次都没来回穿过格线，网格什么都没干。网格只在震荡里赚钱，碰上单边就是这个下场。');
+  }
+  if(mode!==0 && m.macdBuys===0 && m.macdSells===0){
+    tips.push('这段走势 MACD 一个信号都没给（'+(mode===2?'金叉都没出现':'金叉要在区间下半部、死叉要在上半部')+'），所以没做成一笔。');
+  }
+  if(cfg.plan>0 && cfg.plan<cfg.need){
+    var each=cfg.perGrid+Math.max(cfg.perGrid*cfg.feeRate,FEE_MIN);
+    var afford=Math.max(0,Math.floor((cfg.capital-cfg.baseCash)/each));
+    var lvAll=levelsOf(cfg.low,cfg.high,cfg.step);
+    var deepest=lvAll[Math.max(0,lvAll.length-1-afford)];
+    tips.push('你说只投 '+money(cfg.plan)+' 元，可铺满 '+cfg.slots+' 个格子要 '+money(cfg.need)+
+      ' 元，钱只够买到跌到 '+money(deepest)+' 元那一格，再往下的 '+Math.max(0,cfg.slots-afford)+' 格买不进。');
   }
   if(!tips.length && m.maxDD>0.1){
     tips.push('最惨的时候账户浮亏已经超过 10%，跌下去那一段是网格最难受的时候，确认你这笔钱扛得住。');
@@ -362,14 +502,25 @@ function render(){
   ];
   var html='';
   rows.forEach(function(r){html+='<div class="row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>'});
+  html+='<div class="cmp-hd">同样这条走势，三种打法各赚多少</div>';
+  [['只做网格',r0],['网格 + MACD',r1],['只做 MACD',r2]].forEach(function(it,idx){
+    var rr=it[1], pf=rr?rr.m.finalEq-cfg.capital:0;
+    html+='<div class="row cmp'+(idx===mode?' on':'')+'"><span>'+it[0]+(idx===mode?' ← 现在选的':'')+
+      '</span><strong class="'+(pf>=0?'up':'down')+'">'+(pf>=0?'+':'−')+money(Math.abs(pf))+' 元</strong></div>';
+  });
   id('rows').innerHTML=html;
   id('utilNote').innerHTML='这套参数平时只用掉本金的 '+pct1(m.avgUtil)+'，平均有 '+money(cfg.capital-m.avgDep)+
     ' 元躺着不动；要真把这 '+money(cfg.capital)+' 元吃满，得一路阴跌、把 '+cfg.slots+' 个格子全买一遍才行，'+
-    '涨回去卖掉的钱又会退回账上。';
+    '涨回去卖掉的钱又会退回账上。'+
+    (mode===1?'<br>MACD 这套：低位金叉加仓 '+m.macdBuys+' 次，高位死叉清仓 '+m.macdSells+
+      ' 次（连网格攒的份一起卖），比只做网格'+(profit-baseProfit>=0?'多赚':'少赚')+' '+money(Math.abs(profit-baseProfit))+' 元。':'')+
+    (mode===2?'<br>只做 MACD 就是不看格线：金叉买一份、死叉清仓，来回几次全看信号，仓位比网格轻。':'');
   id('stamp').textContent=cfg.low+'~'+cfg.high+' 元 · 每跌 '+Math.round(cfg.step*100)+'% 买一次';
   id('capital').value=money(cfg.capital);
   id('pgNote').textContent='每次 '+money(m.perGrid)+' 元 × '+cfg.slots+' 个买入格';
-  id('capNote').textContent='不用你填，自动跟着变';
+  id('capNote').textContent=cfg.plan>0&&cfg.plan<cfg.need?'计划只投 '+money(cfg.plan)+'，铺不满':'不用你填，自动跟着变';
+  id('planNote').textContent=cfg.plan>0?(cfg.plan<cfg.need?'铺满要 '+money(cfg.need)+'，差 '+money(cfg.need-cfg.plan):'够用，还会剩 '+money(cfg.plan-cfg.need)):'填 0 就按需要的自动算';
+  id('modeNote').textContent=MODE_TIP[S.mode];
 }
 function pickPoint(e){
   var r=pcv.getBoundingClientRect(), rg=pRange();
@@ -443,9 +594,17 @@ id('btnRand').addEventListener('click',function(){
   });
   render();
 });
-['low','high','step','baseCash','perGrid','feeBp'].forEach(function(k){
+['low','high','step','baseCash','perGrid','feeBp','plan'].forEach(function(k){
   id(k).addEventListener('input',render);
   id(k).addEventListener('change',render);
+});
+id('modes').addEventListener('click',function(e){
+  var b=e.target.closest?e.target.closest('button.mode'):null;
+  if(!b) return;
+  S.mode=+b.getAttribute('data-mode');
+  var bs=this.querySelectorAll('button.mode');
+  for(var i=0;i<bs.length;i++) bs[i].className='mode'+(bs[i]===b?' on':'');
+  render();
 });
 var rt=null;
 window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(render,150)});
